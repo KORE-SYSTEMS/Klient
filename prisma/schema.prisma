@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  CLIENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  REVIEW
+  COMPLETED
+  ON_HOLD
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum UpdateType {
+  INFO
+  MILESTONE
+  WARNING
+  REQUEST
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  role          Role      @default(CLIENT)
+  image         String?
+  company       String?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  projects      ProjectMember[]
+  assignedTasks Task[]    @relation("assignee")
+  messages      Message[]
+  updates       Update[]
+  files         File[]    @relation("uploadedBy")
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  role      Role     @default(CLIENT)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  color       String?
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  members     ProjectMember[]
+  tasks       Task[]
+  files       File[]
+  updates     Update[]
+  messages    Message[]
+}
+
+model ProjectMember {
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  @@id([userId, projectId])
+}
+
+model Task {
+  id            String     @id @default(cuid())
+  title         String
+  description   String?
+  status        TaskStatus @default(BACKLOG)
+  priority      Priority   @default(MEDIUM)
+  clientVisible Boolean    @default(false)
+  dueDate       DateTime?
+  order         Int        @default(0)
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  assignee      User?      @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assigneeId    String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model File {
+  id           String   @id @default(cuid())
+  name         String
+  path         String
+  size         Int
+  mimeType     String
+  clientVisible Boolean @default(false)
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  uploadedBy   User     @relation("uploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime @default(now())
+}
+
+model Update {
+  id        String     @id @default(cuid())
+  content   String
+  type      UpdateType @default(INFO)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  author    User       @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime   @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  filePath  String?
+  fileName  String?
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  createdAt DateTime @default(now())
+}
+
+model Workspace {
+  id           String  @id @default(cuid())
+  name         String  @default("Klient")
+  logo         String?
+  primaryColor String  @default("#E8520A")
+  smtpHost     String?
+  smtpPort     Int     @default(587)
+  smtpUser     String?
+  smtpPass     String?
+  smtpFrom     String?
+}
