@@ -37,10 +37,33 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, name, role } = body;
+    const { email, name, role, createDirectly } = body;
+
+    if (createDirectly) {
+      const finalEmail = email || `placeholder-${nanoid(10)}@klient.local`;
+      
+      const existingUser = await prisma.user.findUnique({
+        where: { email: finalEmail },
+      });
+      
+      if (existingUser) {
+        return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
+      }
+      
+      const user = await prisma.user.create({
+        data: {
+          email: finalEmail,
+          name: name || "Unbenannter Kunde",
+          role: role || "CLIENT",
+          active: true,
+        }
+      });
+      
+      return NextResponse.json(user, { status: 201 });
+    }
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      return NextResponse.json({ error: "Email is required for invitation" }, { status: 400 });
     }
 
     // Check if user already exists

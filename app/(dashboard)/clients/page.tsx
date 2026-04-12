@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials, formatDate } from "@/lib/utils";
 import { ClientActions } from "./client-actions";
+import { DeleteInvitationButton } from "./invitation-actions";
+import { EditClientDialog } from "./edit-client-dialog";
 
 export default async function ClientsPage() {
   const session = await auth();
@@ -49,7 +51,10 @@ export default async function ClientsPage() {
                     {inv.name && `${inv.name} · `}Gültig bis {formatDate(inv.expiresAt)}
                   </div>
                 </div>
-                <Badge variant="outline" className="text-yellow-400">Ausstehend</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-yellow-400">Ausstehend</Badge>
+                  <DeleteInvitationButton id={inv.id} />
+                </div>
               </div>
             ))}
           </CardContent>
@@ -64,27 +69,32 @@ export default async function ClientsPage() {
         )}
         {clients.map((client) => (
           <Card key={client.id}>
-            <CardContent className="flex items-start gap-4 p-4">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>
-                  {getInitials(client.name || client.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-1">
-                <div className="font-medium">{client.name || "Kein Name"}</div>
-                <div className="text-xs text-muted-foreground">{client.email}</div>
-                {client.company && (
-                  <div className="text-xs text-muted-foreground">{client.company}</div>
-                )}
-                <div className="flex items-center gap-2 pt-1">
-                  <Badge variant="secondary" className="text-[10px]">
-                    {client.projects.length} Projekte
-                  </Badge>
-                  {!client.active && (
-                    <Badge variant="destructive" className="text-[10px]">Deaktiviert</Badge>
+            <CardContent className="flex items-start justify-between gap-4 p-4">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>
+                    {getInitials(client.name || client.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="font-medium">{client.name || "Kein Name"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {client.email.startsWith("placeholder-") ? "Keine E-Mail" : client.email}
+                  </div>
+                  {client.company && (
+                    <div className="text-xs text-muted-foreground">{client.company}</div>
                   )}
+                  <div className="flex items-center gap-2 pt-1">
+                    <Badge variant="secondary" className="text-[10px]">
+                      {client.projects.length} Projekte
+                    </Badge>
+                    {!client.active && (
+                      <Badge variant="destructive" className="text-[10px]">Deaktiviert</Badge>
+                    )}
+                  </div>
                 </div>
               </div>
+              <EditClientDialog client={client} />
             </CardContent>
           </Card>
         ))}
