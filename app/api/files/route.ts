@@ -4,18 +4,53 @@ import { requireAuth, requireAdminOrMember, requireProjectAccess } from "@/lib/a
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
+export async function GET(request: NextRequest) {
+  const session = await requireAuth();
+  if (session instanceof NextResponse) return session;
+
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("projectId");
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+  }
+
+  const userId = session.user.id;
+  const role = session.user.role;
+
+  if (role !== "ADMIN") {
+    const hasAccess = await requireProjectAccess(projectId, userId);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  const where: any = { projectId };
+  if (role === "CLIENT") {
+    where.clientVisible = true;
+  }
+
+  const files = await prisma.file.findMany({
+    where,
+    include: {
+      uploadedBy: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json(files);
+}
+
 export async function POST(request: NextRequest) {
   const session = await requireAdminOrMember();
   if (session instanceof NextResponse) return session;
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
     const projectId = formData.get("projectId") as string | null;
-    const clientVisible = formData.get("clientVisible") === "true";
+    const fileEntries = formData.getAll("files") as File[];
 
-    if (!file || !projectId) {
-      return NextResponse.json({ error: "File and projectId are required" }, { status: 400 });
+    if (!projectId || fileEntries.length === 0) {
+      return NextResponse.json({ error: "projectId and at least one file are required" }, { status: 400 });
     }
 
     const userId = session.user.id;
@@ -28,38 +63,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create upload directory
     const uploadDir = path.join(process.cwd(), "uploads", projectId);
     await mkdir(uploadDir, { recursive: true });
 
-    // Generate unique filename to prevent collisions
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileName = `${timestamp}-${safeName}`;
-    const filePath = path.join(uploadDir, fileName);
+    const results = [];
 
-    // Write file to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    for (const file of fileEntries) {
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const fileName = `${timestamp}-${safeName}`;
+      const filePath = path.join(uploadDir, fileName);
 
-    // Save file record in database
-    const fileRecord = await prisma.file.create({
-      data: {
-        name: file.name,
-        path: filePath,
-        size: buffer.length,
-        mimeType: file.type || "application/octet-stream",
-        clientVisible,
-        projectId,
-        uploadedById: userId,
-      },
-      include: {
-        uploadedBy: { select: { id: true, name: true, email: true, image: true } },
-      },
-    });
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await writeFile(filePath, buffer);
 
-    return NextResponse.json(fileRecord, { status: 201 });
+      const fileRecord = await prisma.file.create({
+        data: {
+          name: file.name,
+          path: filePath,
+          size: buffer.length,
+          mimeType: file.type || "application/octet-stream",
+          clientVisible: false,
+          projectId,
+          uploadedById: userId,
+        },
+        include: {
+          uploadedBy: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      results.push(fileRecord);
+    }
+
+    return NextResponse.json(results, { status: 201 });
   } catch (error) {
     console.error("Failed to upload file:", error);
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
