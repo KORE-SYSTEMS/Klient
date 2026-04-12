@@ -11,7 +11,6 @@ import {
   Calendar,
 } from "lucide-react";
 import { formatDate, getInitials } from "@/lib/utils";
-import { ProjectDetailEditor } from "./detail-editor";
 import { StatusPill } from "@/components/status-pill";
 
 interface Props {
@@ -51,10 +50,6 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   if (!project) notFound();
 
-  const isAdmin = session.user.role === "ADMIN";
-  const isMember = session.user.role === "MEMBER";
-  const canEdit = isAdmin || isMember;
-
   const taskStats = await prisma.task.groupBy({
     by: ["status"],
     where: { projectId: params.id },
@@ -68,16 +63,6 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Editable project info */}
-      <ProjectDetailEditor
-        project={{
-          id: project.id,
-          name: project.name,
-          description: project.description,
-        }}
-        canEdit={canEdit}
-      />
-
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>

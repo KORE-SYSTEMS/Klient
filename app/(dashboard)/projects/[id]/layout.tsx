@@ -17,7 +17,7 @@ export default async function ProjectLayout({ children, params }: Props) {
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, name: true, color: true, status: true },
+    select: { id: true, name: true, description: true, status: true },
   });
 
   if (!project) notFound();

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         clientVisible: clientVisible ?? false,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         projectId,
-        assigneeId: assigneeId || undefined,
+        assigneeId: assigneeId || null,
         order: order ?? 0,
       },
       include: {

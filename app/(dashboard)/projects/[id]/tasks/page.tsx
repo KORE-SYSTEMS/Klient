@@ -142,6 +142,16 @@ export default function TasksPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ id: string; name: string; email: string }[]>([]);
 
+  // Form state for task dialog
+  const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formStatus, setFormStatus] = useState("BACKLOG");
+  const [formPriority, setFormPriority] = useState("MEDIUM");
+  const [formDueDate, setFormDueDate] = useState("");
+  const [formAssigneeId, setFormAssigneeId] = useState("none");
+  const [formClientVisible, setFormClientVisible] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
@@ -167,37 +177,53 @@ export default function TasksPage() {
       });
   }, [fetchTasks, projectId]);
 
+  function openDialog(task: Task | null) {
+    setEditTask(task);
+    setFormTitle(task?.title || "");
+    setFormDescription(task?.description || "");
+    setFormStatus(task?.status || "BACKLOG");
+    setFormPriority(task?.priority || "MEDIUM");
+    setFormDueDate(task?.dueDate ? task.dueDate.split("T")[0] : "");
+    setFormAssigneeId(task?.assigneeId || "none");
+    setFormClientVisible(task?.clientVisible || false);
+    setDialogOpen(true);
+  }
+
   async function createOrUpdateTask(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    setFormSubmitting(true);
     const body: any = {
-      title: form.get("title"),
-      description: form.get("description") || "",
-      priority: form.get("priority") || "MEDIUM",
-      status: form.get("status") || "BACKLOG",
-      clientVisible: form.get("clientVisible") === "on",
-      dueDate: form.get("dueDate") || null,
-      assigneeId: form.get("assigneeId") || null,
+      title: formTitle,
+      description: formDescription || "",
+      priority: formPriority,
+      status: formStatus,
+      clientVisible: formClientVisible,
+      dueDate: formDueDate || null,
+      assigneeId: formAssigneeId === "none" ? null : formAssigneeId,
     };
 
-    if (editTask) {
-      await fetch(`/api/tasks/${editTask.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-    } else {
-      body.projectId = projectId;
-      await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-    }
+    try {
+      if (editTask) {
+        await fetch(`/api/tasks/${editTask.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      } else {
+        body.projectId = projectId;
+        await fetch("/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      }
 
-    setDialogOpen(false);
-    setEditTask(null);
-    fetchTasks();
+      setDialogOpen(false);
+      setEditTask(null);
+      fetchTasks();
+    } finally {
+      setFormSubmitting(false);
+    }
   }
 
   async function deleteTask(id: string) {
@@ -256,7 +282,7 @@ export default function TasksPage() {
           </Button>
         </div>
         {!isClient && (
-          <Button size="sm" onClick={() => { setEditTask(null); setDialogOpen(true); }}>
+          <Button size="sm" onClick={() => openDialog(null)}>
             <Plus className="mr-1 h-4 w-4" />
             Neuer Task
           </Button>
@@ -297,8 +323,7 @@ export default function TasksPage() {
                             task={task}
                             onClick={() => {
                               if (!isClient) {
-                                setEditTask(task);
-                                setDialogOpen(true);
+                                openDialog(task);
                               }
                             }}
                           />
@@ -370,16 +395,25 @@ export default function TasksPage() {
           <form onSubmit={createOrUpdateTask} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Titel</Label>
-              <Input id="title" name="title" defaultValue={editTask?.title || ""} required />
+              <Input
+                id="title"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Beschreibung</Label>
-              <Textarea id="description" name="description" defaultValue={editTask?.description || ""} />
+              <Textarea
+                id="description"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select name="status" defaultValue={editTask?.status || "BACKLOG"}>
+                <Select value={formStatus} onValueChange={setFormStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {COLUMNS.map((c) => (
@@ -390,7 +424,7 @@ export default function TasksPage() {
               </div>
               <div className="space-y-2">
                 <Label>Priorität</Label>
-                <Select name="priority" defaultValue={editTask?.priority || "MEDIUM"}>
+                <Select value={formPriority} onValueChange={setFormPriority}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PRIORITIES.map((p) => (
@@ -405,17 +439,17 @@ export default function TasksPage() {
                 <Label htmlFor="dueDate">Fällig am</Label>
                 <Input
                   id="dueDate"
-                  name="dueDate"
                   type="date"
-                  defaultValue={editTask?.dueDate ? editTask.dueDate.split("T")[0] : ""}
+                  value={formDueDate}
+                  onChange={(e) => setFormDueDate(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Zugewiesen an</Label>
-                <Select name="assigneeId" defaultValue={editTask?.assigneeId || ""}>
+                <Select value={formAssigneeId} onValueChange={setFormAssigneeId}>
                   <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Niemand</SelectItem>
+                    <SelectItem value="none">Niemand</SelectItem>
                     {members.map((m) => (
                       <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>
                     ))}
@@ -427,8 +461,8 @@ export default function TasksPage() {
               <input
                 type="checkbox"
                 id="clientVisible"
-                name="clientVisible"
-                defaultChecked={editTask?.clientVisible || false}
+                checked={formClientVisible}
+                onChange={(e) => setFormClientVisible(e.target.checked)}
                 className="rounded-sm"
               />
               <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
@@ -443,7 +477,9 @@ export default function TasksPage() {
                   Löschen
                 </Button>
               )}
-              <Button type="submit">{editTask ? "Speichern" : "Erstellen"}</Button>
+              <Button type="submit" disabled={formSubmitting || !formTitle.trim()}>
+                {editTask ? "Speichern" : "Erstellen"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

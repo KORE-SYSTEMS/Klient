@@ -46,15 +46,15 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
               <img
                 src={logo}
                 alt="Workspace Logo"
-                className="h-8 max-w-[140px] w-auto object-contain"
+                className="h-6 max-w-[120px] w-auto object-contain"
               />
             ) : (
               <Image
                 src="/klient-k.png"
                 alt="Klient"
-                width={120}
-                height={32}
-                className="h-8 w-auto"
+                width={90}
+                height={24}
+                className="h-6 w-auto"
                 priority
               />
             )}
