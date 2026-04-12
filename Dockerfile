@@ -5,6 +5,8 @@ WORKDIR /app
 # Install dependencies
 FROM base AS deps
 COPY package.json package-lock.json* ./
+# Copy prisma schema so postinstall (prisma generate) works
+COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN npm ci
 
 # Build

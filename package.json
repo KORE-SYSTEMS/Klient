@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate || true",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts"
   },
@@ -48,9 +48,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "date-fns": "^4.1.0",
-    "nanoid": "^5.0.9",
-    "multer": "^1.4.5-lts.1",
-    "sharp": "^0.33.5"
+    "nanoid": "^5.0.9"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -58,7 +56,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/bcryptjs": "^2.4.6",
-    "@types/multer": "^1.4.12",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "eslint": "^8",
