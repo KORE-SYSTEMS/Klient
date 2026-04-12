@@ -33,11 +33,8 @@ fi
 PRISMA="node ./node_modules/prisma/build/index.js"
 
 # --- Run database migrations ---
-echo "[..] Running migrations..."
-su-exec nextjs:nodejs $PRISMA migrate deploy --schema=./prisma/schema.prisma 2>&1 || {
-  echo "[!!] Migration failed — trying schema push..."
-  su-exec nextjs:nodejs $PRISMA db push --schema=./prisma/schema.prisma --accept-data-loss 2>&1
-}
+echo "[..] Running schema push..."
+su-exec nextjs:nodejs $PRISMA db push --schema=./prisma/schema.prisma --accept-data-loss 2>&1
 
 # --- Seed default workspace if needed ---
 echo "[..] Checking seed..."
