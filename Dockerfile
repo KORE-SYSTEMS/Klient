@@ -6,8 +6,8 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY prisma/schema.prisma ./prisma/schema.prisma
-# npm ci ensures exact versions from lockfile — no version drift
-RUN npm ci
+# npm ci ensures exact versions from lockfile
+RUN npm ci --legacy-peer-deps
 
 # ---- Build ----
 FROM base AS builder
