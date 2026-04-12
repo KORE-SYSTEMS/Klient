@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,12 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  cn,
-  formatDate,
-  getInitials,
-  getStatusColor,
-} from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/utils";
+import { StatusPill } from "@/components/status-pill";
 
 interface ProjectMember {
   user: {
@@ -264,12 +259,7 @@ export default function ProjectsPage() {
                         {project.name}
                       </h3>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={cn("shrink-0 text-xs", getStatusColor(project.status))}
-                    >
-                      {project.status.replace("_", " ")}
-                    </Badge>
+                    <StatusPill value={project.status} type="project" size="sm" />
                   </div>
 
                   {project.description && (

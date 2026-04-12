@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function InvitePage() {
   const router = useRouter();
@@ -39,13 +40,22 @@ export default function InvitePage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (password !== confirmPassword) {
+      setError("Passwörter stimmen nicht überein");
+      setLoading(false);
+      return;
+    }
+
     const res = await fetch("/api/invitations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token,
         name: formData.get("name"),
-        password: formData.get("password"),
+        password,
       }),
     });
 
@@ -71,7 +81,7 @@ export default function InvitePage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl text-destructive">Ungueltige Einladung</CardTitle>
+            <CardTitle className="text-xl text-destructive">Ungültige Einladung</CardTitle>
             <CardDescription>{error}</CardDescription>
           </CardHeader>
         </Card>
@@ -83,11 +93,18 @@ export default function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mb-4">
-            <span className="text-2xl font-bold tracking-tight text-primary">KLIENT</span>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/klient-k.png"
+              alt="Klient"
+              width={120}
+              height={120}
+              className="h-16 w-auto"
+              priority
+            />
           </div>
           <CardTitle className="text-xl">Konto einrichten</CardTitle>
-          <CardDescription>Willkommen! Bitte legen Sie Ihr Passwort fest.</CardDescription>
+          <CardDescription>Willkommen! Bitte lege dein Passwort fest.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">

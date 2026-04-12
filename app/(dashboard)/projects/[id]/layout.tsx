@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { ProjectTabNav } from "./tab-nav";
+import { ProjectHeader } from "./project-header";
 
 interface Props {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ export default async function ProjectLayout({ children, params }: Props) {
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, name: true, color: true },
+    select: { id: true, name: true, color: true, status: true },
   });
 
   if (!project) notFound();
@@ -33,19 +34,13 @@ export default async function ProjectLayout({ children, params }: Props) {
     if (!member) notFound();
   }
 
+  const canEdit = session.user.role === "ADMIN" || session.user.role === "MEMBER";
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div
-          className="h-4 w-4 rounded-sm"
-          style={{ backgroundColor: project.color || "#E8520A" }}
-        />
-        <h1 className="font-heading text-2xl font-bold tracking-tight">
-          {project.name}
-        </h1>
-      </div>
+    <div className="space-y-4">
+      <ProjectHeader project={project} canEdit={canEdit} />
       <ProjectTabNav projectId={project.id} />
-      {children}
+      <div className="pt-2">{children}</div>
     </div>
   );
 }

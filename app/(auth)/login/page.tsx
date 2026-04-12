@@ -49,7 +49,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <Image
-              src="/klinet-logo-shadow.png"
+              src="/klient-k.png"
               alt="Klient"
               width={180}
               height={48}

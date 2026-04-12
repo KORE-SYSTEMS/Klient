@@ -1,10 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import {
   CheckSquare,
   FileIcon,
@@ -12,8 +10,9 @@ import {
   Users,
   Calendar,
 } from "lucide-react";
-import { formatDate, getStatusColor, getInitials } from "@/lib/utils";
+import { formatDate, getInitials } from "@/lib/utils";
 import { ProjectDetailEditor } from "./detail-editor";
+import { StatusPill } from "@/components/status-pill";
 
 interface Props {
   params: { id: string };
@@ -75,7 +74,6 @@ export default async function ProjectDetailPage({ params }: Props) {
           id: project.id,
           name: project.name,
           description: project.description,
-          status: project.status,
         }}
         canEdit={canEdit}
       />
@@ -144,14 +142,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                   key={stat.status}
                   className="flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className={getStatusColor(stat.status)}
-                    >
-                      {stat.status.replace("_", " ")}
-                    </Badge>
-                  </div>
+                  <StatusPill value={stat.status} type="task" size="sm" />
                   <span className="text-sm font-medium">{stat._count}</span>
                 </div>
               ))

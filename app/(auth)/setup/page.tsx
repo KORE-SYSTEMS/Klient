@@ -84,7 +84,7 @@ export default function SetupPage() {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <Image
-              src="/klinet-logo-shadow.png"
+              src="/klient-k.png"
               alt="Klient"
               width={120}
               height={120}

@@ -9,16 +9,14 @@ import {
   FileIcon,
   Bell,
   MessageSquare,
-  Users,
 } from "lucide-react";
 
 const tabs = [
-  { label: "Ubersicht", href: "", icon: LayoutDashboard },
+  { label: "Übersicht", href: "", icon: LayoutDashboard },
   { label: "Tasks", href: "/tasks", icon: CheckSquare },
   { label: "Dateien", href: "/files", icon: FileIcon },
   { label: "Updates", href: "/updates", icon: Bell },
   { label: "Chat", href: "/chat", icon: MessageSquare },
-  { label: "Mitarbeiter", href: "/members", icon: Users },
 ];
 
 export function ProjectTabNav({ projectId }: { projectId: string }) {
@@ -26,7 +24,7 @@ export function ProjectTabNav({ projectId }: { projectId: string }) {
   const base = `/projects/${projectId}`;
 
   return (
-    <nav className="flex gap-1 border-b overflow-x-auto">
+    <nav className="flex gap-1 border-b overflow-x-auto scrollbar-none">
       {tabs.map((tab) => {
         const href = `${base}${tab.href}`;
         const isActive =

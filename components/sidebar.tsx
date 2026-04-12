@@ -50,7 +50,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
               />
             ) : (
               <Image
-                src="/klinet-logo-shadow.png"
+                src="/klient-k.png"
                 alt="Klient"
                 width={120}
                 height={32}

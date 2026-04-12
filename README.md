@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/klinet-logo-shadow.png" alt="Klient Logo" width="200" />
+  <img src="public/klient-k.png" alt="Klient Logo" width="200" />
 </p>
 
 <h1 align="center">Klient</h1>

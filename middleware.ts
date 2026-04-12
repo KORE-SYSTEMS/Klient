@@ -27,5 +27,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|klinet-logo-shadow.png|logo.svg).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|klient-k.png|klinet-logo-shadow.png|logo.svg).*)"],
 };

@@ -14,7 +14,7 @@
   <Overview>Self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication. Just start the container — no configuration needed. Default login: admin@klient.local / changeme123</Overview>
   <Category>Productivity: Tools:</Category>
   <WebUI>http://[IP]:[PORT:8399]</WebUI>
-  <Icon>https://raw.githubusercontent.com/KORE-SYSTEMS/Klient/main/public/klinet-logo-shadow.png</Icon>
+  <Icon>https://raw.githubusercontent.com/KORE-SYSTEMS/Klient/main/public/klient-k.png</Icon>
   <Description>Klient is a self-hosted client portal for freelancers and agencies. Zero configuration required — the container auto-generates all secrets and creates the database on first start. Default login: admin@klient.local / changeme123</Description>
   <Requires/>
   <Config
