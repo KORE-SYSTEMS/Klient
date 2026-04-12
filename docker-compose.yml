@@ -1,18 +1,15 @@
 services:
   klient:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     image: ghcr.io/kore-systems/klient:latest
     container_name: klient
     restart: unless-stopped
     ports:
-      - "${PORT:-8399}:3000"
-    environment:
-      DATABASE_URL: file:/app/data/klient.db
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:8399}
-      NODE_ENV: production
+      - "8399:3000"
     volumes:
-      - ${DATA_PATH:-./data}:/app/data
-      - ${UPLOADS_PATH:-./uploads}:/app/uploads
+      - klient-data:/app/data
+      - klient-uploads:/app/uploads
+
+volumes:
+  klient-data:
+  klient-uploads:

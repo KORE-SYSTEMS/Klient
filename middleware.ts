@@ -4,12 +4,15 @@ import { authConfig } from "@/lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login") ||
-    req.nextUrl.pathname.startsWith("/invite");
-  const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
 
-  if (isApiAuth) return;
+  // Public routes — no auth required
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/invite");
+  const isSetup = pathname.startsWith("/setup") || pathname.startsWith("/api/setup");
+  const isApiAuth = pathname.startsWith("/api/auth");
+
+  if (isApiAuth || isSetup) return;
 
   if (!isLoggedIn && !isAuthPage) {
     return Response.redirect(new URL("/login", req.nextUrl));

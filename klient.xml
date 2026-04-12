@@ -11,11 +11,11 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/KORE-SYSTEMS/Klient/issues</Support>
   <Project>https://github.com/KORE-SYSTEMS/Klient</Project>
-  <Overview>Klient is a self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication — fully under your control.</Overview>
+  <Overview>Self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication. Just start the container — no configuration needed. Default login: admin@klient.local / changeme123</Overview>
   <Category>Productivity: Tools:</Category>
   <WebUI>http://[IP]:[PORT:8399]</WebUI>
   <Icon>https://raw.githubusercontent.com/KORE-SYSTEMS/Klient/main/public/klinet-logo-shadow.png</Icon>
-  <Description>Klient is a self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication — fully under your control. Default login: admin@klient.local / changeme123</Description>
+  <Description>Klient is a self-hosted client portal for freelancers and agencies. Zero configuration required — the container auto-generates all secrets and creates the database on first start. Default login: admin@klient.local / changeme123</Description>
   <Requires/>
   <Config
     Name="Web UI Port"
@@ -32,7 +32,7 @@
     Target="/app/data"
     Default="/mnt/user/appdata/klient/data"
     Mode="rw"
-    Description="Database and application data"
+    Description="Database and application data (persistent)"
     Type="Path"
     Display="always"
     Required="true"
@@ -42,36 +42,27 @@
     Target="/app/uploads"
     Default="/mnt/user/appdata/klient/uploads"
     Mode="rw"
-    Description="Uploaded files storage"
+    Description="Uploaded files storage (persistent)"
     Type="Path"
     Display="always"
     Required="true"
     Mask="false">/mnt/user/appdata/klient/uploads</Config>
   <Config
+    Name="NEXTAUTH_URL"
+    Target="NEXTAUTH_URL"
+    Default=""
+    Description="(Optional) Public URL — only needed if using a reverse proxy with custom domain. Leave empty for default."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false"/>
+  <Config
     Name="NEXTAUTH_SECRET"
     Target="NEXTAUTH_SECRET"
     Default=""
-    Description="Random secret for session encryption. Generate with: openssl rand -base64 32"
-    Type="Variable"
-    Display="always"
-    Required="true"
-    Mask="true"/>
-  <Config
-    Name="NEXTAUTH_URL"
-    Target="NEXTAUTH_URL"
-    Default="http://[IP]:8399"
-    Description="Public URL of your Klient instance"
-    Type="Variable"
-    Display="always"
-    Required="true"
-    Mask="false">http://[IP]:8399</Config>
-  <Config
-    Name="DATABASE_URL"
-    Target="DATABASE_URL"
-    Default="file:/app/data/klient.db"
-    Description="SQLite database path (do not change unless you know what you are doing)"
+    Description="(Optional) Session secret — auto-generated on first start if left empty."
     Type="Variable"
     Display="advanced"
-    Required="true"
-    Mask="false">file:/app/data/klient.db</Config>
+    Required="false"
+    Mask="true"/>
 </Container>

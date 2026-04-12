@@ -1,40 +1,21 @@
 import { PrismaClient } from "@prisma/client";
-import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const existingAdmin = await prisma.user.findFirst({
-    where: { role: "ADMIN" },
-  });
-
-  if (existingAdmin) {
-    console.log("Admin user already exists, skipping seed.");
-    return;
+  const workspaceCount = await prisma.workspace.count();
+  if (workspaceCount === 0) {
+    await prisma.workspace.create({
+      data: {
+        id: "default",
+        name: "Klient",
+        primaryColor: "#F5A623",
+      },
+    });
+    console.log("Default workspace created.");
+  } else {
+    console.log("Workspace already exists, skipping seed.");
   }
-
-  const hashedPassword = await hash("changeme123", 12);
-
-  await prisma.user.create({
-    data: {
-      email: "admin@klient.local",
-      name: "Admin",
-      password: hashedPassword,
-      role: "ADMIN",
-    },
-  });
-
-  await prisma.workspace.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
-      id: "default",
-      name: "Klient",
-      primaryColor: "#E8520A",
-    },
-  });
-
-  console.log("Seed completed: admin@klient.local / changeme123");
 }
 
 main()
