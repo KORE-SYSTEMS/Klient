@@ -2,49 +2,61 @@ FROM node:20-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Install dependencies
+# ---- Install dependencies ----
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY prisma/schema.prisma ./prisma/schema.prisma
+# npm ci ensures exact versions from lockfile — no version drift
 RUN npm ci
 
-# Build
+# ---- Build ----
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate
+# Use local prisma binary via node — never npx (which can pull a different version)
+RUN node ./node_modules/prisma/build/index.js generate
 RUN npm run build
 
-# Production runner
+# ---- Production runner ----
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/klient.db"
 
+# su-exec for dropping privileges (root → nextjs) after permission fix
+RUN apk add --no-cache su-exec
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built app
+# Copy built Next.js standalone app
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma runtime (client + engines + CLI for migrate deploy)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Copy bcryptjs (needed for seed + auth at runtime)
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
+
+# Copy prisma schema + migrations + seed for runtime migrate deploy
 COPY --from=builder /app/prisma ./prisma
 
-# Data & uploads directories
-RUN mkdir -p /app/data /app/uploads && chown nextjs:nodejs /app/data /app/uploads
+# Create data & uploads directories
+RUN mkdir -p /app/data /app/uploads
 
-# Entrypoint
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+# Entrypoint runs as root to fix permissions, then drops to nextjs
+COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
-USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Run as root — entrypoint handles permission fix + privilege drop
 ENTRYPOINT ["./docker-entrypoint.sh"]

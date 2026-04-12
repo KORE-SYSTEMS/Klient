@@ -3,6 +3,10 @@ set -e
 
 echo "=== Klient ==="
 
+# --- Fix permissions on mounted volumes (runs as root) ---
+chown -R nextjs:nodejs /app/data /app/uploads 2>/dev/null || true
+echo "[ok] Permissions set on /app/data and /app/uploads"
+
 # --- Auto-configure DATABASE_URL ---
 export DATABASE_URL="${DATABASE_URL:-file:/app/data/klient.db}"
 
@@ -14,7 +18,7 @@ if [ -z "$NEXTAUTH_SECRET" ]; then
     echo "[ok] Using stored secret"
   else
     export NEXTAUTH_SECRET=$(openssl rand -base64 32)
-    echo "$NEXTAUTH_SECRET" > "$SECRET_FILE"
+    su-exec nextjs:nodejs sh -c "echo '$NEXTAUTH_SECRET' > '$SECRET_FILE'"
     echo "[ok] Generated new secret (stored in /app/data/.nextauth-secret)"
   fi
 fi
@@ -25,17 +29,20 @@ if [ -z "$NEXTAUTH_URL" ]; then
   echo "[ok] NEXTAUTH_URL defaulting to $NEXTAUTH_URL"
 fi
 
+# --- Prisma CLI: always use the local copy via node, never npx ---
+PRISMA="node ./node_modules/prisma/build/index.js"
+
 # --- Run database migrations ---
 echo "[..] Running migrations..."
-npx prisma migrate deploy --schema=./prisma/schema.prisma 2>&1 || {
-  echo "[!!] Migration failed — trying fresh database..."
-  npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss 2>&1
+su-exec nextjs:nodejs $PRISMA migrate deploy --schema=./prisma/schema.prisma 2>&1 || {
+  echo "[!!] Migration failed — trying schema push..."
+  su-exec nextjs:nodejs $PRISMA db push --schema=./prisma/schema.prisma --accept-data-loss 2>&1
 }
 
-# --- Seed default admin user if needed ---
+# --- Seed default workspace if needed ---
 echo "[..] Checking seed..."
-node prisma/seed.js 2>/dev/null || echo "[ok] Seed skipped (already done)"
+su-exec nextjs:nodejs node prisma/seed.js 2>/dev/null || echo "[ok] Seed skipped (already done)"
 
-# --- Start the app ---
+# --- Start the app as nextjs user ---
 echo "[ok] Starting Klient on port ${PORT:-3000}"
-exec node server.js
+exec su-exec nextjs:nodejs node server.js
