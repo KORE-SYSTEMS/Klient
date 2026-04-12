@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 function hexToHslString(hex: string): string {
   // Parse hex to rgb
   const r = parseInt(hex.substring(1, 3), 16) / 255;
