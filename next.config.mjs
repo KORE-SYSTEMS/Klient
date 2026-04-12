@@ -1,6 +1,13 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 
-const pkg = JSON.parse(readFileSync("./package.json", "utf8"));
+// Version priority: VERSION file (from git tag) > package.json
+let appVersion;
+if (existsSync("./VERSION")) {
+  appVersion = readFileSync("./VERSION", "utf8").trim();
+} else {
+  const pkg = JSON.parse(readFileSync("./package.json", "utf8"));
+  appVersion = pkg.version;
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -14,7 +21,7 @@ const nextConfig = {
     },
   },
   env: {
-    NEXT_PUBLIC_APP_VERSION: pkg.version,
+    NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_GITHUB_REPO: "KORE-SYSTEMS/Klient",
   },
 };
