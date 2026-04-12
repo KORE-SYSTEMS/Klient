@@ -7,8 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Save, Loader2 } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface WorkspaceSettings {
@@ -19,6 +28,23 @@ interface WorkspaceSettings {
   smtpUser: string;
   smtpPass: string;
   smtpFrom: string;
+}
+
+interface VersionInfo {
+  current: string;
+  latest: {
+    version: string;
+    name: string;
+    publishedAt: string;
+    url: string;
+    changelog: string;
+  } | null;
+  updateAvailable: boolean;
+}
+
+interface UpdateStatus {
+  pending: boolean;
+  log: string;
 }
 
 export default function SettingsPage() {
@@ -36,6 +62,11 @@ export default function SettingsPage() {
     smtpFrom: "",
   });
 
+  const [version, setVersion] = useState<VersionInfo | null>(null);
+  const [versionLoading, setVersionLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
+
   useEffect(() => {
     if (session?.user?.role !== "ADMIN") {
       router.push("/dashboard");
@@ -47,7 +78,65 @@ export default function SettingsPage() {
         if (!data.error) setSettings(data);
         setLoading(false);
       });
+    checkVersion();
   }, [session, router]);
+
+  async function checkVersion() {
+    setVersionLoading(true);
+    try {
+      const res = await fetch("/api/system/version");
+      if (res.ok) setVersion(await res.json());
+    } catch {
+      // offline
+    }
+    setVersionLoading(false);
+  }
+
+  async function checkUpdateStatus() {
+    try {
+      const res = await fetch("/api/system/update");
+      if (res.ok) {
+        const status = await res.json();
+        setUpdateStatus(status);
+        return status;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
+  async function triggerUpdate() {
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/system/update", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "Update gestartet", description: "Die App wird neu gebaut und neu gestartet. Das kann einige Minuten dauern." });
+        // Poll for completion
+        const poll = setInterval(async () => {
+          const status = await checkUpdateStatus();
+          if (status && !status.pending && status.log.includes("Update complete")) {
+            clearInterval(poll);
+            setUpdating(false);
+            toast({ title: "Update abgeschlossen", description: "Die App wurde aktualisiert. Seite wird neu geladen..." });
+            setTimeout(() => window.location.reload(), 3000);
+          }
+        }, 5000);
+        // Stop polling after 10 minutes
+        setTimeout(() => {
+          clearInterval(poll);
+          setUpdating(false);
+        }, 600000);
+      } else {
+        toast({ title: "Fehler", description: data.error, variant: "destructive" });
+        setUpdating(false);
+      }
+    } catch {
+      toast({ title: "Fehler", description: "Update konnte nicht gestartet werden", variant: "destructive" });
+      setUpdating(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,9 +160,110 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold tracking-tight">Einstellungen</h1>
-        <p className="text-muted-foreground">Workspace und SMTP konfigurieren</p>
+        <p className="text-muted-foreground">Workspace, Updates und SMTP konfigurieren</p>
       </div>
 
+      {/* Version & Updates */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Version & Updates</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={checkVersion}
+              disabled={versionLoading}
+            >
+              <RefreshCw className={`mr-1 h-3 w-3 ${versionLoading ? "animate-spin" : ""}`} />
+              Prüfen
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Installierte Version</div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold font-heading">
+                  v{version?.current || process.env.NEXT_PUBLIC_APP_VERSION || "?"}
+                </span>
+                {version && !version.updateAvailable && version.latest && (
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-400">
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Aktuell
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {version?.updateAvailable && version.latest && (
+            <>
+              <Separator />
+              <div className="rounded-sm border border-primary/30 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-primary" />
+                      <span className="font-medium">Update verfügbar</span>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">v{version.latest.version}</span>
+                      {version.latest.name && ` — ${version.latest.name}`}
+                    </div>
+                    {version.latest.publishedAt && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Veröffentlicht: {new Date(version.latest.publishedAt).toLocaleDateString("de-DE")}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {version.latest.url && (
+                      <a href={version.latest.url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="mr-1 h-3 w-3" />
+                          Release
+                        </Button>
+                      </a>
+                    )}
+                    <Button size="sm" onClick={triggerUpdate} disabled={updating}>
+                      {updating ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Download className="mr-1 h-3 w-3" />
+                      )}
+                      {updating ? "Wird aktualisiert..." : "Jetzt updaten"}
+                    </Button>
+                  </div>
+                </div>
+
+                {version.latest.changelog && (
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap border-t border-border/50 pt-3 mt-3">
+                    {version.latest.changelog.slice(0, 500)}
+                    {version.latest.changelog.length > 500 && "..."}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {version && !version.latest && (
+            <p className="text-xs text-muted-foreground">
+              Konnte GitHub nicht erreichen. Prüfen Sie Ihre Internetverbindung.
+            </p>
+          )}
+
+          {updating && updateStatus?.log && (
+            <div className="rounded-sm border bg-background p-3">
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                {updateStatus.log}
+              </pre>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Workspace Settings */}
       <form onSubmit={onSubmit} className="space-y-6">
         <Card>
           <CardHeader>

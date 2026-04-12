@@ -82,6 +82,14 @@ export function Sidebar({ role }: { role: string }) {
           );
         })}
       </nav>
+
+      {!collapsed && (
+        <div className="border-t px-4 py-3">
+          <span className="text-[10px] text-muted-foreground">
+            v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
+          </span>
+        </div>
+      )}
     </aside>
   );
 }

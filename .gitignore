@@ -19,8 +19,8 @@ dist/
 # Keep example
 !.env.example
 
-# Prisma
-prisma/migrations/
+# Prisma — migrations MUST be tracked for Docker deploys
+# prisma/migrations/
 
 # Uploads (runtime data, not source)
 uploads/

@@ -6,7 +6,7 @@ services:
     container_name: klient-app
     restart: unless-stopped
     ports:
-      - "3200:3000"
+      - "8399:3000"
     environment:
       DATABASE_URL: postgresql://klient:${DB_PASSWORD}@klient-db:5432/klient
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
@@ -40,6 +40,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - klient-net
+
+  updater:
+    build:
+      context: ./updater
+      dockerfile: Dockerfile
+    container_name: klient-updater
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/project
+      - ./uploads:/data
+    working_dir: /project
     networks:
       - klient-net
 
