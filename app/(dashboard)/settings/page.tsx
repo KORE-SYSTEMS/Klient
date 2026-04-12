@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Save,
   Loader2,
-  Download,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -42,11 +41,6 @@ interface VersionInfo {
   updateAvailable: boolean;
 }
 
-interface UpdateStatus {
-  pending: boolean;
-  log: string;
-}
-
 export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -64,8 +58,6 @@ export default function SettingsPage() {
 
   const [version, setVersion] = useState<VersionInfo | null>(null);
   const [versionLoading, setVersionLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
 
   useEffect(() => {
     if (session?.user?.role !== "ADMIN") {
@@ -90,52 +82,6 @@ export default function SettingsPage() {
       // offline
     }
     setVersionLoading(false);
-  }
-
-  async function checkUpdateStatus() {
-    try {
-      const res = await fetch("/api/system/update");
-      if (res.ok) {
-        const status = await res.json();
-        setUpdateStatus(status);
-        return status;
-      }
-    } catch {
-      // ignore
-    }
-    return null;
-  }
-
-  async function triggerUpdate() {
-    setUpdating(true);
-    try {
-      const res = await fetch("/api/system/update", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        toast({ title: "Update gestartet", description: "Die App wird neu gebaut und neu gestartet. Das kann einige Minuten dauern." });
-        // Poll for completion
-        const poll = setInterval(async () => {
-          const status = await checkUpdateStatus();
-          if (status && !status.pending && status.log.includes("Update complete")) {
-            clearInterval(poll);
-            setUpdating(false);
-            toast({ title: "Update abgeschlossen", description: "Die App wurde aktualisiert. Seite wird neu geladen..." });
-            setTimeout(() => window.location.reload(), 3000);
-          }
-        }, 5000);
-        // Stop polling after 10 minutes
-        setTimeout(() => {
-          clearInterval(poll);
-          setUpdating(false);
-        }, 600000);
-      } else {
-        toast({ title: "Fehler", description: data.error, variant: "destructive" });
-        setUpdating(false);
-      }
-    } catch {
-      toast({ title: "Fehler", description: "Update konnte nicht gestartet werden", variant: "destructive" });
-      setUpdating(false);
-    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -216,6 +162,9 @@ export default function SettingsPage() {
                         Veröffentlicht: {new Date(version.latest.publishedAt).toLocaleDateString("de-DE")}
                       </div>
                     )}
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Update über Docker: <code className="bg-muted px-1 rounded">docker compose pull && docker compose up -d</code>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     {version.latest.url && (
@@ -226,14 +175,6 @@ export default function SettingsPage() {
                         </Button>
                       </a>
                     )}
-                    <Button size="sm" onClick={triggerUpdate} disabled={updating}>
-                      {updating ? (
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      ) : (
-                        <Download className="mr-1 h-3 w-3" />
-                      )}
-                      {updating ? "Wird aktualisiert..." : "Jetzt updaten"}
-                    </Button>
                   </div>
                 </div>
 
@@ -251,14 +192,6 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               Konnte GitHub nicht erreichen. Prüfen Sie Ihre Internetverbindung.
             </p>
-          )}
-
-          {updating && updateStatus?.log && (
-            <div className="rounded-sm border bg-background p-3">
-              <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
-                {updateStatus.log}
-              </pre>
-            </div>
           )}
         </CardContent>
       </Card>

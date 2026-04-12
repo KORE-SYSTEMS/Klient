@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Klient</Name>
+  <Repository>ghcr.io/kore-systems/klient:latest</Repository>
+  <Registry>https://github.com/KORE-SYSTEMS/Klient/pkgs/container/klient</Registry>
+  <Branch>
+    <Tag>latest</Tag>
+    <TagDescription>Latest stable release</TagDescription>
+  </Branch>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/KORE-SYSTEMS/Klient/issues</Support>
+  <Project>https://github.com/KORE-SYSTEMS/Klient</Project>
+  <Overview>Klient is a self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication — fully under your control.</Overview>
+  <Category>Productivity: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8399]</WebUI>
+  <Icon>https://raw.githubusercontent.com/KORE-SYSTEMS/Klient/main/public/klinet-logo-shadow.png</Icon>
+  <Description>Klient is a self-hosted client portal for freelancers and agencies. Manage projects, tasks, files, and client communication — fully under your control. Default login: admin@klient.local / changeme123</Description>
+  <Requires/>
+  <Config
+    Name="Web UI Port"
+    Target="3000"
+    Default="8399"
+    Mode="tcp"
+    Description="Port for the Klient web interface"
+    Type="Port"
+    Display="always"
+    Required="true"
+    Mask="false">8399</Config>
+  <Config
+    Name="Data"
+    Target="/app/data"
+    Default="/mnt/user/appdata/klient/data"
+    Mode="rw"
+    Description="Database and application data"
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/klient/data</Config>
+  <Config
+    Name="Uploads"
+    Target="/app/uploads"
+    Default="/mnt/user/appdata/klient/uploads"
+    Mode="rw"
+    Description="Uploaded files storage"
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/klient/uploads</Config>
+  <Config
+    Name="NEXTAUTH_SECRET"
+    Target="NEXTAUTH_SECRET"
+    Default=""
+    Description="Random secret for session encryption. Generate with: openssl rand -base64 32"
+    Type="Variable"
+    Display="always"
+    Required="true"
+    Mask="true"/>
+  <Config
+    Name="NEXTAUTH_URL"
+    Target="NEXTAUTH_URL"
+    Default="http://[IP]:8399"
+    Description="Public URL of your Klient instance"
+    Type="Variable"
+    Display="always"
+    Required="true"
+    Mask="false">http://[IP]:8399</Config>
+  <Config
+    Name="DATABASE_URL"
+    Target="DATABASE_URL"
+    Default="file:/app/data/klient.db"
+    Description="SQLite database path (do not change unless you know what you are doing)"
+    Type="Variable"
+    Display="advanced"
+    Required="true"
+    Mask="false">file:/app/data/klient.db</Config>
+</Container>

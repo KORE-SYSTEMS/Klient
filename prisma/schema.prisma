@@ -3,44 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  MEMBER
-  CLIENT
-}
-
-enum ProjectStatus {
-  PLANNING
-  ACTIVE
-  REVIEW
-  COMPLETED
-  ON_HOLD
-}
-
-enum TaskStatus {
-  BACKLOG
-  TODO
-  IN_PROGRESS
-  IN_REVIEW
-  DONE
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum UpdateType {
-  INFO
-  MILESTONE
-  WARNING
-  REQUEST
 }
 
 model User {
@@ -48,7 +12,7 @@ model User {
   email         String    @unique
   name          String?
   password      String?
-  role          Role      @default(CLIENT)
+  role          String    @default("CLIENT")
   image         String?
   company       String?
   active        Boolean   @default(true)
@@ -65,7 +29,7 @@ model Invitation {
   id        String   @id @default(cuid())
   email     String
   name      String?
-  role      Role     @default(CLIENT)
+  role      String   @default("CLIENT")
   token     String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)
@@ -73,14 +37,14 @@ model Invitation {
 }
 
 model Project {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
-  status      ProjectStatus @default(PLANNING)
+  status      String          @default("PLANNING")
   color       String?
   dueDate     DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   members     ProjectMember[]
   tasks       Task[]
   files       File[]
@@ -98,45 +62,45 @@ model ProjectMember {
 }
 
 model Task {
-  id            String     @id @default(cuid())
+  id            String   @id @default(cuid())
   title         String
   description   String?
-  status        TaskStatus @default(BACKLOG)
-  priority      Priority   @default(MEDIUM)
-  clientVisible Boolean    @default(false)
+  status        String   @default("BACKLOG")
+  priority      String   @default("MEDIUM")
+  clientVisible Boolean  @default(false)
   dueDate       DateTime?
-  order         Int        @default(0)
-  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order         Int      @default(0)
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
-  assignee      User?      @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assignee      User?    @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   assigneeId    String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model File {
-  id           String   @id @default(cuid())
-  name         String
-  path         String
-  size         Int
-  mimeType     String
-  clientVisible Boolean @default(false)
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId    String
-  uploadedBy   User     @relation("uploadedBy", fields: [uploadedById], references: [id])
-  uploadedById String
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  name          String
+  path          String
+  size          Int
+  mimeType      String
+  clientVisible Boolean  @default(false)
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  uploadedBy    User     @relation("uploadedBy", fields: [uploadedById], references: [id])
+  uploadedById  String
+  createdAt     DateTime @default(now())
 }
 
 model Update {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   content   String
-  type      UpdateType @default(INFO)
-  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      String   @default("INFO")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
-  author    User       @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
   authorId  String
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Message {

@@ -1,65 +1,18 @@
 services:
-  app:
+  klient:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: klient-app
+    image: ghcr.io/kore-systems/klient:latest
+    container_name: klient
     restart: unless-stopped
     ports:
-      - "8399:3000"
+      - "${PORT:-8399}:3000"
     environment:
-      DATABASE_URL: postgresql://klient:${DB_PASSWORD}@klient-db:5432/klient
+      DATABASE_URL: file:/app/data/klient.db
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@klient.local}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:8399}
       NODE_ENV: production
     volumes:
-      - ./uploads:/app/uploads
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - klient-net
-
-  db:
-    image: postgres:15-alpine
-    container_name: klient-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: klient
-      POSTGRES_USER: klient
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U klient"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - klient-net
-
-  updater:
-    build:
-      context: ./updater
-      dockerfile: Dockerfile
-    container_name: klient-updater
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - .:/project
-      - ./uploads:/data
-    working_dir: /project
-    networks:
-      - klient-net
-
-volumes:
-  postgres_data:
-
-networks:
-  klient-net:
-    driver: bridge
+      - ${DATA_PATH:-./data}:/app/data
+      - ${UPLOADS_PATH:-./uploads}:/app/uploads

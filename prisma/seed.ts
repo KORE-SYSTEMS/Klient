@@ -1,11 +1,11 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const existingAdmin = await prisma.user.findFirst({
-    where: { role: Role.ADMIN },
+    where: { role: "ADMIN" },
   });
 
   if (existingAdmin) {
@@ -20,7 +20,7 @@ async function main() {
       email: "admin@klient.local",
       name: "Admin",
       password: hashedPassword,
-      role: Role.ADMIN,
+      role: "ADMIN",
     },
   });
 

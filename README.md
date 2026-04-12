@@ -22,189 +22,156 @@
 
 ## Features
 
-- **Project Management** -- Create projects with status tracking, deadlines, and color-coded organization
-- **Kanban Board** -- Drag-and-drop task management with Backlog, Todo, In Progress, Review, and Done columns
-- **File Sharing** -- Upload and share files with clients, control visibility per file
+- **Project Management** -- Status tracking, deadlines, and color-coded organization
+- **Kanban Board** -- Drag-and-drop tasks across Backlog, Todo, In Progress, Review, Done
+- **File Sharing** -- Upload files and control per-file client visibility
 - **Project Chat** -- Real-time messaging within each project
-- **Client Portal** -- Clients only see what you share -- isolated access with granular visibility controls
-- **Team Collaboration** -- Invite team members and assign roles (Admin, Member, Client)
-- **Project Updates** -- Post milestones, info, warnings, and requests on a timeline
-- **In-App Updates** -- Check for new versions and update directly from the settings page
-- **Dark Theme** -- Clean, modern UI built with shadcn/ui
+- **Client Portal** -- Clients only see what you share, fully isolated access
+- **Team & Roles** -- Admin, Member, and Client roles with granular permissions
+- **Project Updates** -- Timeline with milestones, info, warnings, and requests
+- **Version Check** -- See available updates directly in Settings
+- **Single Container** -- One Docker container, SQLite database, zero external dependencies
+- **Dark Theme** -- Clean UI built with shadcn/ui
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 14 (App Router) |
-| Database | PostgreSQL 15 |
-| ORM | Prisma |
-| Auth | NextAuth.js v5 |
+| Framework | Next.js 14 (App Router, Standalone) |
+| Database | SQLite (via Prisma) |
+| Auth | NextAuth.js v5 (JWT) |
 | UI | shadcn/ui + Radix UI + Tailwind CSS |
 | Language | TypeScript |
-| Deployment | Docker + Docker Compose |
+| Container | Docker (single container) |
 
 ---
 
 ## Quick Start
 
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
-- Git
-
-### 1. Clone the repository
-
 ```bash
-git clone https://github.com/KORE-SYSTEMS/Klient.git
-cd Klient
+docker run -d \
+  --name klient \
+  -p 8399:3000 \
+  -v klient-data:/app/data \
+  -v klient-uploads:/app/uploads \
+  -e NEXTAUTH_SECRET=$(openssl rand -base64 32) \
+  -e NEXTAUTH_URL=http://localhost:8399 \
+  -e DATABASE_URL=file:/app/data/klient.db \
+  --restart unless-stopped \
+  ghcr.io/kore-systems/klient:latest
 ```
 
-### 2. Configure environment
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set your values:
-
-```env
-# Required
-DB_PASSWORD=your-secure-database-password
-NEXTAUTH_SECRET=your-random-secret-string
-NEXTAUTH_URL=http://localhost:8399
-
-# Optional: SMTP for email notifications
-SMTP_HOST=
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=noreply@klient.local
-```
-
-> **Tip:** Generate a secure secret with `openssl rand -base64 32`
-
-### 3. Start the application
-
-```bash
-docker compose up -d
-```
-
-The app will be available at **http://localhost:8399**.
-
-### 4. Login
-
-Use the default admin credentials:
+Open **http://localhost:8399** and login:
 
 | | |
 |---|---|
 | **Email** | `admin@klient.local` |
 | **Password** | `changeme123` |
 
-> **Important:** Change the admin password immediately after first login.
+> **Change the admin password immediately after first login.**
 
 ---
 
-## Installation Guides
+## Installation
 
-### Unraid Installation
-
-1. **Install the Docker Compose plugin** if you haven't already -- available in the Unraid Community Apps store.
-
-2. **Open a terminal** in Unraid (SSH or web terminal) and clone the repo:
-
-   ```bash
-   mkdir -p /mnt/user/appdata/klient
-   cd /mnt/user/appdata/klient
-   git clone https://github.com/KORE-SYSTEMS/Klient.git .
-   ```
-
-3. **Create the environment file:**
-
-   ```bash
-   cp .env.example .env
-   nano .env
-   ```
-
-   Set the following values:
-
-   ```env
-   DB_PASSWORD=a-strong-password-here
-   NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
-   NEXTAUTH_URL=http://YOUR-UNRAID-IP:8399
-   ```
-
-4. **Start the stack:**
-
-   ```bash
-   docker compose up -d
-   ```
-
-5. **Access Klient** at `http://YOUR-UNRAID-IP:8399`
-
-6. **Data persistence:** The PostgreSQL data is stored in a Docker volume (`postgres_data`). Uploaded files are stored in `./uploads`.
-
-#### Unraid: Using Docker Compose Manager
-
-If you prefer the UI-based approach with the **Docker Compose Manager** plugin:
-
-1. Go to **Docker** > **Compose** in the Unraid web UI
-2. Click **Add New Stack**
-3. Set the compose file path to `/mnt/user/appdata/klient/docker-compose.yml`
-4. Add the environment variables in the stack settings
-5. Click **Compose Up**
-
-### Generic Docker Installation
-
-Works on any Linux server, VPS, Raspberry Pi, or local machine with Docker installed.
+### Docker Compose (recommended)
 
 ```bash
-# Clone
+# Clone the repository
 git clone https://github.com/KORE-SYSTEMS/Klient.git
 cd Klient
 
-# Configure
+# Create environment file
 cp .env.example .env
-nano .env  # Set DB_PASSWORD, NEXTAUTH_SECRET, NEXTAUTH_URL
+
+# Edit .env and set NEXTAUTH_SECRET
+# Generate one with: openssl rand -base64 32
+nano .env
 
 # Start
 docker compose up -d
-
-# View logs
-docker compose logs -f app
 ```
 
-The app runs on port **8399** by default. To change it, edit the `ports` mapping in `docker-compose.yml`:
+That's it. Klient runs at **http://localhost:8399**.
 
-```yaml
-ports:
-  - "YOUR_PORT:3000"
+### Unraid
+
+#### Option 1: Community Apps (XML Template)
+
+1. In the Unraid web UI, go to **Docker** > **Add Container**
+2. Click **Template repositories** and add:
+   ```
+   https://github.com/KORE-SYSTEMS/Klient
+   ```
+3. Select **Klient** from the template list
+4. Fill in:
+   - **NEXTAUTH_SECRET** -- generate with `openssl rand -base64 32`
+   - **NEXTAUTH_URL** -- `http://YOUR-UNRAID-IP:8399`
+5. Click **Apply**
+
+#### Option 2: Docker Compose on Unraid
+
+```bash
+# SSH into your Unraid server
+mkdir -p /mnt/user/appdata/klient
+cd /mnt/user/appdata/klient
+
+# Clone
+git clone https://github.com/KORE-SYSTEMS/Klient.git .
+
+# Configure
+cp .env.example .env
+nano .env
+# Set: NEXTAUTH_SECRET=your-generated-secret
+# Set: NEXTAUTH_URL=http://YOUR-UNRAID-IP:8399
+
+# Start
+docker compose up -d
+```
+
+#### Option 3: Docker Run on Unraid
+
+```bash
+docker run -d \
+  --name klient \
+  -p 8399:3000 \
+  -v /mnt/user/appdata/klient/data:/app/data \
+  -v /mnt/user/appdata/klient/uploads:/app/uploads \
+  -e NEXTAUTH_SECRET=your-generated-secret \
+  -e NEXTAUTH_URL=http://YOUR-UNRAID-IP:8399 \
+  -e DATABASE_URL=file:/app/data/klient.db \
+  --restart unless-stopped \
+  ghcr.io/kore-systems/klient:latest
+```
+
+### Any Linux Server / VPS
+
+```bash
+docker run -d \
+  --name klient \
+  -p 8399:3000 \
+  -v /opt/klient/data:/app/data \
+  -v /opt/klient/uploads:/app/uploads \
+  -e NEXTAUTH_SECRET=$(openssl rand -base64 32) \
+  -e NEXTAUTH_URL=http://YOUR-SERVER-IP:8399 \
+  -e DATABASE_URL=file:/app/data/klient.db \
+  --restart unless-stopped \
+  ghcr.io/kore-systems/klient:latest
 ```
 
 ---
 
-## Reverse Proxy Setup
+## Reverse Proxy
 
 ### Nginx Proxy Manager
 
-1. Add a new **Proxy Host**
-2. Set the following:
+1. Add a new **Proxy Host**:
    - **Domain:** `klient.yourdomain.com`
    - **Scheme:** `http`
-   - **Forward Hostname/IP:** Your server IP (or `klient-app` if on the same Docker network)
+   - **Forward IP:** your server IP
    - **Forward Port:** `8399`
-3. Enable **SSL** via Let's Encrypt
-4. Update your `.env`:
-
-   ```env
-   NEXTAUTH_URL=https://klient.yourdomain.com
-   ```
-
-5. Restart the app:
-
-   ```bash
-   docker compose restart app
-   ```
+2. Enable **SSL** via Let's Encrypt
+3. Update the container's `NEXTAUTH_URL` to `https://klient.yourdomain.com`
 
 ### Traefik / Caddy
 
@@ -214,22 +181,27 @@ Point your reverse proxy to `http://localhost:8399` and set `NEXTAUTH_URL` to yo
 
 ## Updates
 
-### In-App Updates
-
-1. Go to **Settings** in the Klient dashboard
-2. The **Version & Updates** section shows your current version
-3. Click **Check for Updates** to see if a new release is available
-4. Click **Update** to pull the latest version and rebuild automatically
-
-The updater sidecar container handles the update process -- it pulls the latest code from GitHub and rebuilds the app container.
-
-### Manual Updates
+### Docker Compose
 
 ```bash
 cd /path/to/Klient
 git pull
-docker compose up -d --build --no-deps app
+docker compose up -d --build
 ```
+
+### Docker Run
+
+```bash
+docker pull ghcr.io/kore-systems/klient:latest
+docker stop klient && docker rm klient
+# Run the docker run command again (your data volumes persist)
+```
+
+### Watchtower (automatic)
+
+If you use [Watchtower](https://containrrr.dev/watchtower/) on Unraid or your server, Klient will update automatically when a new image is published.
+
+Klient also shows available updates in **Settings > Version & Updates**.
 
 ---
 
@@ -237,47 +209,53 @@ docker compose up -d --build --no-deps app
 
 ### Database
 
-```bash
-# Create backup
-docker exec klient-db pg_dump -U klient klient > backup_$(date +%Y%m%d).sql
+The SQLite database is stored at `/app/data/klient.db` (mapped to your host volume).
 
-# Restore backup
-docker exec -i klient-db psql -U klient klient < backup_20240101.sql
+```bash
+# Simple file copy
+cp /path/to/klient/data/klient.db backup_$(date +%Y%m%d).db
 ```
 
-### Files
+### Uploaded Files
 
-Uploaded files are stored in the `./uploads` directory. Include this in your backup routine.
+```bash
+cp -r /path/to/klient/uploads/ backup_uploads_$(date +%Y%m%d)/
+```
 
-### Full Backup (Unraid)
+### Unraid
 
-If running on Unraid, you can back up the entire `/mnt/user/appdata/klient` directory using the **Unraid Backup** plugin or any standard backup solution.
+Back up your `/mnt/user/appdata/klient/` directory -- it contains both the database and uploaded files.
+
+---
+
+## Configuration
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEXTAUTH_SECRET` | **Yes** | -- | Session encryption secret |
+| `NEXTAUTH_URL` | **Yes** | `http://localhost:8399` | Public URL of your instance |
+| `DATABASE_URL` | No | `file:/app/data/klient.db` | SQLite database path |
+| `PORT` | No | `8399` | Host port (docker-compose only) |
 
 ---
 
 ## Development
 
 ```bash
-# Prerequisites: Node.js 20+, PostgreSQL
-
-# Install dependencies
+# Prerequisites: Node.js 20+
 npm install
-
-# Set up environment
 cp .env.example .env
-# Configure DATABASE_URL to point to your local PostgreSQL
 
-# Run migrations
-npm run db:migrate
+# Set DATABASE_URL for local dev
+echo 'DATABASE_URL="file:./dev.db"' >> .env
+echo 'NEXTAUTH_SECRET="dev-secret"' >> .env
 
-# Seed the database
+npx prisma migrate dev
 npm run db:seed
-
-# Start dev server
 npm run dev
 ```
 
-The dev server runs at `http://localhost:3000`.
+Dev server runs at **http://localhost:3000**.
 
 ---
 
@@ -285,47 +263,32 @@ The dev server runs at `http://localhost:3000`.
 
 ```
 Klient/
-├── app/                  # Next.js App Router pages & API routes
-│   ├── (auth)/           # Login, invitation pages
+├── app/                  # Next.js pages & API routes
+│   ├── (auth)/           # Login, invitation
 │   ├── (dashboard)/      # Dashboard, projects, clients, settings
-│   └── api/              # REST API endpoints
-├── components/           # Reusable UI components
-├── lib/                  # Auth, Prisma client, utilities
+│   └── api/              # REST API
+├── components/           # UI components
+├── lib/                  # Auth, Prisma, utilities
 ├── prisma/               # Schema, migrations, seed
-├── public/               # Static assets, logos
-├── updater/              # Update sidecar container
-├── docker-compose.yml    # Production Docker stack
+├── public/               # Static assets
+├── docker-compose.yml    # Single-container Docker stack
 ├── Dockerfile            # Multi-stage production build
-└── docker-entrypoint.sh  # Startup script (migrations + seed)
+├── klient.xml            # Unraid Docker template
+└── docker-entrypoint.sh  # Startup (migrations + seed)
 ```
-
----
-
-## Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DB_PASSWORD` | Yes | -- | PostgreSQL password |
-| `NEXTAUTH_SECRET` | Yes | -- | Random secret for session encryption |
-| `NEXTAUTH_URL` | Yes | -- | Public URL of your Klient instance |
-| `SMTP_HOST` | No | -- | SMTP server for email notifications |
-| `SMTP_PORT` | No | `587` | SMTP port |
-| `SMTP_USER` | No | -- | SMTP username |
-| `SMTP_PASS` | No | -- | SMTP password |
-| `SMTP_FROM` | No | `noreply@klient.local` | Sender email address |
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please open an [issue](https://github.com/KORE-SYSTEMS/Klient/issues) or submit a [pull request](https://github.com/KORE-SYSTEMS/Klient/pulls).
+Contributions welcome! Open an [issue](https://github.com/KORE-SYSTEMS/Klient/issues) or submit a [pull request](https://github.com/KORE-SYSTEMS/Klient/pulls).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE)
 
 ---
 
 <p align="center">
-  Built with care by <a href="https://github.com/KORE-SYSTEMS">KORE SYSTEMS</a>
+  Built by <a href="https://github.com/KORE-SYSTEMS">KORE SYSTEMS</a>
 </p>

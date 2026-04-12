@@ -5,7 +5,6 @@ WORKDIR /app
 # Install dependencies
 FROM base AS deps
 COPY package.json package-lock.json* ./
-# Copy prisma schema so postinstall (prisma generate) works
 COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN npm ci
 
@@ -33,8 +32,8 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=builder /app/prisma ./prisma
 
-# Uploads directory
-RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
+# Data & uploads directories
+RUN mkdir -p /app/data /app/uploads && chown nextjs:nodejs /app/data /app/uploads
 
 # Entrypoint
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
