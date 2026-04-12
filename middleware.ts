@@ -8,17 +8,20 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
 
   // Public routes — no auth required
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/invite");
+  const isInvitePage = pathname.startsWith("/invite");
+  const isInviteApi = pathname.startsWith("/api/invitations");
+  const isAuthPage = pathname.startsWith("/login") || isInvitePage;
   const isSetup = pathname.startsWith("/setup") || pathname.startsWith("/api/setup");
   const isApiAuth = pathname.startsWith("/api/auth");
 
-  if (isApiAuth || isSetup) return;
+  if (isApiAuth || isSetup || isInviteApi) return;
 
   if (!isLoggedIn && !isAuthPage) {
     return Response.redirect(new URL("/login", req.nextUrl));
   }
 
-  if (isLoggedIn && isAuthPage) {
+  // Don't redirect logged-in users away from invite pages — they might be testing the link
+  if (isLoggedIn && pathname.startsWith("/login")) {
     return Response.redirect(new URL("/dashboard", req.nextUrl));
   }
 });

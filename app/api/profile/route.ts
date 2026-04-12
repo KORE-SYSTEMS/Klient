@@ -13,6 +13,7 @@ export async function GET() {
       name: true,
       email: true,
       company: true,
+      image: true,
     },
   });
 
@@ -25,12 +26,13 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, email, company, newPassword } = body;
+    const { name, email, company, newPassword, image } = body;
 
     const updateData: any = {};
 
     if (name !== undefined) updateData.name = name;
     if (company !== undefined) updateData.company = company;
+    if (image !== undefined) updateData.image = image;
     
     if (email !== undefined && email !== session.user.email) {
       // check if email is taken
@@ -56,6 +58,7 @@ export async function PATCH(request: NextRequest) {
       name: updatedUser.name,
       email: updatedUser.email,
       company: updatedUser.company,
+      image: updatedUser.image,
     });
   } catch (error) {
     console.error("Failed to update profile:", error);

@@ -116,13 +116,15 @@ model Message {
 }
 
 model Workspace {
-  id           String  @id @default(cuid())
-  name         String  @default("Klient")
-  logo         String?
-  primaryColor String  @default("#E8520A")
-  smtpHost     String?
-  smtpPort     Int     @default(587)
-  smtpUser     String?
-  smtpPass     String?
-  smtpFrom     String?
+  id                  String  @id @default(cuid())
+  name                String  @default("Klient")
+  logo                String?
+  primaryColor        String  @default("#E8520A")
+  smtpHost            String?
+  smtpPort            Int     @default(587)
+  smtpUser            String?
+  smtpPass            String?
+  smtpFrom            String?
+  inviteEmailSubject  String?
+  inviteEmailTemplate String?
 }

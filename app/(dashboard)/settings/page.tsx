@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import {
   RefreshCw,
   ExternalLink,
   Download,
+  Upload,
+  X,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -26,7 +29,62 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+
+const PRESET_COLORS = [
+  "#E8520A", "#6366F1", "#8B5CF6", "#EC4899",
+  "#EF4444", "#F59E0B", "#10B981", "#14B8A6",
+  "#3B82F6", "#0EA5E9", "#64748B", "#F8FAFC",
+];
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+  const [hex, setHex] = useState(value);
+
+  useEffect(() => { setHex(value); }, [value]);
+
+  function commitHex(v: string) {
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) onChange(v);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-6 gap-2">
+        {PRESET_COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => { onChange(c); setHex(c); }}
+            className={cn(
+              "h-8 w-full rounded-sm border-2 transition-all hover:scale-110",
+              value === c ? "border-foreground shadow-md scale-110" : "border-transparent"
+            )}
+            style={{ backgroundColor: c }}
+            title={c}
+          >
+            {value === c && <Check className="h-3 w-3 text-white mx-auto drop-shadow" />}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-9 w-9 rounded-sm border flex-shrink-0" style={{ backgroundColor: value }} />
+        <Input
+          value={hex}
+          maxLength={7}
+          onChange={(e) => {
+            let v = e.target.value;
+            if (!v.startsWith("#")) v = "#" + v;
+            setHex(v);
+            commitHex(v);
+          }}
+          onBlur={() => commitHex(hex)}
+          className="font-mono text-sm"
+          placeholder="#E8520A"
+        />
+      </div>
+    </div>
+  );
+}
 
 interface WorkspaceSettings {
   name: string;
@@ -37,6 +95,8 @@ interface WorkspaceSettings {
   smtpUser: string;
   smtpPass: string;
   smtpFrom: string;
+  inviteEmailSubject: string;
+  inviteEmailTemplate: string;
 }
 
 interface VersionInfo {
@@ -65,6 +125,8 @@ export default function SettingsPage() {
     smtpUser: "",
     smtpPass: "",
     smtpFrom: "",
+    inviteEmailSubject: "",
+    inviteEmailTemplate: "",
   });
 
   const [version, setVersion] = useState<VersionInfo | null>(null);
@@ -237,59 +299,66 @@ export default function SettingsPage() {
             <CardTitle className="text-lg">Workspace</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Workspace Logo</Label>
               <div className="flex items-center gap-4">
-                {settings.logo ? (
-                  <img src={settings.logo} className="h-10 max-w-[120px] object-contain rounded border p-1 bg-muted" alt="Current Logo" />
-                ) : (
-                  <div className="h-10 w-24 flex items-center justify-center border rounded text-xs text-muted-foreground bg-muted">Kein Logo</div>
-                )}
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                      toast({ title: "Fehler", description: "Logo darf max. 2MB groß sein", variant: "destructive" });
-                      return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = (event) => setSettings({ ...settings, logo: event.target?.result as string });
-                    reader.readAsDataURL(file);
-                  }}
-                  className="max-w-[250px]"
-                />
-                {settings.logo && (
-                  <Button variant="outline" size="sm" type="button" onClick={() => setSettings({ ...settings, logo: null })}>Entfernen</Button>
-                )}
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Workspace-Name</Label>
-                <Input
-                  value={settings.name}
-                  onChange={(e) => setSettings({ ...settings, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Primärfarbe</Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={settings.primaryColor}
-                    onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                    className="h-10 w-10 cursor-pointer rounded-sm border bg-transparent"
-                  />
-                  <Input
-                    value={settings.primaryColor}
-                    onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                    className="flex-1"
-                  />
+                <div className="h-14 w-32 flex items-center justify-center rounded-md border bg-muted overflow-hidden flex-shrink-0">
+                  {settings.logo ? (
+                    <img src={settings.logo} className="h-12 max-w-[120px] object-contain" alt="Logo" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Kein Logo</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="logo-upload"
+                    className="inline-flex items-center gap-2 cursor-pointer rounded-sm border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Logo hochladen
+                    <input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) {
+                          toast({ title: "Fehler", description: "Logo darf max. 2 MB groß sein", variant: "destructive" });
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setSettings({ ...settings, logo: ev.target?.result as string });
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                  {settings.logo && (
+                    <Button variant="outline" size="sm" type="button" onClick={() => setSettings({ ...settings, logo: null })} className="text-destructive hover:text-destructive">
+                      <X className="mr-1 h-3 w-3" /> Entfernen
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground">PNG, SVG oder JPEG · Max. 2 MB</span>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Workspace-Name</Label>
+              <Input
+                value={settings.name}
+                onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+                className="max-w-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Primärfarbe</Label>
+              <ColorPicker
+                value={settings.primaryColor}
+                onChange={(c) => setSettings({ ...settings, primaryColor: c })}
+              />
             </div>
           </CardContent>
         </Card>
@@ -342,6 +411,50 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
                 placeholder="noreply@yourdomain.com"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">E-Mail Einladungsvorlage</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Wird automatisch versendet, wenn SMTP konfiguriert ist. Verfügbare Platzhalter:
+              {" "}<code className="bg-muted px-1 rounded text-xs">&#123;&#123;inviteLink&#125;&#125;</code>{" "}
+              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;name&#125;&#125;</code>{" "}
+              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;workspace&#125;&#125;</code>{" "}
+              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;primaryColor&#125;&#125;</code>
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Betreff</Label>
+              <Input
+                value={settings.inviteEmailSubject || ""}
+                onChange={(e) => setSettings({ ...settings, inviteEmailSubject: e.target.value })}
+                placeholder="Du wurdest eingeladen – {{workspace}}"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>HTML-Template</Label>
+              <div className="relative">
+                <textarea
+                  value={settings.inviteEmailTemplate || ""}
+                  onChange={(e) => setSettings({ ...settings, inviteEmailTemplate: e.target.value })}
+                  rows={16}
+                  placeholder="Leer lassen für das Standard-Template..."
+                  className="w-full rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
+                />
+              </div>
+              {settings.inviteEmailTemplate && (
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, inviteEmailTemplate: "" })}
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Zurücksetzen auf Standard-Template
+                </button>
+              )}
             </div>
           </CardContent>
         </Card>

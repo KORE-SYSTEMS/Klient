@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { nanoid } from "nanoid";
+import { sendInvitationEmail } from "@/lib/mailer";
 
 // GET: List all client users (admin only)
 export async function GET() {
@@ -41,24 +42,24 @@ export async function POST(request: NextRequest) {
 
     if (createDirectly) {
       const finalEmail = email || `placeholder-${nanoid(10)}@klient.local`;
-      
+
       const existingUser = await prisma.user.findUnique({
         where: { email: finalEmail },
       });
-      
+
       if (existingUser) {
         return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
       }
-      
+
       const user = await prisma.user.create({
         data: {
           email: finalEmail,
           name: name || "Unbenannter Kunde",
           role: role || "CLIENT",
           active: true,
-        }
+        },
       });
-      
+
       return NextResponse.json(user, { status: 201 });
     }
 
@@ -67,23 +68,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
     }
 
     // Check if there's already a pending invitation for this email
     const existingInvitation = await prisma.invitation.findFirst({
-      where: {
-        email,
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
+      where: { email, used: false, expiresAt: { gt: new Date() } },
     });
-
     if (existingInvitation) {
       return NextResponse.json({ error: "An active invitation already exists for this email" }, { status: 409 });
     }
@@ -91,17 +84,26 @@ export async function POST(request: NextRequest) {
     // Create invitation with token
     const token = nanoid(32);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 day expiry
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     const invitation = await prisma.invitation.create({
-      data: {
-        email,
-        name: name || undefined,
-        role: role || "CLIENT",
-        token,
-        expiresAt,
-      },
+      data: { email, name: name || undefined, role: role || "CLIENT", token, expiresAt },
     });
+
+    // Build invite link from request headers
+    const host = request.headers.get("host") || "";
+    const proto = request.headers.get("x-forwarded-proto") || "http";
+    const origin = request.headers.get("origin") || `${proto}://${host}`;
+    const inviteLink = `${origin}/invite/${token}`;
+
+    // Try to send invitation email (failure is non-blocking)
+    let emailSent = false;
+    try {
+      const result = await sendInvitationEmail({ to: email, name, inviteLink });
+      emailSent = result.sent;
+    } catch (mailErr) {
+      console.warn("Failed to send invitation email:", mailErr);
+    }
 
     return NextResponse.json({
       id: invitation.id,
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
       token: invitation.token,
       role: invitation.role,
       expiresAt: invitation.expiresAt,
+      emailSent,
     }, { status: 201 });
   } catch (error) {
     console.error("Failed to create invitation:", error);

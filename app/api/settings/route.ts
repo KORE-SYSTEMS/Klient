@@ -52,6 +52,8 @@ export async function PATCH(request: NextRequest) {
     if (body.smtpUser !== undefined) updateData.smtpUser = body.smtpUser;
     if (body.smtpPass !== undefined) updateData.smtpPass = body.smtpPass;
     if (body.smtpFrom !== undefined) updateData.smtpFrom = body.smtpFrom;
+    if (body.inviteEmailSubject !== undefined) updateData.inviteEmailSubject = body.inviteEmailSubject;
+    if (body.inviteEmailTemplate !== undefined) updateData.inviteEmailTemplate = body.inviteEmailTemplate;
 
     const updated = await prisma.workspace.update({
       where: { id: workspace.id },

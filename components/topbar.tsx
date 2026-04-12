@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ interface TopbarProps {
     name?: string | null;
     email?: string | null;
     role?: string;
+    image?: string | null;
   };
 }
 
@@ -33,6 +34,7 @@ export function Topbar({ user }: TopbarProps) {
             {user.name || user.email}
           </span>
           <Avatar className="h-8 w-8">
+            {user.image && <AvatarImage src={user.image} />}
             <AvatarFallback className="text-xs">
               {getInitials(user.name || user.email || "U")}
             </AvatarFallback>

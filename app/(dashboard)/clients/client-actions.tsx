@@ -24,6 +24,9 @@ export function ClientActions() {
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState("invite");
 
+  const [loaded, setLoaded] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -47,6 +50,8 @@ export function ClientActions() {
     if (res.ok && data.token && !createDirectly) {
       const link = `${window.location.origin}/invite/${data.token}`;
       setInviteLink(link);
+      setEmailSent(!!data.emailSent);
+      setLoaded(true);
     } else if (res.ok && createDirectly) {
       setOpen(false);
       setInviteLink("");
@@ -76,9 +81,16 @@ export function ClientActions() {
 
         {inviteLink ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Einladungslink erstellt. Teilen Sie diesen Link mit dem Kunden:
-            </p>
+            {emailSent ? (
+              <div className="flex items-center gap-2 rounded-sm bg-green-500/10 px-3 py-2 text-sm text-green-400">
+                <Check className="h-4 w-4 shrink-0" />
+                Einladungs-E-Mail wurde automatisch versendet.
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Einladungslink erstellt. Teile diesen Link mit dem Kunden:
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <Input value={inviteLink} readOnly className="text-xs" />
               <Button variant="outline" size="icon" onClick={copyLink}>
