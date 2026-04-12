@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" fill="none">
+  <rect width="800" height="200" rx="8" fill="#0a0a0a"/>
+  <path d="M70 40 L70 140 L100 140 L100 95 L145 140 L175 140 L130 95 L180 40 L148 40 L100 95 L100 40 Z" fill="#F5A623"/>
+  <text x="220" y="120" font-family="system-ui, sans-serif" font-weight="800" font-size="72" letter-spacing="6" fill="#ffffff">Klient</text>
+  <text x="222" y="155" font-family="system-ui, sans-serif" font-weight="400" font-size="18" fill="#888888">Self-hosted Client Portal</text>
+</svg>

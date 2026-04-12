@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -41,9 +42,14 @@ export function Sidebar({ role }: { role: string }) {
       <div className="flex h-14 items-center border-b px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-lg font-bold tracking-tight text-primary">
-              KLIENT
-            </span>
+            <Image
+              src="/klinet-logo-shadow.png"
+              alt="Klient"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
         )}
         <Button

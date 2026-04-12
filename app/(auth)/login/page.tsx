@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,10 +39,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mb-4">
-            <span className="text-2xl font-bold tracking-tight text-primary">
-              KLIENT
-            </span>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/klinet-logo-shadow.png"
+              alt="Klient"
+              width={180}
+              height={48}
+              className="h-12 w-auto"
+              priority
+            />
           </div>
           <CardTitle className="text-xl">Anmelden</CardTitle>
         </CardHeader>

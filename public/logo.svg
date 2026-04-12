@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="64" fill="#0a0a0a"/>
+  <path d="M120 120 L120 340 L200 340 L200 220 L300 340 L360 340 L260 220 L370 120 L300 120 L200 220 L200 120 Z" fill="#F5A623"/>
+  <text x="256" y="430" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="56" letter-spacing="16" fill="#ffffff">KLIENT</text>
+</svg>
