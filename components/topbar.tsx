@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,13 @@ export function Topbar({ user }: TopbarProps) {
             <User className="mr-2 h-3 w-3" />
             {user.role}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <Link href="/profile">
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              Mein Profil
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive cursor-pointer"

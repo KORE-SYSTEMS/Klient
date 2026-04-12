@@ -97,7 +97,7 @@ export async function PATCH(
   }
 }
 
-// DELETE: Deactivate client (soft delete)
+// DELETE: Hard delete if possible, otherwise soft delete
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -107,29 +107,22 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const client = await prisma.user.findUnique({
-    where: { id, role: "CLIENT" },
-  });
-
-  if (!client) {
-    return NextResponse.json({ error: "Client not found" }, { status: 404 });
-  }
-
   try {
-    const updated = await prisma.user.update({
+    await prisma.user.delete({
       where: { id },
-      data: { active: false },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        active: true,
-      },
     });
-
-    return NextResponse.json(updated);
-  } catch (error) {
-    console.error("Failed to deactivate client:", error);
-    return NextResponse.json({ error: "Failed to deactivate client" }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    if (error.code === "P2003") {
+      // Foreign key constraint failed -> Fallback to soft delete
+      await prisma.projectMember.deleteMany({ where: { userId: id } });
+      await prisma.user.update({
+        where: { id },
+        data: { active: false },
+      });
+      return NextResponse.json({ success: true, softDeleted: true });
+    }
+    console.error("Failed to delete client:", error);
+    return NextResponse.json({ error: "Failed to delete client" }, { status: 500 });
   }
 }

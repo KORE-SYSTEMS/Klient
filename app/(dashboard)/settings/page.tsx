@@ -30,6 +30,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface WorkspaceSettings {
   name: string;
+  logo?: string | null;
   primaryColor: string;
   smtpHost: string;
   smtpPort: number;
@@ -57,6 +58,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<WorkspaceSettings>({
     name: "Klient",
+    logo: "",
     primaryColor: "#E8520A",
     smtpHost: "",
     smtpPort: 587,
@@ -122,6 +124,7 @@ export default function SettingsPage() {
     setSaving(false);
     if (res.ok) {
       toast({ title: "Einstellungen gespeichert" });
+      router.refresh();
     } else {
       toast({ title: "Fehler beim Speichern", variant: "destructive" });
     }
@@ -234,6 +237,35 @@ export default function SettingsPage() {
             <CardTitle className="text-lg">Workspace</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Workspace Logo</Label>
+              <div className="flex items-center gap-4">
+                {settings.logo ? (
+                  <img src={settings.logo} className="h-10 max-w-[120px] object-contain rounded border p-1 bg-muted" alt="Current Logo" />
+                ) : (
+                  <div className="h-10 w-24 flex items-center justify-center border rounded text-xs text-muted-foreground bg-muted">Kein Logo</div>
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast({ title: "Fehler", description: "Logo darf max. 2MB groß sein", variant: "destructive" });
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (event) => setSettings({ ...settings, logo: event.target?.result as string });
+                    reader.readAsDataURL(file);
+                  }}
+                  className="max-w-[250px]"
+                />
+                {settings.logo && (
+                  <Button variant="outline" size="sm" type="button" onClick={() => setSettings({ ...settings, logo: null })}>Entfernen</Button>
+                )}
+              </div>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Workspace-Name</Label>

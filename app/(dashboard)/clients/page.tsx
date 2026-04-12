@@ -15,7 +15,7 @@ export default async function ClientsPage() {
 
   const [clients, invitations] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "CLIENT" },
+      where: { role: "CLIENT", active: true },
       include: { projects: { include: { project: true } } },
       orderBy: { createdAt: "desc" },
     }),

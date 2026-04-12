@@ -27,7 +27,7 @@ const clientNav = [
   { label: "Projekte", href: "/projects", icon: FolderKanban },
 ];
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role, logo }: { role: string; logo?: string | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const nav = role === "CLIENT" ? clientNav : adminNav;
@@ -42,14 +42,22 @@ export function Sidebar({ role }: { role: string }) {
       <div className="flex h-14 items-center border-b px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image
-              src="/klinet-logo-shadow.png"
-              alt="Klient"
-              width={120}
-              height={32}
-              className="h-8 w-auto"
-              priority
-            />
+            {logo ? (
+              <img
+                src={logo}
+                alt="Workspace Logo"
+                className="h-8 max-w-[140px] w-auto object-contain"
+              />
+            ) : (
+              <Image
+                src="/klinet-logo-shadow.png"
+                alt="Klient"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+                priority
+              />
+            )}
           </Link>
         )}
         <Button

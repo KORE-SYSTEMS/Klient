@@ -40,6 +40,15 @@ export function EditClientDialog({ client }: { client: { id: string; name: strin
     router.refresh();
   }
 
+  async function handleDelete() {
+    if (!confirm("Kunde wirklich löschen?")) return;
+    setLoading(true);
+    await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+    setLoading(false);
+    setOpen(false);
+    router.refresh();
+  }
+
   const defaultEmail = client.email.startsWith("placeholder-") ? "" : client.email;
 
   return (
@@ -67,7 +76,10 @@ export function EditClientDialog({ client }: { client: { id: string; name: strin
             <Label htmlFor="company">Firma</Label>
             <Input id="company" name="company" defaultValue={client.company || ""} />
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex sm:justify-between items-center w-full gap-2 mt-4">
+            <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
+              Löschen
+            </Button>
             <Button type="submit" disabled={loading}>
               {loading ? "Speichern..." : "Speichern"}
             </Button>
