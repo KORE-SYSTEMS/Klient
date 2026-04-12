@@ -16,7 +16,6 @@ export async function GET() {
       email: true,
       name: true,
       company: true,
-      image: true,
       active: true,
       createdAt: true,
       projects: {

@@ -14,7 +14,7 @@ import { getInitials } from "@/lib/utils";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { update } = useSession();
+  const { data: session, update } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       await update({
         name: updatedData.name,
         email: updatedData.email,
-        image: updatedData.image,
+        image: updatedData.image ? `/api/users/${session?.user?.id || 'me'}/avatar?t=${Date.now()}` : null,
       });
       setProfile((prev) => ({ ...prev, newPassword: "" }));
       router.refresh();

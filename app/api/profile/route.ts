@@ -17,7 +17,10 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(user);
+  return NextResponse.json({
+    ...user,
+    image: user?.image ? `/api/users/${session.user.id}/avatar?t=${Date.now()}` : null,
+  });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -32,7 +35,12 @@ export async function PATCH(request: NextRequest) {
 
     if (name !== undefined) updateData.name = name;
     if (company !== undefined) updateData.company = company;
-    if (image !== undefined) updateData.image = image;
+    
+    if (image !== undefined) {
+      if (image === null || image.startsWith("data:image/")) {
+        updateData.image = image;
+      }
+    }
     
     if (email !== undefined && email !== session.user.email) {
       // check if email is taken
@@ -58,7 +66,7 @@ export async function PATCH(request: NextRequest) {
       name: updatedUser.name,
       email: updatedUser.email,
       company: updatedUser.company,
-      image: updatedUser.image,
+      image: updatedUser.image ? `/api/users/${session.user.id}/avatar?t=${Date.now()}` : null,
     });
   } catch (error) {
     console.error("Failed to update profile:", error);
