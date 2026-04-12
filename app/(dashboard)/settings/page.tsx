@@ -16,7 +16,16 @@ import {
   AlertCircle,
   RefreshCw,
   ExternalLink,
+  Download,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface WorkspaceSettings {
@@ -58,6 +67,8 @@ export default function SettingsPage() {
 
   const [version, setVersion] = useState<VersionInfo | null>(null);
   const [versionLoading, setVersionLoading] = useState(true);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (session?.user?.role !== "ADMIN") {
@@ -82,6 +93,22 @@ export default function SettingsPage() {
       // offline
     }
     setVersionLoading(false);
+  }
+
+  async function triggerUpdate() {
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/system/update", { method: "POST" });
+      if (res.ok) {
+        toast({ title: "Update gestartet", description: "Das System wird im Hintergrund aktualisiert und startet danach ggf. neu." });
+        setUpdateDialogOpen(false);
+      } else {
+        toast({ title: "Fehler beim Update", description: "Das Update konnte nicht gestartet werden.", variant: "destructive" });
+      }
+    } catch (e) {
+      toast({ title: "Netzwerkfehler", description: "Es gab ein Problem beim Senden der Update-Anfrage.", variant: "destructive" });
+    }
+    setUpdating(false);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -175,6 +202,10 @@ export default function SettingsPage() {
                         </Button>
                       </a>
                     )}
+                    <Button size="sm" onClick={() => setUpdateDialogOpen(true)}>
+                      <Download className="mr-1 h-3 w-3" />
+                      Jetzt updaten
+                    </Button>
                   </div>
                 </div>
 
@@ -292,6 +323,25 @@ export default function SettingsPage() {
           Speichern
         </Button>
       </form>
+
+      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>System Update durchführen</DialogTitle>
+            <DialogDescription>
+              Achtung: Bitte stelle sicher, dass du ein Backup deiner Datenbank und deiner Uploads hast, bevor du fortfährst. 
+              Deine Einstellungen gehen durch das Update nicht verloren. Das System startet nach erfolgreichem Update neu.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUpdateDialogOpen(false)} disabled={updating}>Abbrechen</Button>
+            <Button onClick={triggerUpdate} disabled={updating}>
+              {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              Update starten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

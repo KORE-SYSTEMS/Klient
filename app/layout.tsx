@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "Klient",
   description: "Self-hosted client portal for freelancers and agencies",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
   },
 };
 

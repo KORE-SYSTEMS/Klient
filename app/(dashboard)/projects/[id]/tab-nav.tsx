@@ -9,6 +9,7 @@ import {
   FileIcon,
   Bell,
   MessageSquare,
+  Users,
 } from "lucide-react";
 
 const tabs = [
@@ -17,6 +18,7 @@ const tabs = [
   { label: "Dateien", href: "/files", icon: FileIcon },
   { label: "Updates", href: "/updates", icon: Bell },
   { label: "Chat", href: "/chat", icon: MessageSquare },
+  { label: "Mitarbeiter", href: "/members", icon: Users },
 ];
 
 export function ProjectTabNav({ projectId }: { projectId: string }) {
