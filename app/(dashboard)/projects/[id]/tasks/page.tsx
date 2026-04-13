@@ -69,12 +69,11 @@ import {
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
 import {
-  useActiveTimer,
-  FloatingTimer,
   TimerButton,
   formatDurationShort,
   formatDuration,
 } from "@/components/time-tracker";
+import { useGlobalTimer } from "@/components/global-timer";
 
 // --- Types ---
 
@@ -554,14 +553,15 @@ export default function TasksPage() {
     { id: string; name: string; email: string }[]
   >([]);
 
-  // Timer
+  // Timer (global — FloatingTimer lives in dashboard layout)
   const {
     activeTimer,
     elapsed,
     startTimer,
-    stopTimer,
+    requestStop,
     fetchActive,
-  } = useActiveTimer();
+    setOnChange,
+  } = useGlobalTimer();
 
   // Task dialog
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -631,6 +631,12 @@ export default function TasksPage() {
       });
   }, [fetchTasks, fetchStatuses, fetchEpics, projectId]);
 
+  // Refetch tasks when global timer starts/stops
+  useEffect(() => {
+    setOnChange(() => fetchTasks);
+    return () => setOnChange(null);
+  }, [setOnChange, fetchTasks]);
+
   // --- Timer handlers ---
 
   async function handleTimerStart(taskId: string) {
@@ -638,9 +644,8 @@ export default function TasksPage() {
     fetchTasks();
   }
 
-  async function handleTimerStop() {
-    await stopTimer();
-    fetchTasks();
+  function handleTimerStop() {
+    requestStop();
   }
 
   // --- Task CRUD ---
@@ -1262,13 +1267,6 @@ export default function TasksPage() {
           })}
         </div>
       )}
-
-      {/* Floating Timer Widget */}
-      <FloatingTimer
-        activeTimer={activeTimer}
-        elapsed={elapsed}
-        onStop={handleTimerStop}
-      />
 
       {/* Task Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
