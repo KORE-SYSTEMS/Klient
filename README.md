@@ -14,18 +14,29 @@
   <img src="https://img.shields.io/badge/docker-ready-blue?style=flat-square&logo=docker" alt="Docker">
 </p>
 
+<p align="center">
+  <a href="https://ko-fi.com/nikore"><img src="https://img.shields.io/badge/Ko--fi-Support%20Klient-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+</p>
+
 ---
 
 **Klient** is a modern, self-hosted client portal. Manage projects, tasks, files, and client communication in one place. Single container, zero configuration, just start it.
 
 ## Features
 
-- **Project Management** -- Status tracking, deadlines, color-coded projects
-- **Kanban Board** -- Drag-and-drop tasks across 5 columns
-- **File Sharing** -- Upload files, control per-file client visibility
+- **Project Management** -- Status tracking, deadlines, color-coded projects, real-time overview
+- **Kanban Board** -- Drag-and-drop tasks with custom statuses, epics, and priorities
+- **List View** -- Table-style task view grouped by status with sortable columns
+- **Time Tracking** -- Built-in timer with global floating widget, time entries per task
+- **Task Details** -- Comments with @mentions, file attachments, full activity timeline
+- **Task Links** -- Connect related, blocking, or dependent tasks
+- **Epics** -- Group tasks into color-coded epics for high-level planning
+- **File Sharing** -- Upload files per project or per task, control client visibility
 - **Project Chat** -- Real-time messaging per project
-- **Client Portal** -- Isolated client access with granular permissions
-- **Team & Roles** -- Admin, Member, Client roles
+- **Client Portal** -- Isolated read-only client access with granular per-task visibility
+- **Team & Roles** -- Admin, Member, Client roles with fine-grained permissions
+- **Client Management** -- Assign clients to projects from both directions
+- **Invite System** -- Email-based invitations with configurable SMTP
 - **Single Container** -- SQLite database, no external dependencies
 - **Zero Config** -- Auto-generates secrets, creates database on first start
 
@@ -183,9 +194,10 @@ npm run dev
 | | |
 |---|---|
 | Framework | Next.js 14 (App Router) |
-| Database | SQLite |
+| Database | SQLite (Prisma ORM) |
 | Auth | NextAuth.js v5 |
 | UI | shadcn/ui + Tailwind CSS |
+| Drag & Drop | @dnd-kit |
 | Language | TypeScript |
 
 ---
@@ -193,6 +205,12 @@ npm run dev
 ## Contributing
 
 [Issues](https://github.com/KORE-SYSTEMS/Klient/issues) and [Pull Requests](https://github.com/KORE-SYSTEMS/Klient/pulls) welcome.
+
+## Support
+
+If you find Klient useful, consider supporting development:
+
+<a href="https://ko-fi.com/nikore"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi"></a>
 
 ## License
 
