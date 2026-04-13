@@ -17,7 +17,21 @@ export default async function ProjectLayout({ children, params }: Props) {
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { id: true, name: true, description: true, status: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      status: true,
+      color: true,
+      dueDate: true,
+      members: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, role: true, image: true },
+          },
+        },
+      },
+    },
   });
 
   if (!project) notFound();
@@ -38,7 +52,14 @@ export default async function ProjectLayout({ children, params }: Props) {
 
   return (
     <div className="space-y-4">
-      <ProjectHeader project={project} canEdit={canEdit} />
+      <ProjectHeader
+        project={{
+          ...project,
+          dueDate: project.dueDate?.toISOString() || null,
+        }}
+        canEdit={canEdit}
+        initialMembers={project.members.map((m) => m.user)}
+      />
       <ProjectTabNav projectId={project.id} />
       <div className="pt-2">{children}</div>
     </div>

@@ -90,6 +90,21 @@ export async function PATCH(
       },
     });
 
+    // If projectIds provided, update project assignments
+    if (body.projectIds !== undefined && Array.isArray(body.projectIds)) {
+      // Remove all current project memberships for this client
+      await prisma.projectMember.deleteMany({ where: { userId: id } });
+      // Create new memberships
+      if (body.projectIds.length > 0) {
+        await prisma.projectMember.createMany({
+          data: body.projectIds.map((pid: string) => ({
+            userId: id,
+            projectId: pid,
+          })),
+        });
+      }
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to update client:", error);

@@ -1,64 +1,129 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { redirect, notFound } from "next/navigation";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   CheckSquare,
   FileIcon,
   MessageSquare,
   Users,
   Calendar,
+  Clock,
 } from "lucide-react";
 import { formatDate, getInitials } from "@/lib/utils";
-import { StatusPill } from "@/components/status-pill";
 
-interface Props {
-  params: { id: string };
+interface Member {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  image?: string | null;
 }
 
-export default async function ProjectDetailPage({ params }: Props) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+interface ProjectData {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  createdAt: string;
+  dueDate: string | null;
+  members: { user: Member }[];
+  _count: {
+    tasks: number;
+    files: number;
+    messages: number;
+    updates: number;
+  };
+}
 
-  const project = await prisma.project.findUnique({
-    where: { id: params.id },
-    include: {
-      members: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              image: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          tasks: true,
-          files: true,
-          messages: true,
-          updates: true,
-        },
-      },
-    },
-  });
+interface TaskStat {
+  status: string;
+  statusName?: string;
+  statusColor?: string;
+  _count: number;
+}
 
-  if (!project) notFound();
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const projectId = params.id as string;
 
-  const taskStats = await prisma.task.groupBy({
-    by: ["status"],
-    where: { projectId: params.id },
-    _count: true,
-  });
+  const [project, setProject] = useState<ProjectData | null>(null);
+  const [taskStats, setTaskStats] = useState<TaskStat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    const [projRes, tasksRes, statusesRes] = await Promise.all([
+      fetch(`/api/projects/${projectId}`),
+      fetch(`/api/tasks?projectId=${projectId}`),
+      fetch(`/api/projects/${projectId}/statuses`),
+    ]);
+
+    if (projRes.ok) {
+      setProject(await projRes.json());
+    }
+
+    if (tasksRes.ok && statusesRes.ok) {
+      const tasks = await tasksRes.json();
+      const statuses = await statusesRes.json();
+
+      // Build status counts
+      const counts = new Map<string, number>();
+      for (const task of tasks) {
+        counts.set(task.status, (counts.get(task.status) || 0) + 1);
+      }
+
+      const stats: TaskStat[] = [];
+      for (const s of statuses) {
+        const count = counts.get(s.id) || 0;
+        if (count > 0) {
+          stats.push({
+            status: s.id,
+            statusName: s.name,
+            statusColor: s.color,
+            _count: count,
+          });
+        }
+      }
+      setTaskStats(stats);
+    }
+
+    setLoading(false);
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Poll for live updates every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  // Also refetch when tab becomes visible
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === "visible") {
+        fetchData();
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [fetchData]);
+
+  if (loading || !project) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        Lade Projektübersicht...
+      </div>
+    );
+  }
 
   const totalTasks = taskStats.reduce((sum, s) => sum + s._count, 0);
-  const doneTasks =
-    taskStats.find((s) => s.status === "DONE")?._count || 0;
+  const doneTasks = taskStats.find((s) => s.status === "DONE")?._count || 0;
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
@@ -127,7 +192,13 @@ export default async function ProjectDetailPage({ params }: Props) {
                   key={stat.status}
                   className="flex items-center justify-between"
                 >
-                  <StatusPill value={stat.status} type="task" size="sm" />
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 rounded-[3px]"
+                      style={{ backgroundColor: stat.statusColor || "#6b7280" }}
+                    />
+                    <span className="text-sm">{stat.statusName || stat.status}</span>
+                  </div>
                   <span className="text-sm font-medium">{stat._count}</span>
                 </div>
               ))
@@ -154,10 +225,29 @@ export default async function ProjectDetailPage({ params }: Props) {
                   <p className="text-sm font-medium truncate">
                     {m.user.name || m.user.email}
                   </p>
-                  <p className="text-xs text-muted-foreground">{m.user.role}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.user.role === "CLIENT" ? "Kunde" : m.user.role === "ADMIN" ? "Admin" : "Mitarbeiter"}
+                  </p>
                 </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    m.user.role === "CLIENT"
+                      ? "text-[10px] text-orange-500 border-orange-500/30"
+                      : m.user.role === "ADMIN"
+                        ? "text-[10px] text-blue-500 border-blue-500/30"
+                        : "text-[10px] text-green-500 border-green-500/30"
+                  }
+                >
+                  {m.user.role === "CLIENT" ? "Kunde" : m.user.role === "ADMIN" ? "Admin" : "Mitarbeiter"}
+                </Badge>
               </div>
             ))}
+            {project.members.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Noch keine Mitglieder zugewiesen
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
