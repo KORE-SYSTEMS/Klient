@@ -37,7 +37,9 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
 
     if (role === "CLIENT") {
-      if (body.status !== undefined) updateData.status = body.status;
+      // Clients can NOT change status via drag or any other field
+      // They can only interact via comments and file uploads
+      return NextResponse.json({ error: "Clients cannot edit tasks" }, { status: 403 });
     } else {
       if (body.title !== undefined) updateData.title = body.title;
       if (body.description !== undefined) updateData.description = body.description;
@@ -68,6 +70,43 @@ export async function PATCH(
         },
       },
     });
+
+    // Auto-create activity records for tracked changes
+    const activities: { type: string; oldValue?: string; newValue?: string }[] = [];
+
+    if (body.status !== undefined && body.status !== task.status) {
+      activities.push({
+        type: "STATUS_CHANGE",
+        oldValue: task.status,
+        newValue: body.status,
+      });
+    }
+    if (body.priority !== undefined && body.priority !== task.priority) {
+      activities.push({
+        type: "PRIORITY_CHANGE",
+        oldValue: task.priority,
+        newValue: body.priority,
+      });
+    }
+    if (body.assigneeId !== undefined && (body.assigneeId || null) !== task.assigneeId) {
+      activities.push({
+        type: "ASSIGNMENT",
+        oldValue: task.assigneeId || undefined,
+        newValue: body.assigneeId || undefined,
+      });
+    }
+
+    if (activities.length > 0) {
+      await prisma.taskActivity.createMany({
+        data: activities.map((a) => ({
+          type: a.type,
+          taskId: id,
+          userId,
+          oldValue: a.oldValue || null,
+          newValue: a.newValue || null,
+        })),
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

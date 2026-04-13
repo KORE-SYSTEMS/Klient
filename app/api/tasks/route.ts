@@ -116,6 +116,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Create "CREATED" activity
+    await prisma.taskActivity.create({
+      data: {
+        type: "CREATED",
+        taskId: task.id,
+        userId,
+        newValue: title,
+      },
+    });
+
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
     console.error("Failed to create task:", error);
