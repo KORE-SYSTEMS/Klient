@@ -43,11 +43,26 @@ export async function GET(request: NextRequest) {
           sourceTask: { select: { id: true, title: true, status: true } },
         },
       },
+      timeEntries: {
+        select: { id: true, duration: true, startedAt: true, stoppedAt: true, userId: true },
+        orderBy: { startedAt: "desc" },
+      },
     },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
 
-  return NextResponse.json(tasks);
+  // Add totalTime and activeTimer to each task
+  const tasksWithTime = tasks.map((task) => {
+    const totalTime = task.timeEntries.reduce((sum, e) => {
+      if (e.stoppedAt) return sum + e.duration;
+      // For running entries, calc live duration
+      return sum + Math.floor((Date.now() - new Date(e.startedAt).getTime()) / 1000);
+    }, 0);
+    const activeEntry = task.timeEntries.find((e) => !e.stoppedAt) || null;
+    return { ...task, totalTime, activeEntry };
+  });
+
+  return NextResponse.json(tasksWithTime);
 }
 
 export async function POST(request: NextRequest) {

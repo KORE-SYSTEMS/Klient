@@ -65,8 +65,16 @@ import {
   ChevronRight,
   Layers,
   X,
+  Clock,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
+import {
+  useActiveTimer,
+  FloatingTimer,
+  TimerButton,
+  formatDurationShort,
+  formatDuration,
+} from "@/components/time-tracker";
 
 // --- Types ---
 
@@ -93,6 +101,14 @@ interface TaskLinkInfo {
   targetTask?: { id: string; title: string; status: string };
 }
 
+interface TimeEntryInfo {
+  id: string;
+  duration: number;
+  startedAt: string;
+  stoppedAt: string | null;
+  userId: string;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -107,6 +123,9 @@ interface Task {
   epicId?: string | null;
   sourceLinks?: TaskLinkInfo[];
   targetLinks?: TaskLinkInfo[];
+  timeEntries?: TimeEntryInfo[];
+  totalTime?: number;
+  activeEntry?: TimeEntryInfo | null;
 }
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -123,16 +142,26 @@ const LINK_TYPES = [
   { value: "DEPENDS_ON", label: "Abhängig von" },
 ];
 
-// --- Sortable Task Card ---
+// --- Sortable Task Card (Asana-style) ---
 
 function TaskCard({
   task,
   onClick,
   statuses,
+  isTimerActive,
+  timerElapsed,
+  onTimerStart,
+  onTimerStop,
+  isClient,
 }: {
   task: Task;
   onClick: () => void;
   statuses: TaskStatus[];
+  isTimerActive: boolean;
+  timerElapsed: number;
+  onTimerStart: (taskId: string) => void;
+  onTimerStop: () => void;
+  isClient: boolean;
 }) {
   const {
     attributes,
@@ -151,6 +180,7 @@ function TaskCard({
 
   const linkCount =
     (task.sourceLinks?.length || 0) + (task.targetLinks?.length || 0);
+  const totalTime = task.totalTime || 0;
 
   return (
     <div
@@ -161,7 +191,10 @@ function TaskCard({
       className="touch-none"
     >
       <Card
-        className="cursor-grab border bg-card p-3 transition-all hover:bg-accent hover:shadow-md active:cursor-grabbing"
+        className={cn(
+          "group cursor-grab border bg-card p-3 transition-all hover:shadow-md active:cursor-grabbing",
+          isTimerActive && "ring-2 ring-primary/30 border-primary/40"
+        )}
         onClick={(e) => {
           if (!(e.target as HTMLElement).closest("[data-no-click]")) {
             onClick();
@@ -169,10 +202,11 @@ function TaskCard({
         }}
       >
         <div className="space-y-2">
+          {/* Epic tag */}
           {task.epic && (
             <div className="flex items-center gap-1.5">
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: task.epic.color }}
               />
               <span className="text-[10px] font-medium text-muted-foreground truncate">
@@ -180,8 +214,12 @@ function TaskCard({
               </span>
             </div>
           )}
+
+          {/* Title */}
           <div className="text-sm font-medium leading-tight">{task.title}</div>
-          <div className="flex items-center gap-2 flex-wrap">
+
+          {/* Meta row */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge
               variant="outline"
               className={cn(
@@ -203,19 +241,38 @@ function TaskCard({
                 {linkCount}
               </span>
             )}
-          </div>
-          <div className="flex items-center justify-between">
-            {task.assignee ? (
-              <Avatar className="h-5 w-5">
-                <AvatarFallback className="text-[8px]">
-                  {getInitials(task.assignee.name || task.assignee.email)}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div />
+            {totalTime > 0 && !isTimerActive && (
+              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                <Clock className="h-2.5 w-2.5" />
+                {formatDurationShort(totalTime)}
+              </span>
             )}
-            {task.clientVisible && (
-              <span className="text-[10px] text-primary">Kundensichtbar</span>
+          </div>
+
+          {/* Bottom row: avatar, timer, visibility */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {task.assignee && (
+                <Avatar className="h-5 w-5">
+                  <AvatarFallback className="text-[8px]">
+                    {getInitials(task.assignee.name || task.assignee.email)}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              {task.clientVisible && (
+                <span className="text-[10px] text-primary">Kundensichtbar</span>
+              )}
+            </div>
+            {!isClient && (
+              <TimerButton
+                taskId={task.id}
+                isActive={isTimerActive}
+                elapsed={timerElapsed}
+                totalTime={totalTime}
+                onStart={onTimerStart}
+                onStop={onTimerStop}
+                size="sm"
+              />
             )}
           </div>
         </div>
@@ -236,6 +293,10 @@ function KanbanColumn({
   isClient,
   statuses,
   isOver,
+  activeTimerTaskId,
+  timerElapsed,
+  onTimerStart,
+  onTimerStop,
 }: {
   status: TaskStatus;
   tasks: Task[];
@@ -246,88 +307,229 @@ function KanbanColumn({
   isClient: boolean;
   statuses: TaskStatus[];
   isOver: boolean;
+  activeTimerTaskId: string | null;
+  timerElapsed: number;
+  onTimerStart: (taskId: string) => void;
+  onTimerStop: () => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status.id });
+
+  // Column total time
+  const columnTotalTime = tasks.reduce((sum, t) => sum + (t.totalTime || 0), 0);
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-w-[280px] max-w-[320px] flex-col rounded-lg border bg-muted/30 transition-colors",
-        isOver && "border-primary/50 bg-primary/5"
+        "flex min-w-[280px] max-w-[320px] flex-col rounded-lg border transition-colors",
+        isOver
+          ? "border-primary/50 bg-primary/5"
+          : "border-border/60 bg-muted/20"
       )}
     >
-      <div className="flex items-center justify-between border-b px-3 py-2.5">
+      {/* Column header */}
+      <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2">
           <span
-            className="h-2.5 w-2.5 rounded-full"
+            className="h-2.5 w-2.5 rounded-sm"
             style={{ backgroundColor: status.color }}
           />
-          <span className="text-xs font-semibold uppercase tracking-wider">
+          <span className="text-xs font-semibold tracking-wide">
             {status.name}
           </span>
-          <Badge variant="secondary" className="text-[10px] ml-1">
+          <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
             {tasks.length}
-          </Badge>
+          </span>
         </div>
-        {!isClient && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEditColumn(status)}>
-                <Pencil className="mr-2 h-3.5 w-3.5" />
-                Bearbeiten
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onAddTask(status.id)}>
-                <Plus className="mr-2 h-3.5 w-3.5" />
-                Task hinzufügen
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDeleteColumn(status)}
-                className="text-destructive"
-              >
-                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                Spalte löschen
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex items-center gap-1">
+          {columnTotalTime > 0 && (
+            <span className="mr-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Clock className="h-2.5 w-2.5" />
+              {formatDurationShort(columnTotalTime)}
+            </span>
+          )}
+          {!isClient && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEditColumn(status)}>
+                  <Pencil className="mr-2 h-3.5 w-3.5" />
+                  Bearbeiten
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAddTask(status.id)}>
+                  <Plus className="mr-2 h-3.5 w-3.5" />
+                  Task hinzufügen
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDeleteColumn(status)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  Spalte löschen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
+
+      {/* Cards */}
       <ScrollArea className="flex-1">
         <SortableContext
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2 p-2" style={{ minHeight: 80 }}>
+          <div className="space-y-2 px-2 pb-2" style={{ minHeight: 60 }}>
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
                 onClick={() => onTaskClick(task)}
                 statuses={statuses}
+                isTimerActive={activeTimerTaskId === task.id}
+                timerElapsed={
+                  activeTimerTaskId === task.id ? timerElapsed : 0
+                }
+                onTimerStart={onTimerStart}
+                onTimerStop={onTimerStop}
+                isClient={isClient}
               />
             ))}
             {tasks.length === 0 && (
-              <div className="py-8 text-center text-xs text-muted-foreground">
-                Keine Tasks
+              <div className="flex flex-col items-center justify-center py-8 text-xs text-muted-foreground">
+                <span>Keine Tasks</span>
               </div>
             )}
           </div>
         </SortableContext>
       </ScrollArea>
+
+      {/* Add task button */}
       {!isClient && (
         <button
           onClick={() => onAddTask(status.id)}
-          className="m-2 flex items-center justify-center gap-1 rounded-md border border-dashed p-2 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="m-2 mt-0 flex items-center justify-center gap-1 rounded-md border border-dashed py-2 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
         >
           <Plus className="h-3 w-3" />
-          Task
+          Task hinzufügen
         </button>
+      )}
+    </div>
+  );
+}
+
+// --- Time Entries List in Task Dialog ---
+
+function TimeEntriesSection({
+  taskId,
+  onUpdate,
+}: {
+  taskId: string;
+  onUpdate: () => void;
+}) {
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchEntries = useCallback(async () => {
+    const res = await fetch(`/api/time-entries?taskId=${taskId}`);
+    if (res.ok) setEntries(await res.json());
+    setLoading(false);
+  }, [taskId]);
+
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
+
+  async function deleteEntry(id: string) {
+    await fetch(`/api/time-entries/${id}`, { method: "DELETE" });
+    fetchEntries();
+    onUpdate();
+  }
+
+  const totalSeconds = entries.reduce((sum, e) => {
+    if (e.stoppedAt) return sum + e.duration;
+    return sum + Math.floor((Date.now() - new Date(e.startedAt).getTime()) / 1000);
+  }, 0);
+
+  if (loading) return null;
+
+  return (
+    <div className="space-y-2 border-t pt-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Zeiterfassung
+        </Label>
+        <span className="flex items-center gap-1.5 text-xs font-medium">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          {formatDuration(totalSeconds)} gesamt
+        </span>
+      </div>
+      {entries.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Noch keine Zeit erfasst
+        </p>
+      ) : (
+        <div className="max-h-[160px] space-y-1 overflow-y-auto">
+          {entries.map((entry: any) => {
+            const isRunning = !entry.stoppedAt;
+            const startDate = new Date(entry.startedAt);
+            return (
+              <div
+                key={entry.id}
+                className={cn(
+                  "flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs",
+                  isRunning && "border-primary/30 bg-primary/5"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {isRunning && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                    </span>
+                  )}
+                  <span className="text-muted-foreground">
+                    {startDate.toLocaleDateString("de-DE", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
+                    {" "}
+                    {startDate.toLocaleTimeString("de-DE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  {entry.user && (
+                    <span className="text-muted-foreground">
+                      — {entry.user.name || entry.user.email}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-medium tabular-nums">
+                    {isRunning
+                      ? "läuft..."
+                      : formatDuration(entry.duration)}
+                  </span>
+                  {!isRunning && (
+                    <button
+                      type="button"
+                      onClick={() => deleteEntry(entry.id)}
+                      className="text-muted-foreground transition-colors hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -351,6 +553,15 @@ export default function TasksPage() {
   const [members, setMembers] = useState<
     { id: string; name: string; email: string }[]
   >([]);
+
+  // Timer
+  const {
+    activeTimer,
+    elapsed,
+    startTimer,
+    stopTimer,
+    fetchActive,
+  } = useActiveTimer();
 
   // Task dialog
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -419,6 +630,18 @@ export default function TasksPage() {
         if (data.members) setMembers(data.members.map((m: any) => m.user));
       });
   }, [fetchTasks, fetchStatuses, fetchEpics, projectId]);
+
+  // --- Timer handlers ---
+
+  async function handleTimerStart(taskId: string) {
+    await startTimer(taskId);
+    fetchTasks();
+  }
+
+  async function handleTimerStop() {
+    await stopTimer();
+    fetchTasks();
+  }
 
   // --- Task CRUD ---
 
@@ -620,14 +843,13 @@ export default function TasksPage() {
     if (!over) return;
 
     const taskId = active.id as string;
-    const overId = over.id as string;
+    const dragOverId = over.id as string;
     const draggedTask = tasks.find((t) => t.id === taskId);
     if (!draggedTask) return;
 
-    // Check if dropped on a column (status)
-    const targetColumn = statuses.find((s) => s.id === overId);
+    // Dropped on a column
+    const targetColumn = statuses.find((s) => s.id === dragOverId);
     if (targetColumn && draggedTask.status !== targetColumn.id) {
-      // Optimistic update
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? { ...t, status: targetColumn.id } : t
@@ -642,10 +864,9 @@ export default function TasksPage() {
       return;
     }
 
-    // Check if dropped on another task
-    const targetTask = tasks.find((t) => t.id === overId);
+    // Dropped on another task
+    const targetTask = tasks.find((t) => t.id === dragOverId);
     if (targetTask && draggedTask.status !== targetTask.status) {
-      // Move to the target task's column
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? { ...t, status: targetTask.status } : t
@@ -662,30 +883,22 @@ export default function TasksPage() {
 
     // Same column reorder
     if (targetTask && draggedTask.status === targetTask.status) {
-      const columnTasks = tasks
-        .filter((t) => t.status === draggedTask.status)
-        .sort((a, b) => (a.id === taskId ? -1 : b.id === taskId ? 1 : 0));
+      const columnTasks = tasks.filter(
+        (t) => t.status === draggedTask.status
+      );
       const oldIndex = columnTasks.findIndex((t) => t.id === taskId);
-      const newIndex = columnTasks.findIndex((t) => t.id === overId);
+      const newIndex = columnTasks.findIndex((t) => t.id === dragOverId);
       if (oldIndex !== -1 && newIndex !== -1) {
         const reordered = arrayMove(columnTasks, oldIndex, newIndex);
-        // Update local state for immediate feedback
         setTasks((prev) => {
-          const otherTasks = prev.filter(
-            (t) => t.status !== draggedTask.status
-          );
-          return [...otherTasks, ...reordered];
+          const other = prev.filter((t) => t.status !== draggedTask.status);
+          return [...other, ...reordered];
         });
-        // Update order on server
-        for (let i = 0; i < reordered.length; i++) {
-          if (reordered[i].id === taskId) {
-            await fetch(`/api/tasks/${taskId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ order: i }),
-            });
-          }
-        }
+        await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: newIndex }),
+        });
       }
     }
   }
@@ -696,8 +909,6 @@ export default function TasksPage() {
 
   const epicGroups = useMemo(() => {
     const groups: { epic: Epic | null; tasks: Task[] }[] = [];
-
-    // Group tasks with epics
     const epicMap = new Map<string, Task[]>();
     const noEpicTasks: Task[] = [];
 
@@ -711,7 +922,6 @@ export default function TasksPage() {
       }
     }
 
-    // Add epic groups in order
     for (const epic of epics) {
       const epicTasks = epicMap.get(epic.id) || [];
       if (epicTasks.length > 0) {
@@ -719,7 +929,6 @@ export default function TasksPage() {
       }
     }
 
-    // Add tasks without epic
     if (noEpicTasks.length > 0) {
       groups.push({ epic: null, tasks: noEpicTasks });
     }
@@ -736,8 +945,6 @@ export default function TasksPage() {
     });
   }
 
-  // --- Status color helper ---
-
   function getStatusInfo(statusId: string) {
     return statuses.find((s) => s.id === statusId);
   }
@@ -751,46 +958,46 @@ export default function TasksPage() {
   }
 
   const COLORS = [
-    "#ef4444",
-    "#f97316",
-    "#eab308",
-    "#22c55e",
-    "#10b981",
-    "#3b82f6",
-    "#6366f1",
-    "#8b5cf6",
-    "#ec4899",
-    "#6b7280",
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981",
+    "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#6b7280",
   ];
 
   return (
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Button
-            variant={view === "kanban" ? "secondary" : "ghost"}
-            size="sm"
+        <div className="flex items-center gap-1 rounded-lg border p-0.5">
+          <button
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              view === "kanban"
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
             onClick={() => setView("kanban")}
           >
-            <LayoutGrid className="mr-1 h-4 w-4" />
-            Kanban
-          </Button>
-          <Button
-            variant={view === "list" ? "secondary" : "ghost"}
-            size="sm"
+            <LayoutGrid className="mr-1.5 inline h-3.5 w-3.5" />
+            Board
+          </button>
+          <button
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              view === "list"
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
             onClick={() => setView("list")}
           >
-            <List className="mr-1 h-4 w-4" />
+            <List className="mr-1.5 inline h-3.5 w-3.5" />
             Liste
-          </Button>
+          </button>
         </div>
         {!isClient && (
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Layers className="mr-1 h-4 w-4" />
+                <Button variant="outline" size="sm" className="h-8">
+                  <Layers className="mr-1.5 h-3.5 w-3.5" />
                   Epics
                 </Button>
               </DropdownMenuTrigger>
@@ -821,14 +1028,19 @@ export default function TasksPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="h-8"
                 onClick={() => openColumnDialog(null)}
               >
-                <Plus className="mr-1 h-4 w-4" />
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
                 Spalte
               </Button>
             )}
-            <Button size="sm" onClick={() => openTaskDialog(null)}>
-              <Plus className="mr-1 h-4 w-4" />
+            <Button
+              size="sm"
+              className="h-8"
+              onClick={() => openTaskDialog(null)}
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Neuer Task
             </Button>
           </div>
@@ -844,7 +1056,7 @@ export default function TasksPage() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div className="flex gap-3 overflow-x-auto pb-4">
             {statuses.map((status) => {
               const colTasks = tasks.filter((t) => t.status === status.id);
               return (
@@ -859,13 +1071,17 @@ export default function TasksPage() {
                   isClient={isClient}
                   statuses={statuses}
                   isOver={overId === status.id}
+                  activeTimerTaskId={activeTimer?.taskId || null}
+                  timerElapsed={elapsed}
+                  onTimerStart={handleTimerStart}
+                  onTimerStop={handleTimerStop}
                 />
               );
             })}
           </div>
           <DragOverlay>
             {activeTask && (
-              <Card className="w-[280px] rotate-2 border bg-card p-3 shadow-xl">
+              <Card className="w-[280px] rotate-2 border bg-card p-3 shadow-2xl">
                 <div className="space-y-2">
                   {activeTask.epic && (
                     <div className="flex items-center gap-1.5">
@@ -878,9 +1094,7 @@ export default function TasksPage() {
                       </span>
                     </div>
                   )}
-                  <div className="text-sm font-medium">
-                    {activeTask.title}
-                  </div>
+                  <div className="text-sm font-medium">{activeTask.title}</div>
                   <Badge
                     variant="outline"
                     className={cn(
@@ -897,7 +1111,7 @@ export default function TasksPage() {
         </DndContext>
       ) : (
         /* List View with Epic Grouping */
-        <div className="space-y-4">
+        <div className="space-y-3">
           {epicGroups.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
               Keine Tasks vorhanden
@@ -906,22 +1120,26 @@ export default function TasksPage() {
           {epicGroups.map((group) => {
             const epicId = group.epic?.id || "__none__";
             const isCollapsed = collapsedEpics.has(epicId);
+            const groupTotalTime = group.tasks.reduce(
+              (sum, t) => sum + (t.totalTime || 0),
+              0
+            );
             return (
-              <div key={epicId} className="space-y-1">
+              <div key={epicId}>
                 {/* Epic Header */}
                 <button
                   onClick={() => toggleEpicCollapse(epicId)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition-colors hover:bg-accent"
                 >
                   {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
                   {group.epic ? (
                     <>
                       <span
-                        className="h-3 w-3 rounded-full shrink-0"
+                        className="h-3 w-3 rounded-sm shrink-0"
                         style={{ backgroundColor: group.epic.color }}
                       />
                       <span className="text-sm font-semibold">
@@ -936,32 +1154,43 @@ export default function TasksPage() {
                   <Badge variant="secondary" className="text-[10px] ml-1">
                     {group.tasks.length}
                   </Badge>
+                  {groupTotalTime > 0 && (
+                    <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatDurationShort(groupTotalTime)}
+                    </span>
+                  )}
                 </button>
 
-                {/* Task List */}
+                {/* Task rows */}
                 {!isCollapsed && (
-                  <div className="ml-6 space-y-1">
+                  <div className="ml-2 border-l pl-4 space-y-px">
                     {group.tasks.map((task) => {
                       const statusInfo = getStatusInfo(task.status);
                       const linkCount =
                         (task.sourceLinks?.length || 0) +
                         (task.targetLinks?.length || 0);
+                      const isTimerActive =
+                        activeTimer?.taskId === task.id;
+                      const totalTime = task.totalTime || 0;
                       return (
                         <div
                           key={task.id}
-                          className="flex items-center justify-between rounded-md border px-3 py-2.5 transition-colors hover:bg-accent cursor-pointer"
+                          className={cn(
+                            "group flex items-center justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-accent cursor-pointer",
+                            isTimerActive && "bg-primary/5"
+                          )}
                           onClick={() => !isClient && openTaskDialog(task)}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] shrink-0",
-                                getPriorityColor(task.priority)
-                              )}
-                            >
-                              {PRIORITY_LABELS[task.priority] || task.priority}
-                            </Badge>
+                            {/* Status dot */}
+                            {statusInfo && (
+                              <span
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{ backgroundColor: statusInfo.color }}
+                                title={statusInfo.name}
+                              />
+                            )}
                             <span className="text-sm font-medium truncate">
                               {task.title}
                             </span>
@@ -973,12 +1202,34 @@ export default function TasksPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
+                            {/* Time tracking */}
+                            {!isClient && (
+                              <TimerButton
+                                taskId={task.id}
+                                isActive={isTimerActive}
+                                elapsed={isTimerActive ? elapsed : 0}
+                                totalTime={totalTime}
+                                onStart={handleTimerStart}
+                                onStop={handleTimerStop}
+                                size="sm"
+                                showTotal
+                              />
+                            )}
                             {task.dueDate && (
                               <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                 <Calendar className="h-3 w-3" />
                                 {formatDate(task.dueDate)}
                               </span>
                             )}
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[10px] shrink-0",
+                                getPriorityColor(task.priority)
+                              )}
+                            >
+                              {PRIORITY_LABELS[task.priority] || task.priority}
+                            </Badge>
                             {task.assignee && (
                               <Avatar className="h-6 w-6">
                                 <AvatarFallback className="text-[9px]">
@@ -997,12 +1248,6 @@ export default function TasksPage() {
                                   backgroundColor: statusInfo.color + "15",
                                 }}
                               >
-                                <span
-                                  className="h-1.5 w-1.5 rounded-full"
-                                  style={{
-                                    backgroundColor: statusInfo.color,
-                                  }}
-                                />
                                 {statusInfo.name}
                               </span>
                             )}
@@ -1018,13 +1263,36 @@ export default function TasksPage() {
         </div>
       )}
 
+      {/* Floating Timer Widget */}
+      <FloatingTimer
+        activeTimer={activeTimer}
+        elapsed={elapsed}
+        onStop={handleTimerStop}
+      />
+
       {/* Task Dialog */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editTask ? "Task bearbeiten" : "Neuer Task"}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                {editTask ? "Task bearbeiten" : "Neuer Task"}
+              </DialogTitle>
+              {/* Timer button in dialog header */}
+              {editTask && !isClient && (
+                <TimerButton
+                  taskId={editTask.id}
+                  isActive={activeTimer?.taskId === editTask.id}
+                  elapsed={
+                    activeTimer?.taskId === editTask.id ? elapsed : 0
+                  }
+                  totalTime={editTask.totalTime || 0}
+                  onStart={handleTimerStart}
+                  onStop={handleTimerStop}
+                  showTotal
+                />
+              )}
+            </div>
           </DialogHeader>
           <form onSubmit={saveTask} className="space-y-4">
             <div className="space-y-2">
@@ -1148,6 +1416,14 @@ export default function TasksPage() {
               <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
             </div>
 
+            {/* Time Entries Section (edit mode only) */}
+            {editTask && (
+              <TimeEntriesSection
+                taskId={editTask.id}
+                onUpdate={fetchTasks}
+              />
+            )}
+
             {/* Task Links Section (edit mode only) */}
             {editTask && (
               <div className="space-y-2 border-t pt-4">
@@ -1184,7 +1460,7 @@ export default function TasksPage() {
                   return (
                     <div
                       key={link.id}
-                      className="flex items-center justify-between rounded-md border px-2 py-1.5 text-xs"
+                      className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">
@@ -1194,15 +1470,13 @@ export default function TasksPage() {
                           {link.linkedTask?.title}
                         </span>
                       </div>
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0"
                         onClick={() => deleteLink(link.id)}
+                        className="text-muted-foreground transition-colors hover:text-destructive"
                       >
                         <X className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </div>
                   );
                 })}
