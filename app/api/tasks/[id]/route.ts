@@ -19,7 +19,6 @@ export async function PATCH(
   const userId = session.user.id;
   const role = session.user.role;
 
-  // Check project access
   if (role !== "ADMIN") {
     const hasAccess = await requireProjectAccess(task.projectId, userId);
     if (!hasAccess) {
@@ -27,7 +26,6 @@ export async function PATCH(
     }
   }
 
-  // Clients can only update status on tasks visible to them
   if (role === "CLIENT") {
     if (!task.clientVisible) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -39,7 +37,6 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
 
     if (role === "CLIENT") {
-      // Clients can only update status
       if (body.status !== undefined) updateData.status = body.status;
     } else {
       if (body.title !== undefined) updateData.title = body.title;
@@ -50,6 +47,7 @@ export async function PATCH(
       if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
       if (body.assigneeId !== undefined) updateData.assigneeId = body.assigneeId || null;
       if (body.order !== undefined) updateData.order = body.order;
+      if (body.epicId !== undefined) updateData.epicId = body.epicId || null;
     }
 
     const updated = await prisma.task.update({
@@ -57,6 +55,17 @@ export async function PATCH(
       data: updateData,
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
+        epic: { select: { id: true, title: true, color: true } },
+        sourceLinks: {
+          include: {
+            targetTask: { select: { id: true, title: true, status: true } },
+          },
+        },
+        targetLinks: {
+          include: {
+            sourceTask: { select: { id: true, title: true, status: true } },
+          },
+        },
       },
     });
 

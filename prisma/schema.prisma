@@ -47,6 +47,8 @@ model Project {
   updatedAt   DateTime        @updatedAt
   members     ProjectMember[]
   tasks       Task[]
+  statuses    TaskStatus[]
+  epics       Epic[]
   files       File[]
   updates     Update[]
   messages    Message[]
@@ -61,21 +63,57 @@ model ProjectMember {
   @@id([userId, projectId])
 }
 
+model TaskStatus {
+  id        String  @id
+  name      String
+  color     String  @default("#6b7280")
+  order     Int     @default(0)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+}
+
+model Epic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  color       String   @default("#6366f1")
+  order       Int      @default(0)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TaskLink {
+  id           String   @id @default(cuid())
+  type         String   @default("RELATED")
+  sourceTask   Task     @relation("sourceLinks", fields: [sourceTaskId], references: [id], onDelete: Cascade)
+  sourceTaskId String
+  targetTask   Task     @relation("targetLinks", fields: [targetTaskId], references: [id], onDelete: Cascade)
+  targetTaskId String
+  createdAt    DateTime @default(now())
+}
+
 model Task {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   title         String
   description   String?
-  status        String   @default("BACKLOG")
-  priority      String   @default("MEDIUM")
-  clientVisible Boolean  @default(false)
+  status        String     @default("BACKLOG")
+  priority      String     @default("MEDIUM")
+  clientVisible Boolean    @default(false)
   dueDate       DateTime?
-  order         Int      @default(0)
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order         Int        @default(0)
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
-  assignee      User?    @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assignee      User?      @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   assigneeId    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  epic          Epic?      @relation(fields: [epicId], references: [id], onDelete: SetNull)
+  epicId        String?
+  sourceLinks   TaskLink[] @relation("sourceLinks")
+  targetLinks   TaskLink[] @relation("targetLinks")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
 model File {

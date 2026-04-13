@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
   const userId = session.user.id;
   const role = session.user.role;
 
-  // Check project access
   if (role !== "ADMIN") {
     const hasAccess = await requireProjectAccess(projectId, userId);
     if (!hasAccess) {
@@ -33,6 +32,17 @@ export async function GET(request: NextRequest) {
     },
     include: {
       assignee: { select: { id: true, name: true, email: true, image: true } },
+      epic: { select: { id: true, title: true, color: true } },
+      sourceLinks: {
+        include: {
+          targetTask: { select: { id: true, title: true, status: true } },
+        },
+      },
+      targetLinks: {
+        include: {
+          sourceTask: { select: { id: true, title: true, status: true } },
+        },
+      },
     },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order } = body;
+    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId } = body;
 
     if (!title || !projectId) {
       return NextResponse.json({ error: "Title and projectId are required" }, { status: 400 });
@@ -66,16 +76,28 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         description,
-        status: status || undefined,
-        priority: priority || undefined,
+        status: status || "BACKLOG",
+        priority: priority || "MEDIUM",
         clientVisible: clientVisible ?? false,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         projectId,
         assigneeId: assigneeId || null,
         order: order ?? 0,
+        epicId: epicId || null,
       },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },
+        epic: { select: { id: true, title: true, color: true } },
+        sourceLinks: {
+          include: {
+            targetTask: { select: { id: true, title: true, status: true } },
+          },
+        },
+        targetLinks: {
+          include: {
+            sourceTask: { select: { id: true, title: true, status: true } },
+          },
+        },
       },
     });
 
