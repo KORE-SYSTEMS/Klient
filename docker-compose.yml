@@ -9,6 +9,10 @@ services:
     volumes:
       - klient-data:/app/data
       - klient-uploads:/app/uploads
+      # Optional: enables one-click in-app updates (Settings → Version & Updates).
+      # Without this mount, the app falls back to a "copy command" modal that
+      # guides you through a manual update. Only mount if you trust the image.
+      # - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   klient-data:

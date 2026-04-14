@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { SessionProvider } from "@/components/session-provider";
 import { GlobalTimerProvider } from "@/components/global-timer";
+import { CommandPalette } from "@/components/command-palette";
 
 import { prisma } from "@/lib/prisma";
 
@@ -27,6 +28,7 @@ export default async function DashboardLayout({
             <main className="flex-1 overflow-y-auto p-6">{children}</main>
           </div>
         </div>
+        <CommandPalette />
       </GlobalTimerProvider>
     </SessionProvider>
   );

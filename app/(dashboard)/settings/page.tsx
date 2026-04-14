@@ -16,21 +16,13 @@ import {
   AlertCircle,
   RefreshCw,
   ExternalLink,
-  Download,
   Upload,
   X,
   Check,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { UpdateManager } from "@/components/update-manager";
 
 const PRESET_COLORS = [
   "#E8520A", "#6366F1", "#8B5CF6", "#EC4899",
@@ -131,8 +123,6 @@ export default function SettingsPage() {
 
   const [version, setVersion] = useState<VersionInfo | null>(null);
   const [versionLoading, setVersionLoading] = useState(true);
-  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
-  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (session?.user?.role !== "ADMIN") {
@@ -157,22 +147,6 @@ export default function SettingsPage() {
       // offline
     }
     setVersionLoading(false);
-  }
-
-  async function triggerUpdate() {
-    setUpdating(true);
-    try {
-      const res = await fetch("/api/system/update", { method: "POST" });
-      if (res.ok) {
-        toast({ title: "Update gestartet", description: "Das System wird im Hintergrund aktualisiert und startet danach ggf. neu." });
-        setUpdateDialogOpen(false);
-      } else {
-        toast({ title: "Fehler beim Update", description: "Das Update konnte nicht gestartet werden.", variant: "destructive" });
-      }
-    } catch (e) {
-      toast({ title: "Netzwerkfehler", description: "Es gab ein Problem beim Senden der Update-Anfrage.", variant: "destructive" });
-    }
-    setUpdating(false);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -254,9 +228,6 @@ export default function SettingsPage() {
                         Veröffentlicht: {new Date(version.latest.publishedAt).toLocaleDateString("de-DE")}
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground mt-2">
-                      Update über Docker: <code className="bg-muted px-1 rounded">docker compose pull && docker compose up -d</code>
-                    </div>
                   </div>
                   <div className="flex gap-2">
                     {version.latest.url && (
@@ -267,10 +238,11 @@ export default function SettingsPage() {
                         </Button>
                       </a>
                     )}
-                    <Button size="sm" onClick={() => setUpdateDialogOpen(true)}>
-                      <Download className="mr-1 h-3 w-3" />
-                      Jetzt updaten
-                    </Button>
+                    <UpdateManager
+                      currentVersion={version.current}
+                      latestVersion={version.latest.version}
+                      onUpdated={checkVersion}
+                    />
                   </div>
                 </div>
 
@@ -469,24 +441,6 @@ export default function SettingsPage() {
         </Button>
       </form>
 
-      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>System Update durchführen</DialogTitle>
-            <DialogDescription>
-              Achtung: Bitte stelle sicher, dass du ein Backup deiner Datenbank und deiner Uploads hast, bevor du fortfährst. 
-              Deine Einstellungen gehen durch das Update nicht verloren. Das System startet nach erfolgreichem Update neu.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUpdateDialogOpen(false)} disabled={updating}>Abbrechen</Button>
-            <Button onClick={triggerUpdate} disabled={updating}>
-              {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-              Update starten
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

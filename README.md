@@ -145,6 +145,21 @@ On Unraid with [Watchtower](https://containrrr.dev/watchtower/), updates happen 
 
 Klient shows available updates in **Settings > Version & Updates**.
 
+### One-click in-app updates (optional)
+
+If you mount the Docker socket, the "Jetzt updaten" button pulls the new image and recreates the container with identical config — no shell needed:
+
+```bash
+docker run -d --name klient -p 8399:3000 \
+  -v klient-data:/app/data \
+  -v klient-uploads:/app/uploads \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart unless-stopped \
+  ghcr.io/kore-systems/klient:latest
+```
+
+Without the socket mount, Klient falls back to a **"Copy Command"** dialog with ready-to-paste commands for Docker Run / Compose / Unraid / Watchtower.
+
 ---
 
 ## Backups

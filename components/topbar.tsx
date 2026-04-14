@@ -11,9 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Search } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { openCommandPalette } from "@/components/command-palette";
 
 interface TopbarProps {
   user: {
@@ -27,7 +28,26 @@ interface TopbarProps {
 export function Topbar({ user }: TopbarProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
-      <div />
+      <button
+        type="button"
+        onClick={openCommandPalette}
+        className="group hidden md:flex items-center gap-2 rounded-sm border bg-background/50 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors min-w-[280px]"
+        aria-label="Suche öffnen"
+      >
+        <Search className="h-3.5 w-3.5" />
+        <span className="flex-1 text-left">Suche…</span>
+        <kbd className="ml-auto hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-muted/50 px-1.5 text-[10px] font-mono">
+          <span className="text-[11px]">⌘</span>K
+        </kbd>
+      </button>
+      <button
+        type="button"
+        onClick={openCommandPalette}
+        className="md:hidden text-muted-foreground hover:text-foreground p-2"
+        aria-label="Suche öffnen"
+      >
+        <Search className="h-4 w-4" />
+      </button>
 
       <div className="flex items-center gap-2">
       <NotificationsBell />
