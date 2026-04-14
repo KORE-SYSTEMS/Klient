@@ -10,6 +10,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Github,
+  Coffee,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -97,11 +99,52 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
         })}
       </nav>
 
-      {!collapsed && (
-        <div className="border-t px-4 py-3">
+      {!collapsed ? (
+        <div className="flex items-center justify-between border-t px-4 py-3">
           <span className="text-[11px] text-muted-foreground">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
           </span>
+          <div className="flex items-center gap-1">
+            <a
+              href="https://github.com/KORE-SYSTEMS/Klient"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Github className="h-3.5 w-3.5" />
+            </a>
+            <a
+              href="https://ko-fi.com/nikore"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Support on Ko-fi"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-[#FF5E5B]"
+            >
+              <Coffee className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-1 border-t px-2 py-3">
+          <a
+            href="https://github.com/KORE-SYSTEMS/Klient"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="GitHub"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Github className="h-3.5 w-3.5" />
+          </a>
+          <a
+            href="https://ko-fi.com/nikore"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Support on Ko-fi"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-[#FF5E5B]"
+          >
+            <Coffee className="h-3.5 w-3.5" />
+          </a>
         </div>
       )}
     </aside>

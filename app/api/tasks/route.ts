@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember, requireProjectAccess } from "@/lib/auth-guard";
+import { notify } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   const session = await requireAuth();
@@ -125,6 +126,19 @@ export async function POST(request: NextRequest) {
         newValue: title,
       },
     });
+
+    // Notify initial assignee
+    if (task.assigneeId && task.assigneeId !== userId) {
+      const actor = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+      await notify({
+        userId: task.assigneeId,
+        type: "TASK_ASSIGNED",
+        title: `Neuer Task zugewiesen: ${task.title}`,
+        message: `${actor?.name || actor?.email || "Jemand"} hat dir den Task zugewiesen.`,
+        link: `/projects/${task.projectId}/tasks?task=${task.id}`,
+        actorId: userId,
+      });
+    }
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

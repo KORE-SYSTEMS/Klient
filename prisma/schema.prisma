@@ -26,6 +26,46 @@ model User {
   files          File[]          @relation("uploadedBy")
   taskComments   TaskComment[]
   taskActivities TaskActivity[]
+  notifications  Notification[]
+  notificationSettings NotificationSettings?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String   // MENTION, TASK_ASSIGNED, TASK_STATUS_CHANGED, TASK_COMMENT, TASK_FILE_UPLOADED, CHAT_MESSAGE, TASK_DUE_SOON
+  title     String
+  message   String?
+  link      String?  // optional in-app href e.g. /projects/xyz/tasks?task=abc
+  read      Boolean  @default(false)
+  actorId   String?  // user id that triggered (not a relation - just ref)
+  metadata  String?  // JSON
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+model NotificationSettings {
+  userId                       String  @id
+  user                         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // In-app toggles
+  inAppMention                 Boolean @default(true)
+  inAppTaskAssigned            Boolean @default(true)
+  inAppTaskStatusChanged       Boolean @default(true)
+  inAppTaskComment             Boolean @default(true)
+  inAppTaskFileUploaded        Boolean @default(true)
+  inAppChatMessage             Boolean @default(true)
+  inAppTaskDueSoon             Boolean @default(true)
+  // Email toggles
+  emailMention                 Boolean @default(true)
+  emailTaskAssigned            Boolean @default(true)
+  emailTaskStatusChanged       Boolean @default(false)
+  emailTaskComment             Boolean @default(false)
+  emailTaskFileUploaded        Boolean @default(false)
+  emailChatMessage             Boolean @default(false)
+  emailTaskDueSoon             Boolean @default(true)
 }
 
 model Invitation {

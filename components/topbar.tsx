@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 interface TopbarProps {
   user: {
@@ -27,6 +28,9 @@ export function Topbar({ user }: TopbarProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       <div />
+
+      <div className="flex items-center gap-2">
+      <NotificationsBell />
 
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
@@ -67,6 +71,7 @@ export function Topbar({ user }: TopbarProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireProjectAccess } from "@/lib/auth-guard";
+import { notify, notifyMany } from "@/lib/notifications";
 
 export async function GET(
   request: NextRequest,
@@ -109,6 +110,43 @@ export async function POST(
         newValue: content.trim().substring(0, 200),
       },
     });
+
+    // --- Notifications ---
+    const taskFull = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, title: true, projectId: true, assigneeId: true },
+    });
+    if (taskFull) {
+      const link = `/projects/${taskFull.projectId}/tasks?task=${taskFull.id}`;
+      const author = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+      const authorName = author?.name || author?.email || "Jemand";
+      const preview = content.trim().substring(0, 140);
+
+      // 1) Mentions
+      const validMentionIds = mentionIds.filter((mid: string) => mid !== userId);
+      if (validMentionIds.length > 0) {
+        await notifyMany(validMentionIds, {
+          type: "MENTION",
+          title: `${authorName} hat dich erwähnt`,
+          message: `In Task "${taskFull.title}": ${preview}`,
+          link,
+          actorId: userId,
+          emailSubject: `Du wurdest erwähnt: ${taskFull.title}`,
+        });
+      }
+
+      // 2) Assignee notification (if assignee exists, isn't the author, and isn't already in mentions)
+      if (taskFull.assigneeId && taskFull.assigneeId !== userId && !validMentionIds.includes(taskFull.assigneeId)) {
+        await notify({
+          userId: taskFull.assigneeId,
+          type: "TASK_COMMENT",
+          title: `Neuer Kommentar: ${taskFull.title}`,
+          message: `${authorName}: ${preview}`,
+          link,
+          actorId: userId,
+        });
+      }
+    }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {

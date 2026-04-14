@@ -244,8 +244,6 @@ function TaskCard({
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const linkCount =
-    (task.sourceLinks?.length || 0) + (task.targetLinks?.length || 0);
   const totalTime = task.totalTime || 0;
 
   return (
@@ -288,18 +286,19 @@ function TaskCard({
           {/* Title */}
           <div className="text-[13px] font-medium leading-snug">{task.title}</div>
 
+          {/* Description */}
+          {task.description && (
+            <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+              {task.description}
+            </p>
+          )}
+
           {/* Meta row */}
           <div className="flex items-center gap-2 flex-wrap">
             {task.dueDate && (
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 {formatDate(task.dueDate)}
-              </span>
-            )}
-            {linkCount > 0 && (
-              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                <Link2 className="h-3 w-3" />
-                {linkCount}
               </span>
             )}
             {totalTime > 0 && !isTimerActive && (
@@ -491,6 +490,65 @@ function KanbanColumn({
 
 // --- Time Entries Section ---
 
+function TimeEntryRow({ entry, isClient, onDelete }: { entry: any; isClient: boolean; onDelete: (id: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const isRunning = !entry.stoppedAt;
+  const startDate = new Date(entry.startedAt);
+  const hasDescription = !!entry.description?.trim();
+
+  return (
+    <div className={cn(
+      "rounded-lg border px-3 py-2 text-xs",
+      isRunning && "border-primary/30 bg-primary/5"
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          {isRunning && (
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+          )}
+          <span className="text-muted-foreground shrink-0">
+            {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+            {" "}
+            {startDate.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+          {entry.user && (
+            <span className="text-muted-foreground truncate">- {entry.user.name || entry.user.email}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="font-mono font-medium tabular-nums">
+            {isRunning ? "läuft..." : formatDuration(entry.duration)}
+          </span>
+          {!isRunning && !isClient && (
+            <button type="button" onClick={() => onDelete(entry.id)}
+              className="text-muted-foreground transition-colors hover:text-destructive">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      {hasDescription && (
+        <div className="mt-1.5 pl-0.5">
+          {expanded ? (
+            <p className="text-[11px] text-muted-foreground whitespace-pre-wrap">{entry.description}</p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground truncate">{entry.description}</p>
+          )}
+          {entry.description.length > 80 && (
+            <button type="button" onClick={() => setExpanded(!expanded)}
+              className="text-[10px] text-primary hover:underline mt-0.5">
+              {expanded ? "weniger anzeigen" : "mehr anzeigen"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TimeEntriesSection({
   taskId,
   onUpdate,
@@ -538,45 +596,10 @@ function TimeEntriesSection({
       {entries.length === 0 ? (
         <p className="text-xs text-muted-foreground">Noch keine Zeit erfasst</p>
       ) : (
-        <div className="max-h-[160px] space-y-1 overflow-y-auto">
-          {entries.map((entry: any) => {
-            const isRunning = !entry.stoppedAt;
-            const startDate = new Date(entry.startedAt);
-            return (
-              <div key={entry.id} className={cn(
-                "flex items-center justify-between rounded-lg border px-3 py-2 text-xs",
-                isRunning && "border-primary/30 bg-primary/5"
-              )}>
-                <div className="flex items-center gap-2">
-                  {isRunning && (
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                    </span>
-                  )}
-                  <span className="text-muted-foreground">
-                    {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
-                    {" "}
-                    {startDate.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                  {entry.user && (
-                    <span className="text-muted-foreground">- {entry.user.name || entry.user.email}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-medium tabular-nums">
-                    {isRunning ? "läuft..." : formatDuration(entry.duration)}
-                  </span>
-                  {!isRunning && !isClient && (
-                    <button type="button" onClick={() => deleteEntry(entry.id)}
-                      className="text-muted-foreground transition-colors hover:text-destructive">
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+        <div className="max-h-[200px] space-y-1 overflow-y-auto">
+          {entries.map((entry: any) => (
+            <TimeEntryRow key={entry.id} entry={entry} isClient={isClient} onDelete={deleteEntry} />
+          ))}
         </div>
       )}
     </div>
@@ -1314,7 +1337,6 @@ export default function TasksPage() {
                   const isTimerActive = activeTimer?.taskId === task.id;
                   const isGreyedOut = isClient && task.assigneeId !== currentUserId;
                   const totalTime = task.totalTime || 0;
-                  const linkCount = (task.sourceLinks?.length || 0) + (task.targetLinks?.length || 0);
 
                   return (
                     <div
@@ -1332,11 +1354,6 @@ export default function TasksPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
-                            {linkCount > 0 && (
-                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
-                                <Link2 className="h-3 w-3" />{linkCount}
-                              </span>
-                            )}
                             {totalTime > 0 && !isTimerActive && (
                               <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
                                 <Clock className="h-3 w-3" />{formatDurationShort(totalTime)}
@@ -1523,6 +1540,22 @@ export default function TasksPage() {
           {(isCreateMode || isEditMode) && detailTab === "details" && (
             <form onSubmit={saveTask} className="space-y-4">
               <div className="space-y-2">
+                <Label>Epic</Label>
+                <Select value={formEpicId} onValueChange={setFormEpicId}>
+                  <SelectTrigger><SelectValue placeholder="Kein Epic" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Kein Epic</SelectItem>
+                    {epics.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: e.color }} />{e.title}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="title">Titel</Label>
                 <Input id="title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required />
               </div>
@@ -1580,58 +1613,13 @@ export default function TasksPage() {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Epic</Label>
-                <Select value={formEpicId} onValueChange={setFormEpicId}>
-                  <SelectTrigger><SelectValue placeholder="Kein Epic" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Kein Epic</SelectItem>
-                    {epics.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: e.color }} />{e.title}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="clientVisible" checked={formClientVisible}
                   onChange={(e) => setFormClientVisible(e.target.checked)} className="rounded-sm" />
                 <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
               </div>
               {editTask && <div className="border-t pt-4"><TimeEntriesSection taskId={editTask.id} onUpdate={fetchTasks} isClient={isClient} /></div>}
-              {editTask && (
-                <div className="space-y-2 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Verknüpfungen</Label>
-                    <Button type="button" variant="ghost" size="sm" className="h-6" onClick={() => openLinkDialog(editTask.id)}>
-                      <Link2 className="mr-1 h-3 w-3" />Verknüpfen
-                    </Button>
-                  </div>
-                  {[
-                    ...(editTask.sourceLinks || []).map((l) => ({ ...l, dir: "source" as const, linkedTask: l.targetTask })),
-                    ...(editTask.targetLinks || []).map((l) => ({ ...l, dir: "target" as const, linkedTask: l.sourceTask })),
-                  ].map((link) => {
-                    const typeLabel = LINK_TYPES.find((lt) => lt.value === link.type)?.label || link.type;
-                    return (
-                      <div key={link.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">{typeLabel}:</span>
-                          <span className="font-medium">{link.linkedTask?.title}</span>
-                        </div>
-                        <button type="button" onClick={() => deleteLink(link.id)} className="text-muted-foreground transition-colors hover:text-destructive">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {(editTask.sourceLinks?.length || 0) + (editTask.targetLinks?.length || 0) === 0 && (
-                    <p className="text-xs text-muted-foreground">Keine Verknüpfungen</p>
-                  )}
-                </div>
-              )}
+              {/* Verknüpfungen sind vorübergehend ausgeblendet */}
               <DialogFooter>
                 {editTask && <Button type="button" variant="destructive" onClick={() => deleteTask(editTask.id)}>Löschen</Button>}
                 <Button type="submit" disabled={formSubmitting || !formTitle.trim()}>{editTask ? "Speichern" : "Erstellen"}</Button>

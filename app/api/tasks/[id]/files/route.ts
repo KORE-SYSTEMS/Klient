@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireProjectAccess } from "@/lib/auth-guard";
+import { notify } from "@/lib/notifications";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
@@ -131,6 +132,22 @@ export async function POST(
           newValue: file.name,
         },
       });
+    }
+
+    // --- Notification to assignee ---
+    if (task.assigneeId && task.assigneeId !== userId) {
+      const taskInfo = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true, projectId: true } });
+      const actor = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+      if (taskInfo) {
+        await notify({
+          userId: task.assigneeId,
+          type: "TASK_FILE_UPLOADED",
+          title: `Datei hochgeladen: ${taskInfo.title}`,
+          message: `${actor?.name || actor?.email || "Jemand"} hat ${results.length === 1 ? "eine Datei" : `${results.length} Dateien`} hochgeladen.`,
+          link: `/projects/${taskInfo.projectId}/tasks?task=${taskId}`,
+          actorId: userId,
+        });
+      }
     }
 
     return NextResponse.json(results, { status: 201 });

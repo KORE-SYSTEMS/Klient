@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireProjectAccess } from "@/lib/auth-guard";
+import { notifyMany } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   const session = await requireAuth();
@@ -68,6 +69,23 @@ export async function POST(request: NextRequest) {
         author: { select: { id: true, name: true, email: true, role: true, image: true } },
       },
     });
+
+    // --- Notify project members (except author) ---
+    const [project, members] = await Promise.all([
+      prisma.project.findUnique({ where: { id: projectId }, select: { name: true } }),
+      prisma.projectMember.findMany({ where: { projectId }, select: { userId: true } }),
+    ]);
+    const recipients = members.map((m) => m.userId).filter((uid) => uid !== userId);
+    if (recipients.length > 0 && project) {
+      const preview = String(content).trim().substring(0, 140);
+      await notifyMany(recipients, {
+        type: "CHAT_MESSAGE",
+        title: `Neue Nachricht in ${project.name}`,
+        message: `${message.author.name || message.author.email}: ${preview}`,
+        link: `/projects/${projectId}/chat`,
+        actorId: userId,
+      });
+    }
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
