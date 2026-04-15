@@ -8,6 +8,8 @@ import { getInitials, formatDate } from "@/lib/utils";
 import { ClientActions } from "./client-actions";
 import { DeleteInvitationButton } from "./invitation-actions";
 import { EditClientDialog } from "./edit-client-dialog";
+import { EmptyState } from "@/components/empty-state";
+import { Users } from "lucide-react";
 
 export default async function ClientsPage() {
   const session = await auth();
@@ -63,9 +65,13 @@ export default async function ClientsPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {clients.length === 0 && (
-          <p className="col-span-full py-8 text-center text-muted-foreground">
-            Noch keine Kunden vorhanden
-          </p>
+          <div className="col-span-full rounded-sm border bg-card">
+            <EmptyState
+              icon={Users}
+              title="Noch keine Kunden"
+              description="Lade deinen ersten Kunden ein, damit er sich im Portal anmelden kann."
+            />
+          </div>
         )}
         {clients.map((client) => (
           <Card key={client.id}>

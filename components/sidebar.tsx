@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Github,
   Coffee,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,14 @@ const adminNav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Projekte", href: "/projects", icon: FolderKanban },
   { label: "Kunden", href: "/clients", icon: Users },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Einstellungen", href: "/settings", icon: Settings },
+];
+
+const memberNav = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Projekte", href: "/projects", icon: FolderKanban },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
 ];
 
 const clientNav = [
@@ -32,7 +40,7 @@ const clientNav = [
 export function Sidebar({ role, logo }: { role: string; logo?: string | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const nav = role === "CLIENT" ? clientNav : adminNav;
+  const nav = role === "CLIENT" ? clientNav : role === "MEMBER" ? memberNav : adminNav;
 
   return (
     <aside

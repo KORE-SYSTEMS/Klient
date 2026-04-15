@@ -5,6 +5,7 @@ import { Topbar } from "@/components/topbar";
 import { SessionProvider } from "@/components/session-provider";
 import { GlobalTimerProvider } from "@/components/global-timer";
 import { CommandPalette } from "@/components/command-palette";
+import { KeyboardShortcutOverlay } from "@/components/keyboard-shortcut-overlay";
 
 import { prisma } from "@/lib/prisma";
 
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
           </div>
         </div>
         <CommandPalette />
+        <KeyboardShortcutOverlay />
       </GlobalTimerProvider>
     </SessionProvider>
   );

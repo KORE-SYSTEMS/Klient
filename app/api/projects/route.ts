@@ -58,7 +58,47 @@ export async function GET() {
     });
   }
 
-  return NextResponse.json(projects);
+  const projectIds = projects.map((p) => p.id);
+
+  // Enrich each project with a doneTaskCount.
+  // "Done" = task whose status belongs to the highest-order TaskStatus of that project
+  // (the rightmost column = the final/done column in any workflow).
+  // Two extra queries total — not N.
+  let doneCountMap: Record<string, number> = {};
+  if (projectIds.length > 0) {
+    // Get the max-order status id per project
+    const allStatuses = await prisma.taskStatus.findMany({
+      where: { projectId: { in: projectIds } },
+      select: { id: true, projectId: true, order: true },
+      orderBy: { order: "asc" },
+    });
+    // Pick the last status (highest order) per project
+    const lastStatusPerProject: Record<string, string> = {};
+    for (const s of allStatuses) {
+      lastStatusPerProject[s.projectId] = s.id; // later entries overwrite → highest order wins
+    }
+    const lastStatusIds = Object.values(lastStatusPerProject);
+    if (lastStatusIds.length > 0) {
+      const doneCounts = await prisma.task.groupBy({
+        by: ["projectId"],
+        where: { status: { in: lastStatusIds } },
+        _count: { id: true },
+      });
+      for (const row of doneCounts) {
+        doneCountMap[row.projectId] = row._count.id;
+      }
+    }
+  }
+
+  const enriched = projects.map((p) => ({
+    ...p,
+    _count: {
+      ...(p._count as object),
+      doneTasks: doneCountMap[p.id] ?? 0,
+    },
+  }));
+
+  return NextResponse.json(enriched);
 }
 
 export async function POST(request: NextRequest) {

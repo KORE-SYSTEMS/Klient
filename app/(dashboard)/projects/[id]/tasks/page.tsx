@@ -77,14 +77,19 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  AlertCircle,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
 import {
   TimerButton,
   formatDurationShort,
   formatDuration,
 } from "@/components/time-tracker";
 import { useGlobalTimer } from "@/components/global-timer";
+import { useOptimisticTasks } from "@/hooks/use-optimistic-tasks";
+import { toast } from "@/hooks/use-toast";
 
 // --- Types ---
 
@@ -151,11 +156,11 @@ interface TaskFile {
 interface Task {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   status: string;
   priority: string;
   clientVisible: boolean;
-  dueDate?: string;
+  dueDate?: string | null;
   assignee?: { id: string; name: string; email: string } | null;
   assigneeId?: string | null;
   epic?: { id: string; title: string; color: string } | null;
@@ -165,6 +170,8 @@ interface Task {
   timeEntries?: TimeEntryInfo[];
   totalTime?: number;
   activeEntry?: TimeEntryInfo | null;
+  order?: number;
+  [key: string]: unknown;
 }
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -295,12 +302,18 @@ function TaskCard({
 
           {/* Meta row */}
           <div className="flex items-center gap-2 flex-wrap">
-            {task.dueDate && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                {formatDate(task.dueDate)}
-              </span>
-            )}
+            {task.dueDate && (() => {
+              const overdue = new Date(task.dueDate) < new Date();
+              return (
+                <span className={cn(
+                  "flex items-center gap-1 text-[11px]",
+                  overdue ? "text-red-400 font-medium" : "text-muted-foreground"
+                )}>
+                  {overdue ? <AlertCircle className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
+                  {formatDate(task.dueDate)}
+                </span>
+              );
+            })()}
             {totalTime > 0 && !isTimerActive && (
               <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                 <Clock className="h-3 w-3" />
@@ -594,7 +607,7 @@ function TimeEntriesSection({
         </span>
       </div>
       {entries.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Noch keine Zeit erfasst</p>
+        <p className="text-xs text-muted-foreground py-1">Noch keine Zeit erfasst</p>
       ) : (
         <div className="max-h-[200px] space-y-1 overflow-y-auto">
           {entries.map((entry: any) => (
@@ -696,9 +709,19 @@ function CommentsSection({
     <div className="space-y-3">
       <div ref={scrollRef} className="max-h-[250px] space-y-3 overflow-y-auto pr-1">
         {loading ? (
-          <p className="text-xs text-muted-foreground">Lade Kommentare...</p>
+          <div className="space-y-3">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex gap-2.5">
+                <Skeleton className="h-7 w-7 rounded-full flex-shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-12 w-full rounded-sm" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : comments.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4 text-center">Noch keine Kommentare</p>
+          <EmptyState icon={MessageSquare} title="Noch keine Kommentare" compact />
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-2.5">
@@ -811,9 +834,19 @@ function FilesSection({ taskId, isClient, canUpload }: { taskId: string; isClien
         </div>
       )}
       {loading ? (
-        <p className="text-xs text-muted-foreground">Lade Dateien...</p>
+        <div className="space-y-1.5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-lg border px-3 py-2">
+              <Skeleton className="h-4 w-4 rounded" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-36" />
+                <Skeleton className="h-2.5 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : files.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-2 text-center">Keine Dateien</p>
+        <EmptyState icon={Paperclip} title="Noch keine Dateien" compact />
       ) : (
         <div className="space-y-1">
           {files.map((file) => (
@@ -862,8 +895,22 @@ function ActivityTimeline({ taskId, statuses, members }: {
   function getStatusName(id: string) { return statuses.find((s) => s.id === id)?.name || id; }
   function getUserName(id: string) { const m = members.find((m) => m.id === id); return m?.name || m?.email || id; }
 
-  if (loading) return <p className="text-xs text-muted-foreground">Lade Aktivitäten...</p>;
-  if (activities.length === 0) return <p className="text-xs text-muted-foreground py-4 text-center">Keine Aktivitäten</p>;
+  if (loading) return (
+    <div className="space-y-2">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex gap-3 py-2">
+          <div className="flex flex-col items-center">
+            <Skeleton className="h-2 w-2 rounded-full mt-1.5" />
+          </div>
+          <div className="flex-1 space-y-1.5 pb-2">
+            <Skeleton className="h-3 w-48" />
+            <Skeleton className="h-2.5 w-20" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+  if (activities.length === 0) return <EmptyState icon={History} title="Keine Aktivitäten" compact />;
 
   return (
     <div className="max-h-[300px] overflow-y-auto space-y-0">
@@ -1011,6 +1058,13 @@ export default function TasksPage() {
     return () => setOnChange(null);
   }, [setOnChange, fetchTasks]);
 
+  const { optimisticUpdate, optimisticDelete, optimisticCreate, optimisticReorder } =
+    useOptimisticTasks({
+      tasks,
+      setTasks,
+      onError: (msg) => toast({ title: "Fehler", description: msg, variant: "destructive" }),
+    });
+
   // --- Timer ---
   async function handleTimerStart(taskId: string) { await startTimer(taskId); fetchTasks(); }
   function handleTimerStop() { requestStop(); }
@@ -1033,7 +1087,7 @@ export default function TasksPage() {
   async function saveTask(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormSubmitting(true);
-    const body: any = {
+    const patch: any = {
       title: formTitle, description: formDescription || "", priority: formPriority, status: formStatus,
       clientVisible: formClientVisible, dueDate: formDueDate || null,
       assigneeId: formAssigneeId === "none" ? null : formAssigneeId,
@@ -1041,21 +1095,23 @@ export default function TasksPage() {
     };
     try {
       if (editTask) {
-        await fetch(`/api/tasks/${editTask.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        // Close dialog immediately — optimistic update in background
+        setTaskDialogOpen(false);
+        setEditTask(null);
+        await optimisticUpdate(editTask.id, patch);
       } else {
-        body.projectId = projectId;
-        await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        // Create: close dialog, add optimistic placeholder
+        setTaskDialogOpen(false);
+        setEditTask(null);
+        await optimisticCreate({ ...patch, projectId });
       }
-      setTaskDialogOpen(false);
-      setEditTask(null);
-      fetchTasks();
     } finally { setFormSubmitting(false); }
   }
 
   async function deleteTask(id: string) {
-    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
     setTaskDialogOpen(false);
-    fetchTasks();
+    setEditTask(null);
+    await optimisticDelete(id);
   }
 
   // --- Column CRUD ---
@@ -1133,28 +1189,27 @@ export default function TasksPage() {
     const draggedTask = tasks.find((t) => t.id === taskId);
     if (!draggedTask) return;
 
+    // Dropped onto a column header
     const targetColumn = statuses.find((s) => s.id === dragOverId);
     if (targetColumn && draggedTask.status !== targetColumn.id) {
-      setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: targetColumn.id } : t));
-      await fetch(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: targetColumn.id }) });
-      fetchTasks(); return;
+      await optimisticUpdate(taskId, { status: targetColumn.id } as any);
+      return;
     }
 
+    // Dropped onto another task (cross-column or same-column)
     const targetTask = tasks.find((t) => t.id === dragOverId);
     if (targetTask && draggedTask.status !== targetTask.status) {
-      setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: targetTask.status } : t));
-      await fetch(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: targetTask.status }) });
-      fetchTasks(); return;
+      await optimisticUpdate(taskId, { status: targetTask.status } as any);
+      return;
     }
 
     if (targetTask && draggedTask.status === targetTask.status) {
       const columnTasks = tasks.filter((t) => t.status === draggedTask.status);
       const oldIndex = columnTasks.findIndex((t) => t.id === taskId);
       const newIndex = columnTasks.findIndex((t) => t.id === dragOverId);
-      if (oldIndex !== -1 && newIndex !== -1) {
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reordered = arrayMove(columnTasks, oldIndex, newIndex);
-        setTasks((prev) => { const other = prev.filter((t) => t.status !== draggedTask.status); return [...other, ...reordered]; });
-        await fetch(`/api/tasks/${taskId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: newIndex }) });
+        await optimisticReorder(taskId, newIndex, reordered);
       }
     }
   }
@@ -1181,7 +1236,50 @@ export default function TasksPage() {
   function clientCanInteract(task: Task): boolean { return isClient && task.assigneeId === currentUserId; }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-20 text-muted-foreground">Lade Tasks...</div>;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-32 rounded-sm" />
+            <Skeleton className="h-8 w-24 rounded-sm" />
+          </div>
+          <Skeleton className="h-8 w-28 rounded-sm" />
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {Array.from({ length: 4 }).map((_, col) => (
+            <div key={col} className="flex-shrink-0 w-[272px] space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-2 w-2 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-6 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-6 rounded-sm" />
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: col === 0 ? 4 : col === 1 ? 3 : col === 2 ? 5 : 2 }).map((_, i) => (
+                  <div key={i} className="rounded-sm border bg-card p-3 space-y-2.5">
+                    <Skeleton className="h-4 w-full" />
+                    {i % 3 === 0 && <Skeleton className="h-3 w-3/4" />}
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="h-4 w-12 rounded-full" />
+                      {i % 2 === 0 && <Skeleton className="h-4 w-16 rounded-full" />}
+                    </div>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-3 w-6" />
+                      </div>
+                      <Skeleton className="h-5 w-5 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#6b7280"];
@@ -1384,9 +1482,15 @@ export default function TasksPage() {
 
                       {/* Due date */}
                       <div className="w-[100px] shrink-0">
-                        {task.dueDate ? (
-                          <span className="text-xs text-muted-foreground">{formatDate(task.dueDate)}</span>
-                        ) : (
+                        {task.dueDate ? (() => {
+                          const overdue = new Date(task.dueDate) < new Date();
+                          return (
+                            <span className={cn("text-xs flex items-center gap-1", overdue ? "text-red-400 font-medium" : "text-muted-foreground")}>
+                              {overdue && <AlertCircle className="h-3 w-3 shrink-0" />}
+                              {formatDate(task.dueDate)}
+                            </span>
+                          );
+                        })() : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </div>
@@ -1443,9 +1547,22 @@ export default function TasksPage() {
           })}
 
           {tasks.length === 0 && (
-            <div className="py-12 text-center text-muted-foreground">
-              Keine Tasks vorhanden
-            </div>
+            <EmptyState
+              icon={CheckCircle2}
+              title="Noch keine Tasks"
+              description={!isClient ? "Erstelle den ersten Task um loszulegen." : "Noch keine Tasks sichtbar."}
+              action={
+                !isClient && (
+                  <button
+                    onClick={() => openTaskDialog(null)}
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Task erstellen
+                  </button>
+                )
+              }
+            />
           )}
         </div>
       )}
