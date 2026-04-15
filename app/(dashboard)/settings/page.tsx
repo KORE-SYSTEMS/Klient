@@ -159,7 +159,7 @@ export default function SettingsPage() {
     });
     setSaving(false);
     if (res.ok) {
-      toast({ title: "Einstellungen gespeichert" });
+      toast({ title: "Einstellungen gespeichert", variant: "success" });
       router.refresh();
     } else {
       toast({ title: "Fehler beim Speichern", variant: "destructive" });

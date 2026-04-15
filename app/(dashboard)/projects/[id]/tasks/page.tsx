@@ -209,6 +209,68 @@ function getPriorityPillStyle(priority: string) {
   }
 }
 
+// --- Inline title editor (double-click to edit) ---
+
+function InlineTitle({
+  value,
+  onSave,
+  disabled,
+  className,
+  inputClassName,
+}: {
+  value: string;
+  onSave: (title: string) => void;
+  disabled?: boolean;
+  className?: string;
+  inputClassName?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  function handleDoubleClick(e: React.MouseEvent) {
+    if (disabled) return;
+    e.stopPropagation();
+    setDraft(value);
+    setEditing(true);
+  }
+
+  function commit() {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) onSave(trimmed);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        className={cn(
+          "w-full rounded bg-accent/60 px-1 -mx-1 outline-none ring-1 ring-primary/40",
+          inputClassName
+        )}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { e.stopPropagation(); setEditing(false); }
+        }}
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={cn(disabled ? "" : "cursor-text select-text", className)}
+      onDoubleClick={handleDoubleClick}
+      title={disabled ? undefined : "Doppelklick zum Bearbeiten"}
+    >
+      {value}
+    </span>
+  );
+}
+
 // --- Kanban Task Card (Asana-style with color accent) ---
 
 function TaskCard({
@@ -221,6 +283,7 @@ function TaskCard({
   onTimerStop,
   isClient,
   currentUserId,
+  onUpdateTitle,
 }: {
   task: Task;
   onClick: () => void;
@@ -231,6 +294,7 @@ function TaskCard({
   onTimerStop: () => void;
   isClient: boolean;
   currentUserId?: string;
+  onUpdateTitle?: (id: string, title: string) => void;
 }) {
   const isAssignedToClient = isClient && task.assigneeId === currentUserId;
   const isGreyedOut = isClient && !isAssignedToClient;
@@ -262,9 +326,9 @@ function TaskCard({
     >
       <div
         className={cn(
-          "group rounded-lg border bg-card shadow-sm transition-all",
-          !isClient && "cursor-grab hover:shadow-md active:cursor-grabbing",
-          isClient && "cursor-pointer hover:shadow-md",
+          "card-hover group rounded-lg border bg-card shadow-sm",
+          !isClient && "cursor-grab active:cursor-grabbing",
+          isClient && "cursor-pointer",
           isTimerActive && "ring-2 ring-primary/30 border-primary/40",
           isGreyedOut && "opacity-50"
         )}
@@ -290,8 +354,15 @@ function TaskCard({
             </span>
           )}
 
-          {/* Title */}
-          <div className="text-[13px] font-medium leading-snug">{task.title}</div>
+          {/* Title — double-click to edit inline */}
+          <div className="text-[13px] font-medium leading-snug" data-no-click="">
+            <InlineTitle
+              value={task.title}
+              onSave={(t) => onUpdateTitle?.(task.id, t)}
+              disabled={isClient || !onUpdateTitle}
+              inputClassName="text-[13px] font-medium leading-snug"
+            />
+          </div>
 
           {/* Description */}
           {task.description && (
@@ -381,6 +452,7 @@ function KanbanColumn({
   onTimerStart,
   onTimerStop,
   currentUserId,
+  onUpdateTitle,
 }: {
   status: TaskStatus;
   tasks: Task[];
@@ -396,6 +468,7 @@ function KanbanColumn({
   onTimerStart: (taskId: string) => void;
   onTimerStop: () => void;
   currentUserId?: string;
+  onUpdateTitle?: (id: string, title: string) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status.id });
   const columnTotalTime = tasks.reduce((sum, t) => sum + (t.totalTime || 0), 0);
@@ -481,6 +554,7 @@ function KanbanColumn({
                 onTimerStop={onTimerStop}
                 isClient={isClient}
                 currentUserId={currentUserId}
+                onUpdateTitle={onUpdateTitle}
               />
             ))}
           </div>
@@ -1065,6 +1139,11 @@ export default function TasksPage() {
       onError: (msg) => toast({ title: "Fehler", description: msg, variant: "destructive" }),
     });
 
+  // --- Inline title update ---
+  async function handleUpdateTitle(taskId: string, title: string) {
+    await optimisticUpdate(taskId, { title } as any);
+  }
+
   // --- Timer ---
   async function handleTimerStart(taskId: string) { await startTimer(taskId); fetchTasks(); }
   function handleTimerStop() { requestStop(); }
@@ -1377,7 +1456,8 @@ export default function TasksPage() {
                   onTaskClick={(task) => openTaskDialog(task)} onAddTask={(statusId) => openTaskDialog(null, statusId)}
                   onEditColumn={openColumnDialog} onDeleteColumn={deleteColumn} isClient={isClient} statuses={statuses}
                   isOver={overId === status.id} activeTimerTaskId={activeTimer?.taskId || null} timerElapsed={elapsed}
-                  onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} currentUserId={currentUserId} />
+                  onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} currentUserId={currentUserId}
+                  onUpdateTitle={isClient ? undefined : handleUpdateTitle} />
               );
             })}
           </div>

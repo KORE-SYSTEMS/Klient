@@ -456,7 +456,7 @@ function CodeBlock({ code }: { code: string }) {
   async function copy() {
     await navigator.clipboard.writeText(code);
     setCopied(true);
-    toast({ title: "In Zwischenablage kopiert" });
+    toast({ title: "In Zwischenablage kopiert", variant: "success" });
     setTimeout(() => setCopied(false), 1500);
   }
   return (

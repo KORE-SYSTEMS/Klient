@@ -126,7 +126,7 @@ export default function ProfilePage() {
     setSaving(false);
 
     if (res.ok) {
-      toast({ title: "Profil gespeichert" });
+      toast({ title: "Profil gespeichert", variant: "success" });
       const updatedData = await res.json();
       await update({
         name: updatedData.name,

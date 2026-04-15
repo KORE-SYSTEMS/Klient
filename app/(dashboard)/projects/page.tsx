@@ -307,7 +307,7 @@ export default function ProjectsPage() {
                   project.status !== "COMPLETED";
                 return (
                   <Card className={cn(
-                    "group cursor-pointer transition-all hover:border-primary/50",
+                    "card-hover group cursor-pointer hover:border-primary/40",
                     isOverdue && "border-red-500/40"
                   )}>
                     <CardContent className="p-4 space-y-3">

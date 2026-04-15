@@ -19,28 +19,50 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const adminNav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Projekte", href: "/projects", icon: FolderKanban },
-  { label: "Kunden", href: "/clients", icon: Users },
-  { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "Einstellungen", href: "/settings", icon: Settings },
+  {
+    section: "Navigation",
+    items: [
+      { label: "Dashboard",     href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",      href: "/projects",  icon: FolderKanban },
+      { label: "Kunden",        href: "/clients",   icon: Users },
+      { label: "Reports",       href: "/reports",   icon: BarChart3 },
+    ],
+  },
+  {
+    section: "System",
+    items: [
+      { label: "Einstellungen", href: "/settings",  icon: Settings },
+    ],
+  },
 ];
 
 const memberNav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Projekte", href: "/projects", icon: FolderKanban },
-  { label: "Reports", href: "/reports", icon: BarChart3 },
+  {
+    section: "Navigation",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",  href: "/projects",  icon: FolderKanban },
+      { label: "Reports",   href: "/reports",   icon: BarChart3 },
+    ],
+  },
 ];
 
 const clientNav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Projekte", href: "/projects", icon: FolderKanban },
+  {
+    section: "Navigation",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",  href: "/projects",  icon: FolderKanban },
+    ],
+  },
 ];
 
 export function Sidebar({ role, logo }: { role: string; logo?: string | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const nav = role === "CLIENT" ? clientNav : role === "MEMBER" ? memberNav : adminNav;
+
+  const sections =
+    role === "CLIENT" ? clientNav : role === "MEMBER" ? memberNav : adminNav;
 
   return (
     <aside
@@ -49,9 +71,10 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className="flex h-14 items-center border-b px-4">
+      {/* Logo / header */}
+      <div className="flex h-14 items-center border-b px-3">
         {!collapsed && (
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2 flex-1 min-w-0">
             {logo ? (
               <img
                 src={logo}
@@ -73,52 +96,83 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
         <Button
           variant="ghost"
           size="icon"
-          className={cn("ml-auto h-8 w-8", collapsed && "mx-auto")}
+          className={cn(
+            "h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground",
+            collapsed ? "mx-auto" : "ml-auto"
+          )}
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           ) : (
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           )}
         </Button>
       </div>
 
-      <nav className="flex-1 space-y-1 p-2">
-        {nav.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                collapsed && "justify-center px-2"
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
+      {/* Nav sections */}
+      <nav className="flex-1 overflow-y-auto py-3 space-y-4">
+        {sections.map((section) => (
+          <div key={section.section}>
+            {/* Section label */}
+            {!collapsed && (
+              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 select-none">
+                {section.section}
+              </p>
+            )}
+
+            <div className="space-y-0.5 px-2">
+              {section.items.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + "/");
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "relative flex items-center gap-3 rounded-sm py-2 text-sm font-medium transition-colors",
+                      collapsed ? "justify-center px-2" : "px-3",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                    )}
+                  >
+                    {/* Left accent bar for active state */}
+                    {isActive && !collapsed && (
+                      <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-primary" />
+                    )}
+
+                    <item.icon
+                      className={cn(
+                        "shrink-0 transition-colors",
+                        collapsed ? "h-4 w-4" : "h-4 w-4",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
+      {/* Footer */}
       {!collapsed ? (
         <div className="flex items-center justify-between border-t px-4 py-3">
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground/50 font-mono">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <a
               href="https://github.com/KORE-SYSTEMS/Klient"
               target="_blank"
               rel="noopener noreferrer"
               title="GitHub"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
             >
               <Github className="h-3.5 w-3.5" />
             </a>
@@ -127,7 +181,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
               target="_blank"
               rel="noopener noreferrer"
               title="Support on Ko-fi"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-[#FF5E5B]"
+              className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground/60 transition-colors hover:bg-accent hover:text-[#FF5E5B]"
             >
               <Coffee className="h-3.5 w-3.5" />
             </a>
@@ -140,7 +194,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
             target="_blank"
             rel="noopener noreferrer"
             title="GitHub"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
           >
             <Github className="h-3.5 w-3.5" />
           </a>
@@ -149,7 +203,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
             target="_blank"
             rel="noopener noreferrer"
             title="Support on Ko-fi"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-[#FF5E5B]"
+            className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground/60 transition-colors hover:bg-accent hover:text-[#FF5E5B]"
           >
             <Coffee className="h-3.5 w-3.5" />
           </a>
