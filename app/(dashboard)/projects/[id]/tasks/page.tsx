@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -78,6 +79,11 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
+  ClipboardCheck,
+  ThumbsUp,
+  ThumbsDown,
+  Hourglass,
+  Lock,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -98,6 +104,7 @@ interface TaskStatus {
   name: string;
   color: string;
   order: number;
+  isApproval: boolean;
 }
 
 interface Epic {
@@ -171,6 +178,13 @@ interface Task {
   totalTime?: number;
   activeEntry?: TimeEntryInfo | null;
   order?: number;
+  // Approval workflow
+  approvalStatus?: string | null;
+  handoffComment?: string | null;
+  approvalComment?: string | null;
+  approvedAt?: string | null;
+  approvedById?: string | null;
+  _isPreview?: boolean;
   [key: string]: unknown;
 }
 
@@ -196,6 +210,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   COMMENT: "hat kommentiert",
   FILE_UPLOAD: "hat eine Datei hochgeladen",
   TIME_ENTRY: "hat Zeit erfasst",
+  APPROVAL_APPROVED: "hat den Task genehmigt",
+  APPROVAL_REJECTED: "hat den Task abgelehnt",
 };
 
 // --- Priority colors for table pills ---
@@ -207,6 +223,27 @@ function getPriorityPillStyle(priority: string) {
     case "LOW": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
     default: return "bg-muted text-muted-foreground";
   }
+}
+
+// --- Approval status badge ---
+function ApprovalBadge({ status }: { status: string | null | undefined }) {
+  if (!status) return null;
+  if (status === "PENDING") return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning">
+      <Hourglass className="h-2.5 w-2.5" />Abnahme ausstehend
+    </span>
+  );
+  if (status === "APPROVED") return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+      <ThumbsUp className="h-2.5 w-2.5" />Abgenommen
+    </span>
+  );
+  if (status === "REJECTED") return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+      <ThumbsDown className="h-2.5 w-2.5" />Abgelehnt
+    </span>
+  );
+  return null;
 }
 
 // --- Inline title editor (double-click to edit) ---
@@ -317,6 +354,20 @@ function TaskCard({
 
   const totalTime = task.totalTime || 0;
 
+  // Preview card — shown to clients for tasks they can't see details of
+  if (task._isPreview) {
+    return (
+      <div ref={setNodeRef} style={style}>
+        <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2.5 opacity-40 select-none">
+          <div className="flex items-center gap-2">
+            <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <span className="text-[12px] text-muted-foreground truncate">{task.title}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -329,6 +380,9 @@ function TaskCard({
           "card-hover group rounded-lg border bg-card shadow-sm",
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
+          task.approvalStatus === "PENDING" && "border-warning/40",
+          task.approvalStatus === "APPROVED" && "border-success/40",
+          task.approvalStatus === "REJECTED" && "border-destructive/40",
           isTimerActive && "ring-2 ring-primary/30 border-primary/40",
           isGreyedOut && "opacity-50"
         )}
@@ -363,6 +417,11 @@ function TaskCard({
               inputClassName="text-[13px] font-medium leading-snug"
             />
           </div>
+
+          {/* Approval badge */}
+          {task.approvalStatus && (
+            <div><ApprovalBadge status={task.approvalStatus as string} /></div>
+          )}
 
           {/* Description */}
           {task.description && (
@@ -489,6 +548,11 @@ function KanbanColumn({
             <span className="text-sm font-semibold">
               {status.name}
             </span>
+            {status.isApproval && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold text-warning uppercase tracking-wide">
+                <ClipboardCheck className="h-2.5 w-2.5" />Abnahme
+              </span>
+            )}
             <span className="text-xs text-muted-foreground font-medium">
               {tasks.length}
             </span>
@@ -1059,7 +1123,7 @@ export default function TasksPage() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
-  const [members, setMembers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [members, setMembers] = useState<{ id: string; name: string; email: string; role?: string }[]>([]);
 
   const { activeTimer, elapsed, startTimer, requestStop, fetchActive, setOnChange } = useGlobalTimer();
 
@@ -1082,6 +1146,19 @@ export default function TasksPage() {
   const [editColumn, setEditColumn] = useState<TaskStatus | null>(null);
   const [colName, setColName] = useState("");
   const [colColor, setColColor] = useState("#6b7280");
+  const [colIsApproval, setColIsApproval] = useState(false);
+
+  // Handoff dialog (when staff drags task to approval column)
+  const [handoffDialogOpen, setHandoffDialogOpen] = useState(false);
+  const [pendingHandoffTaskId, setPendingHandoffTaskId] = useState<string | null>(null);
+  const [pendingHandoffStatusId, setPendingHandoffStatusId] = useState<string | null>(null);
+  const [handoffMsg, setHandoffMsg] = useState("");
+  const [handoffClientId, setHandoffClientId] = useState("");
+  const [handoffSubmitting, setHandoffSubmitting] = useState(false);
+
+  // Approval submit (client view)
+  const [approvalSubmitting, setApprovalSubmitting] = useState(false);
+  const [approvalComment, setApprovalComment] = useState("");
 
   // Epic dialog
   const [epicDialogOpen, setEpicDialogOpen] = useState(false);
@@ -1150,6 +1227,8 @@ export default function TasksPage() {
 
   // --- Task CRUD ---
   function openTaskDialog(task: Task | null, defaultStatus?: string) {
+    // Preview tasks cannot be opened by clients
+    if (task?._isPreview) return;
     setEditTask(task);
     setFormTitle(task?.title || "");
     setFormDescription(task?.description || "");
@@ -1174,6 +1253,19 @@ export default function TasksPage() {
     };
     try {
       if (editTask) {
+        // Intercept: if status changed to an approval column, show handoff dialog
+        const targetStatus = statuses.find((s) => s.id === formStatus);
+        if (targetStatus?.isApproval && editTask.status !== formStatus && !editTask.approvalStatus) {
+          setTaskDialogOpen(false);
+          setEditTask(null);
+          const clientMembers = members.filter((m) => m.role === "CLIENT");
+          setPendingHandoffTaskId(editTask.id);
+          setPendingHandoffStatusId(formStatus);
+          setHandoffMsg("");
+          setHandoffClientId(clientMembers[0]?.id || "");
+          setHandoffDialogOpen(true);
+          return;
+        }
         // Close dialog immediately — optimistic update in background
         setTaskDialogOpen(false);
         setEditTask(null);
@@ -1195,18 +1287,24 @@ export default function TasksPage() {
 
   // --- Column CRUD ---
   function openColumnDialog(col: TaskStatus | null) {
-    setEditColumn(col); setColName(col?.name || ""); setColColor(col?.color || "#6b7280"); setColumnDialogOpen(true);
+    setEditColumn(col);
+    setColName(col?.name || "");
+    setColColor(col?.color || "#6b7280");
+    setColIsApproval(col?.isApproval ?? false);
+    setColumnDialogOpen(true);
   }
 
   async function saveColumn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (editColumn) {
       await fetch(`/api/projects/${projectId}/statuses/${editColumn.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: colName, color: colColor }),
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: colName, color: colColor, isApproval: colIsApproval }),
       });
     } else {
       await fetch(`/api/projects/${projectId}/statuses`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: colName, color: colColor }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: colName, color: colColor, isApproval: colIsApproval }),
       });
     }
     setColumnDialogOpen(false); setEditColumn(null); fetchStatuses();
@@ -1271,14 +1369,34 @@ export default function TasksPage() {
     // Dropped onto a column header
     const targetColumn = statuses.find((s) => s.id === dragOverId);
     if (targetColumn && draggedTask.status !== targetColumn.id) {
-      await optimisticUpdate(taskId, { status: targetColumn.id } as any);
+      // Intercept: task dropped onto an approval column → show handoff dialog
+      if (targetColumn.isApproval) {
+        const clientMembers = members.filter((m) => m.role === "CLIENT");
+        setPendingHandoffTaskId(taskId);
+        setPendingHandoffStatusId(targetColumn.id);
+        setHandoffMsg("");
+        setHandoffClientId(clientMembers[0]?.id || "");
+        setHandoffDialogOpen(true);
+      } else {
+        await optimisticUpdate(taskId, { status: targetColumn.id } as any);
+      }
       return;
     }
 
     // Dropped onto another task (cross-column or same-column)
     const targetTask = tasks.find((t) => t.id === dragOverId);
     if (targetTask && draggedTask.status !== targetTask.status) {
-      await optimisticUpdate(taskId, { status: targetTask.status } as any);
+      const destColumn = statuses.find((s) => s.id === targetTask.status);
+      if (destColumn?.isApproval) {
+        const clientMembers = members.filter((m) => m.role === "CLIENT");
+        setPendingHandoffTaskId(taskId);
+        setPendingHandoffStatusId(targetTask.status);
+        setHandoffMsg("");
+        setHandoffClientId(clientMembers[0]?.id || "");
+        setHandoffDialogOpen(true);
+      } else {
+        await optimisticUpdate(taskId, { status: targetTask.status } as any);
+      }
       return;
     }
 
@@ -1290,6 +1408,63 @@ export default function TasksPage() {
         const reordered = arrayMove(columnTasks, oldIndex, newIndex);
         await optimisticReorder(taskId, newIndex, reordered);
       }
+    }
+  }
+
+  // --- Handoff confirmation (staff sends task to client for approval) ---
+  async function confirmHandoff() {
+    if (!pendingHandoffTaskId || !pendingHandoffStatusId || !handoffMsg.trim()) return;
+    setHandoffSubmitting(true);
+    try {
+      const res = await fetch(`/api/tasks/${pendingHandoffTaskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: pendingHandoffStatusId,
+          handoffComment: handoffMsg.trim(),
+          assigneeId: handoffClientId || null,
+          approvalStatus: "PENDING",
+          clientVisible: true,
+        }),
+      });
+      if (res.ok) {
+        await fetchTasks();
+        setHandoffDialogOpen(false);
+        setPendingHandoffTaskId(null);
+        setPendingHandoffStatusId(null);
+        setHandoffMsg("");
+        toast({ title: "Übergabe gesendet", description: "Der Kunde kann den Task jetzt einsehen und abnehmen.", variant: "success" });
+      }
+    } finally {
+      setHandoffSubmitting(false);
+    }
+  }
+
+  // --- Client approval submit ---
+  async function submitApproval(decision: "APPROVED" | "REJECTED") {
+    if (!editTask) return;
+    setApprovalSubmitting(true);
+    try {
+      const res = await fetch(`/api/tasks/${editTask.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, comment: approvalComment.trim() || undefined }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTasks((prev) => prev.map((t) => (t.id === editTask.id ? { ...t, ...updated } : t)));
+        setEditTask((prev) => prev ? { ...prev, ...updated } : prev);
+        setApprovalComment("");
+        toast({
+          title: decision === "APPROVED" ? "Task genehmigt ✓" : "Task abgelehnt",
+          description: decision === "APPROVED"
+            ? "Das Team wurde benachrichtigt."
+            : "Das Team wurde über die Ablehnung informiert.",
+          variant: decision === "APPROVED" ? "success" : "destructive",
+        });
+      }
+    } finally {
+      setApprovalSubmitting(false);
     }
   }
 
@@ -1730,6 +1905,74 @@ export default function TasksPage() {
                 </div>
                 <div className="border-t pt-3"><TimeEntriesSection taskId={editTask.id} onUpdate={fetchTasks} isClient={isClient} /></div>
               </div>
+
+              {/* ── Handoff comment (shown to client when task is in approval) ── */}
+              {editTask.handoffComment && (
+                <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-warning flex items-center gap-1.5">
+                    <ClipboardCheck className="h-3 w-3" />Übergabe-Nachricht vom Team
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">{editTask.handoffComment}</p>
+                </div>
+              )}
+
+              {/* ── Approval action (only if PENDING and assigned to this client) ── */}
+              {editTask.approvalStatus === "PENDING" && editTask.assigneeId === currentUserId && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Deine Abnahme
+                  </p>
+                  <Textarea
+                    value={approvalComment}
+                    onChange={(e) => setApprovalComment(e.target.value)}
+                    placeholder="Optionaler Kommentar zur Abnahme oder Ablehnung…"
+                    rows={2}
+                    className="resize-none text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                      onClick={() => submitApproval("APPROVED")}
+                      disabled={approvalSubmitting}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" />Genehmigen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1 gap-2"
+                      onClick={() => submitApproval("REJECTED")}
+                      disabled={approvalSubmitting}
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5" />Ablehnen
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Approved/Rejected result ── */}
+              {(editTask.approvalStatus === "APPROVED" || editTask.approvalStatus === "REJECTED") && (
+                <div className={cn(
+                  "rounded-lg border p-3 space-y-1.5",
+                  editTask.approvalStatus === "APPROVED"
+                    ? "border-success/30 bg-success/5"
+                    : "border-destructive/30 bg-destructive/5"
+                )}>
+                  <p className={cn(
+                    "text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5",
+                    editTask.approvalStatus === "APPROVED" ? "text-success" : "text-destructive"
+                  )}>
+                    {editTask.approvalStatus === "APPROVED"
+                      ? <><ThumbsUp className="h-3 w-3" />Abgenommen</>
+                      : <><ThumbsDown className="h-3 w-3" />Abgelehnt</>
+                    }
+                  </p>
+                  {editTask.approvalComment && (
+                    <p className="text-sm whitespace-pre-wrap">{editTask.approvalComment}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -1816,6 +2059,34 @@ export default function TasksPage() {
                 <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
               </div>
               {editTask && <div className="border-t pt-4"><TimeEntriesSection taskId={editTask.id} onUpdate={fetchTasks} isClient={isClient} /></div>}
+
+              {/* Approval status panel visible to staff */}
+              {editTask?.approvalStatus && (
+                <div className={cn(
+                  "rounded-lg border p-3 space-y-2",
+                  editTask.approvalStatus === "PENDING" && "border-warning/30 bg-warning/5",
+                  editTask.approvalStatus === "APPROVED" && "border-success/30 bg-success/5",
+                  editTask.approvalStatus === "REJECTED" && "border-destructive/30 bg-destructive/5"
+                )}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5 text-muted-foreground">
+                    <ClipboardCheck className="h-3 w-3" />Abnahme-Status
+                  </p>
+                  <ApprovalBadge status={editTask.approvalStatus as string} />
+                  {editTask.handoffComment && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">Übergabe-Nachricht</p>
+                      <p className="text-xs whitespace-pre-wrap">{editTask.handoffComment}</p>
+                    </div>
+                  )}
+                  {editTask.approvalComment && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">Kunden-Kommentar</p>
+                      <p className="text-xs whitespace-pre-wrap">{editTask.approvalComment}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Verknüpfungen sind vorübergehend ausgeblendet */}
               <DialogFooter>
                 {editTask && <Button type="button" variant="destructive" onClick={() => deleteTask(editTask.id)}>Löschen</Button>}
@@ -1856,8 +2127,84 @@ export default function TasksPage() {
                 ))}
               </div>
             </div>
+            {/* Approval toggle */}
+            <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <ClipboardCheck className="h-3.5 w-3.5 text-warning" />
+                  Abnahme-Spalte
+                </Label>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Tasks müssen vom Kunden genehmigt werden, bevor sie in diese Spalte verschoben werden können.
+                </p>
+              </div>
+              <Switch checked={colIsApproval} onCheckedChange={setColIsApproval} />
+            </div>
             <DialogFooter><Button type="submit" disabled={!colName.trim()}>{editColumn ? "Speichern" : "Erstellen"}</Button></DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Handoff Dialog — shown when staff moves task to approval column */}
+      <Dialog open={handoffDialogOpen} onOpenChange={(o) => { if (!handoffSubmitting) setHandoffDialogOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4 text-warning" />
+              Übergabe an Kunden
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-1">
+            <p className="text-sm text-muted-foreground">
+              Schreibe eine Nachricht an den Kunden und weise den Task zu. Der Kunde erhält eine Benachrichtigung und kann den Task dann genehmigen oder ablehnen.
+            </p>
+
+            {/* Client selector */}
+            {members.filter((m) => m.role === "CLIENT").length > 0 && (
+              <div className="space-y-2">
+                <Label>Kunden auswählen</Label>
+                <select
+                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  value={handoffClientId}
+                  onChange={(e) => setHandoffClientId(e.target.value)}
+                >
+                  <option value="">— Kein Kunde zuweisen —</option>
+                  {members.filter((m) => m.role === "CLIENT").map((m) => (
+                    <option key={m.id} value={m.id}>{m.name || m.email}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Handoff message */}
+            <div className="space-y-2">
+              <Label>
+                Übergabe-Nachricht <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                value={handoffMsg}
+                onChange={(e) => setHandoffMsg(e.target.value)}
+                placeholder="Was wurde umgesetzt? Was soll der Kunde prüfen? Gibt es besondere Hinweise?"
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setHandoffDialogOpen(false)} disabled={handoffSubmitting}>
+                Abbrechen
+              </Button>
+              <Button
+                onClick={confirmHandoff}
+                disabled={handoffSubmitting || !handoffMsg.trim()}
+                className="gap-2"
+              >
+                {handoffSubmitting && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+                <ClipboardCheck className="h-4 w-4" />
+                Übergabe starten
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

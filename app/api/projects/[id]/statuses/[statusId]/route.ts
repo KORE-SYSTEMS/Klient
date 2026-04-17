@@ -27,6 +27,7 @@ export async function PATCH(
     if (body.name !== undefined) updateData.name = body.name;
     if (body.color !== undefined) updateData.color = body.color;
     if (body.order !== undefined) updateData.order = body.order;
+    if (body.isApproval !== undefined) updateData.isApproval = body.isApproval;
 
     const status = await prisma.taskStatus.update({
       where: { id: statusId },

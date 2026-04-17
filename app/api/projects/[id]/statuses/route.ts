@@ -88,6 +88,7 @@ export async function POST(
         name,
         color: color || "#6b7280",
         order: (maxOrder?.order ?? -1) + 1,
+        isApproval: body.isApproval ?? false,
         projectId,
       },
     });

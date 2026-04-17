@@ -28,7 +28,8 @@ export async function PATCH(
   }
 
   if (role === "CLIENT") {
-    if (!task.clientVisible) {
+    const isApprovalTask = task.approvalStatus === "PENDING" && task.assigneeId === userId;
+    if (!task.clientVisible && !isApprovalTask) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
@@ -38,8 +39,7 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
 
     if (role === "CLIENT") {
-      // Clients can NOT change status via drag or any other field
-      // They can only interact via comments and file uploads
+      // Clients can only interact via comments and file uploads — not direct field edits
       return NextResponse.json({ error: "Clients cannot edit tasks" }, { status: 403 });
     } else {
       if (body.title !== undefined) updateData.title = body.title;
@@ -51,6 +51,12 @@ export async function PATCH(
       if (body.assigneeId !== undefined) updateData.assigneeId = body.assigneeId || null;
       if (body.order !== undefined) updateData.order = body.order;
       if (body.epicId !== undefined) updateData.epicId = body.epicId || null;
+      // Approval workflow fields (set by staff during handoff)
+      if (body.approvalStatus !== undefined) updateData.approvalStatus = body.approvalStatus;
+      if (body.handoffComment !== undefined) updateData.handoffComment = body.handoffComment;
+      if (body.approvalComment !== undefined) updateData.approvalComment = body.approvalComment;
+      if (body.approvedAt !== undefined) updateData.approvedAt = body.approvedAt ? new Date(body.approvedAt) : null;
+      if (body.approvedById !== undefined) updateData.approvedById = body.approvedById || null;
     }
 
     const updated = await prisma.task.update({

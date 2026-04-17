@@ -27,10 +27,7 @@ export async function GET(request: NextRequest) {
   const isClient = role === "CLIENT";
 
   const tasks = await prisma.task.findMany({
-    where: {
-      projectId,
-      ...(isClient ? { clientVisible: true } : {}),
-    },
+    where: { projectId },
     include: {
       assignee: { select: { id: true, name: true, email: true, image: true } },
       epic: { select: { id: true, title: true, color: true } },
@@ -56,11 +53,30 @@ export async function GET(request: NextRequest) {
   const tasksWithTime = tasks.map((task) => {
     const totalTime = task.timeEntries.reduce((sum, e) => {
       if (e.stoppedAt) return sum + e.duration;
-      // For running entries, calc live duration
       return sum + Math.floor((Date.now() - new Date(e.startedAt).getTime()) / 1000);
     }, 0);
     const activeEntry = task.timeEntries.find((e) => !e.stoppedAt) || null;
-    return { ...task, totalTime, activeEntry };
+
+    if (isClient) {
+      // Full visibility: explicitly client-visible OR pending approval assigned to this client
+      const isFullVisible =
+        task.clientVisible ||
+        (task.approvalStatus === "PENDING" && task.assigneeId === userId);
+
+      if (!isFullVisible) {
+        // Preview: only structural data — no sensitive details
+        return {
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          priority: task.priority,
+          order: task.order,
+          _isPreview: true,
+        };
+      }
+    }
+
+    return { ...task, totalTime, activeEntry, _isPreview: false };
   });
 
   return NextResponse.json(tasksWithTime);
