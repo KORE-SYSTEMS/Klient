@@ -86,6 +86,7 @@ model Project {
   status      String          @default("PLANNING")
   color       String?
   dueDate     DateTime?
+  archived    Boolean         @default(false)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   members     ProjectMember[]
@@ -95,6 +96,7 @@ model Project {
   files       File[]
   updates     Update[]
   messages    Message[]
+  invoices    Invoice[]
 }
 
 model ProjectMember {
@@ -176,11 +178,12 @@ model TimeEntry {
   taskId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
-  description String?
-  startedAt   DateTime  @default(now())
-  stoppedAt   DateTime?
-  duration    Int       @default(0) // in seconds, computed on stop
-  createdAt   DateTime  @default(now())
+  description   String?
+  startedAt     DateTime      @default(now())
+  stoppedAt     DateTime?
+  duration      Int           @default(0) // in seconds, computed on stop
+  createdAt     DateTime      @default(now())
+  invoiceItems  InvoiceItem[]
 }
 
 model File {
@@ -245,6 +248,36 @@ model TaskActivity {
   newValue  String?
   metadata  String?  // JSON for extra info
   createdAt DateTime @default(now())
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  number      String        // e.g. "2024-001"
+  title       String
+  status      String        @default("DRAFT") // DRAFT | SENT | PAID | CANCELLED
+  dueDate     DateTime?
+  issuedAt    DateTime      @default(now())
+  paidAt      DateTime?
+  notes       String?
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  items       InvoiceItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  unit        String   @default("Std.") // Std., Stk., Pauschal, etc.
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId   String
+  timeEntry   TimeEntry? @relation(fields: [timeEntryId], references: [id], onDelete: SetNull)
+  timeEntryId String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
 }
 
 model Workspace {

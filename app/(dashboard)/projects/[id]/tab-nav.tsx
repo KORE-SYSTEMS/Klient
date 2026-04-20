@@ -9,19 +9,26 @@ import {
   FileIcon,
   Bell,
   MessageSquare,
+  Receipt,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
-const tabs = [
-  { label: "Übersicht", href: "", icon: LayoutDashboard },
-  { label: "Tasks", href: "/tasks", icon: CheckSquare },
-  { label: "Dateien", href: "/files", icon: FileIcon },
-  { label: "Updates", href: "/updates", icon: Bell },
-  { label: "Chat", href: "/chat", icon: MessageSquare },
+const allTabs = [
+  { label: "Übersicht",  href: "",          icon: LayoutDashboard, staffOnly: false },
+  { label: "Tasks",      href: "/tasks",    icon: CheckSquare,     staffOnly: false },
+  { label: "Dateien",    href: "/files",    icon: FileIcon,        staffOnly: false },
+  { label: "Updates",    href: "/updates",  icon: Bell,            staffOnly: false },
+  { label: "Chat",       href: "/chat",     icon: MessageSquare,   staffOnly: false },
+  { label: "Rechnungen", href: "/invoices", icon: Receipt,         staffOnly: true  },
 ];
 
 export function ProjectTabNav({ projectId }: { projectId: string }) {
   const pathname = usePathname();
   const base = `/projects/${projectId}`;
+  const { data: session } = useSession();
+  const isClient = session?.user?.role === "CLIENT";
+
+  const tabs = allTabs.filter((t) => !t.staffOnly || !isClient);
 
   return (
     <nav className="flex gap-1 border-b overflow-x-auto scrollbar-none">

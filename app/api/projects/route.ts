@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember } from "@/lib/auth-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await requireAuth();
   if (session instanceof NextResponse) return session;
 
   const userId = session.user.id;
   const role = session.user.role;
 
+  const { searchParams } = new URL(request.url);
+  const includeArchived = searchParams.get("includeArchived") === "true";
+
+  // Base archived filter — unless explicitly requested, hide archived projects
+  const archivedFilter = includeArchived ? {} : { archived: false };
+
   let projects;
 
   if (role === "ADMIN") {
     // Admins see all projects
     projects = await prisma.project.findMany({
+      where: { ...archivedFilter },
       include: {
         members: {
           include: { user: { select: { id: true, name: true, email: true, role: true, image: true } } },
@@ -27,6 +34,7 @@ export async function GET() {
     projects = await prisma.project.findMany({
       where: {
         members: { some: { userId } },
+        ...archivedFilter,
       },
       include: {
         members: {
@@ -37,10 +45,11 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
   } else {
-    // Clients only see their own projects
+    // Clients only see their own (non-archived) projects
     projects = await prisma.project.findMany({
       where: {
         members: { some: { userId } },
+        ...archivedFilter,
       },
       include: {
         members: {

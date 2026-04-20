@@ -69,14 +69,15 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const { name, description, status, color, dueDate, memberIds } = body;
+    const { name, description, status, color, dueDate, memberIds, archived } = body;
 
     const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
+    if (name !== undefined)     updateData.name        = name;
     if (description !== undefined) updateData.description = description;
-    if (status !== undefined) updateData.status = status;
-    if (color !== undefined) updateData.color = color;
-    if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (status !== undefined)   updateData.status      = status;
+    if (color !== undefined)    updateData.color       = color;
+    if (dueDate !== undefined)  updateData.dueDate     = dueDate ? new Date(dueDate) : null;
+    if (archived !== undefined) updateData.archived    = archived;
 
     // If memberIds provided, replace all members
     if (memberIds !== undefined) {

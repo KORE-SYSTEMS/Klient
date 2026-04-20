@@ -13,6 +13,7 @@ import {
   Github,
   Coffee,
   BarChart3,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,17 @@ const adminNav = [
   {
     section: "Navigation",
     items: [
-      { label: "Dashboard",     href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",      href: "/projects",  icon: FolderKanban },
-      { label: "Kunden",        href: "/clients",   icon: Users },
-      { label: "Reports",       href: "/reports",   icon: BarChart3 },
+      { label: "Dashboard",    href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",     href: "/projects",  icon: FolderKanban },
+      { label: "Meine Tasks",  href: "/tasks",     icon: CheckSquare },
+      { label: "Kunden",       href: "/clients",   icon: Users },
+      { label: "Reports",      href: "/reports",   icon: BarChart3 },
     ],
   },
   {
     section: "System",
     items: [
-      { label: "Einstellungen", href: "/settings",  icon: Settings },
+      { label: "Einstellungen", href: "/settings", icon: Settings },
     ],
   },
 ];
@@ -40,9 +42,10 @@ const memberNav = [
   {
     section: "Navigation",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",  href: "/projects",  icon: FolderKanban },
-      { label: "Reports",   href: "/reports",   icon: BarChart3 },
+      { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",    href: "/projects",  icon: FolderKanban },
+      { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
+      { label: "Reports",     href: "/reports",   icon: BarChart3 },
     ],
   },
 ];
@@ -51,8 +54,9 @@ const clientNav = [
   {
     section: "Navigation",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",  href: "/projects",  icon: FolderKanban },
+      { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
+      { label: "Projekte",    href: "/projects",  icon: FolderKanban },
+      { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
     ],
   },
 ];

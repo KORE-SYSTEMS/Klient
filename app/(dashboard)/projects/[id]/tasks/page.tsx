@@ -84,6 +84,10 @@ import {
   ThumbsDown,
   Hourglass,
   Lock,
+  Filter,
+  Search,
+  Users,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1176,6 +1180,14 @@ export default function TasksPage() {
   // List view: collapsed status groups
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
+  // --- Filter bar ---
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterSearch, setFilterSearch] = useState("");
+  const [filterAssignees, setFilterAssignees] = useState<string[]>([]);
+  const [filterPriorities, setFilterPriorities] = useState<string[]>([]);
+  const [filterEpicId, setFilterEpicId] = useState<string>("");
+  const [filterDue, setFilterDue] = useState<"" | "overdue" | "today" | "week" | "none">("");
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
@@ -1470,13 +1482,74 @@ export default function TasksPage() {
 
   const activeTask = tasks.find((t) => t.id === activeId);
 
+  // --- Filter helpers ---
+  const activeFilterCount =
+    (filterSearch ? 1 : 0) +
+    filterAssignees.length +
+    filterPriorities.length +
+    (filterEpicId ? 1 : 0) +
+    (filterDue ? 1 : 0);
+
+  function clearFilters() {
+    setFilterSearch("");
+    setFilterAssignees([]);
+    setFilterPriorities([]);
+    setFilterEpicId("");
+    setFilterDue("");
+  }
+
+  function toggleAssigneeFilter(id: string) {
+    setFilterAssignees((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  function togglePriorityFilter(p: string) {
+    setFilterPriorities((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  }
+
+  // --- Filtered tasks (client-side) ---
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (filterSearch) {
+        const q = filterSearch.toLowerCase();
+        if (!task.title.toLowerCase().includes(q) && !(task.description || "").toLowerCase().includes(q)) return false;
+      }
+      if (filterAssignees.length > 0 && !filterAssignees.includes(task.assigneeId || "")) return false;
+      if (filterPriorities.length > 0 && !filterPriorities.includes(task.priority)) return false;
+      if (filterEpicId && task.epicId !== filterEpicId) return false;
+      if (filterDue) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today.getTime() + 86400000);
+        const weekEnd = new Date(today.getTime() + 7 * 86400000);
+        if (filterDue === "overdue") {
+          if (!task.dueDate || new Date(task.dueDate) >= today) return false;
+        } else if (filterDue === "today") {
+          if (!task.dueDate) return false;
+          const d = new Date(task.dueDate);
+          if (d < today || d >= tomorrow) return false;
+        } else if (filterDue === "week") {
+          if (!task.dueDate) return false;
+          const d = new Date(task.dueDate);
+          if (d < today || d >= weekEnd) return false;
+        } else if (filterDue === "none") {
+          if (task.dueDate) return false;
+        }
+      }
+      return true;
+    });
+  }, [tasks, filterSearch, filterAssignees, filterPriorities, filterEpicId, filterDue]);
+
   // --- Grouped data for list view (by status like Asana) ---
   const statusGroups = useMemo(() => {
     return statuses.map((status) => ({
       status,
-      tasks: tasks.filter((t) => t.status === status.id),
+      tasks: filteredTasks.filter((t) => t.status === status.id),
     }));
-  }, [tasks, statuses]);
+  }, [filteredTasks, statuses]);
 
   function toggleGroupCollapse(statusId: string) {
     setCollapsedGroups((prev) => {
@@ -1604,20 +1677,245 @@ export default function TasksPage() {
           )}
         </div>
 
-        {!isClient && (
-          <div className="flex items-center gap-2">
-            {view === "kanban" && (
-              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => openColumnDialog(null)}>
-                <Plus className="mr-1.5 h-4 w-4" />Spalte
-              </Button>
+        <div className="flex items-center gap-2">
+          {/* Filter toggle */}
+          <Button
+            variant={filterOpen || activeFilterCount > 0 ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 gap-1.5 text-muted-foreground data-[active=true]:text-foreground"
+            data-active={filterOpen || activeFilterCount > 0}
+            onClick={() => setFilterOpen((v) => !v)}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filter
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {activeFilterCount}
+              </span>
             )}
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => openTaskDialog(null)}>
-              <Plus className="h-4 w-4" />
-              Task hinzufügen
-            </Button>
-          </div>
-        )}
+          </Button>
+
+          {!isClient && (
+            <>
+              {view === "kanban" && (
+                <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => openColumnDialog(null)}>
+                  <Plus className="mr-1.5 h-4 w-4" />Spalte
+                </Button>
+              )}
+              <Button size="sm" className="h-8 gap-1.5" onClick={() => openTaskDialog(null)}>
+                <Plus className="h-4 w-4" />
+                Task hinzufügen
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* ===== Filter Bar ===== */}
+      {filterOpen && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+          {/* Search */}
+          <div className="relative shrink-0">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Suchen..."
+              value={filterSearch}
+              onChange={(e) => setFilterSearch(e.target.value)}
+              className="h-7 pl-8 w-44 text-xs"
+            />
+            {filterSearch && (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setFilterSearch("")}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Assignee multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={filterAssignees.length > 0 ? "secondary" : "outline"}
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+              >
+                <Users className="h-3.5 w-3.5" />
+                {filterAssignees.length > 0
+                  ? filterAssignees.length === 1
+                    ? (members.find((m) => m.id === filterAssignees[0])?.name || "1 Person")
+                    : `${filterAssignees.length} Personen`
+                  : "Zugewiesen"}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              {members.map((m) => (
+                <DropdownMenuItem
+                  key={m.id}
+                  className="flex items-center gap-2"
+                  onClick={() => toggleAssigneeFilter(m.id)}
+                >
+                  <div className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                    filterAssignees.includes(m.id) ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
+                  )}>
+                    {filterAssignees.includes(m.id) && <CheckCircle2 className="h-3 w-3" />}
+                  </div>
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-[8px]">{getInitials(m.name || m.email)}</AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{m.name || m.email}</span>
+                </DropdownMenuItem>
+              ))}
+              {filterAssignees.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setFilterAssignees([])}>
+                    <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Priority multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={filterPriorities.length > 0 ? "secondary" : "outline"}
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+              >
+                <Filter className="h-3.5 w-3.5" />
+                {filterPriorities.length > 0
+                  ? filterPriorities.length === 1
+                    ? PRIORITY_LABELS[filterPriorities[0]]
+                    : `${filterPriorities.length} Prioritäten`
+                  : "Priorität"}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              {PRIORITIES.map((p) => (
+                <DropdownMenuItem
+                  key={p}
+                  className="flex items-center gap-2"
+                  onClick={() => togglePriorityFilter(p)}
+                >
+                  <div className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                    filterPriorities.includes(p) ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
+                  )}>
+                    {filterPriorities.includes(p) && <CheckCircle2 className="h-3 w-3" />}
+                  </div>
+                  <span className={cn("text-xs font-medium", getPriorityColor(p))}>
+                    {PRIORITY_LABELS[p]}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              {filterPriorities.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setFilterPriorities([])}>
+                    <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Epic filter */}
+          {epics.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={filterEpicId ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                  {filterEpicId
+                    ? (epics.find((e) => e.id === filterEpicId)?.title || "Epic")
+                    : "Epic"}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                {epics.map((epic) => (
+                  <DropdownMenuItem
+                    key={epic.id}
+                    className="flex items-center gap-2"
+                    onClick={() => setFilterEpicId(filterEpicId === epic.id ? "" : epic.id)}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: epic.color }}
+                    />
+                    <span className="truncate">{epic.title}</span>
+                    {filterEpicId === epic.id && <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                {filterEpicId && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setFilterEpicId("")}>
+                      <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Due date quick filters */}
+          <div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
+            {([
+              { value: "", label: "Alle" },
+              { value: "overdue", label: "Überfällig" },
+              { value: "today", label: "Heute" },
+              { value: "week", label: "Diese Woche" },
+              { value: "none", label: "Kein Datum" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setFilterDue(opt.value)}
+                className={cn(
+                  "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  filterDue === opt.value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Clear all — shown when any filter is active */}
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground ml-auto"
+              onClick={clearFilters}
+            >
+              <X className="mr-1 h-3 w-3" />
+              Alle zurücksetzen
+            </Button>
+          )}
+
+          {/* Active count */}
+          {activeFilterCount > 0 && (
+            <span className="text-xs text-muted-foreground shrink-0">
+              {filteredTasks.length} von {tasks.length} Tasks
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Kanban View */}
       {view === "kanban" ? (
@@ -1625,7 +1923,7 @@ export default function TasksPage() {
           onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {statuses.map((status) => {
-              const colTasks = tasks.filter((t) => t.status === status.id);
+              const colTasks = filteredTasks.filter((t) => t.status === status.id);
               return (
                 <KanbanColumn key={status.id} status={status} tasks={colTasks}
                   onTaskClick={(task) => openTaskDialog(task)} onAddTask={(statusId) => openTaskDialog(null, statusId)}
