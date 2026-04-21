@@ -58,14 +58,19 @@ export async function PATCH(
       wasStopped = true;
     }
 
-    // Manual duration override
+    // Manual edits: duration, startedAt, description
     if (body.duration !== undefined) {
-      updateData.duration = body.duration;
-      duration = body.duration;
+      updateData.duration = Number(body.duration);
+      duration = Number(body.duration);
     }
-
+    if (body.startedAt !== undefined) {
+      updateData.startedAt = new Date(body.startedAt);
+    }
+    if (body.stoppedAt !== undefined) {
+      updateData.stoppedAt = body.stoppedAt ? new Date(body.stoppedAt) : null;
+    }
     if (body.description !== undefined) {
-      updateData.description = body.description;
+      updateData.description = body.description || null;
     }
 
     const updated = await prisma.timeEntry.update({

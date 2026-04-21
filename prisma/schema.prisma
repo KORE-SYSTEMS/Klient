@@ -16,6 +16,14 @@ model User {
   image          String?
   company        String?
   active         Boolean         @default(true)
+  // CRM fields
+  phone          String?
+  website        String?
+  address        String?
+  leadStatus     String?         // LEAD | PROSPECT | QUALIFIED | PROPOSAL | WON | LOST
+  leadValue      Float?
+  leadSource     String?
+  tags           String?         // JSON array of tag strings
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   projects       ProjectMember[]
@@ -28,6 +36,34 @@ model User {
   taskActivities TaskActivity[]
   notifications  Notification[]
   notificationSettings NotificationSettings?
+  clientNotes      ClientNote[]     @relation("clientNotes")
+  clientActivities ClientActivity[] @relation("clientActivities")
+}
+
+model ClientNote {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String
+  pinned    Boolean  @default(false)
+  client    User     @relation("clientNotes", fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientActivity {
+  id          String   @id @default(cuid())
+  type        String   // CALL | EMAIL | MEETING | DEMO | PROPOSAL | OTHER
+  title       String
+  description String?
+  date        DateTime @default(now())
+  duration    Int?     // minutes
+  outcome     String?  // POSITIVE | NEUTRAL | NEGATIVE
+  client      User     @relation("clientActivities", fields: [clientId], references: [id], onDelete: Cascade)
+  clientId    String
+  authorId    String
+  createdAt   DateTime @default(now())
 }
 
 model Notification {

@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import {
@@ -312,6 +313,19 @@ function InlineTitle({
   );
 }
 
+// Positions the DragOverlay center under the cursor regardless of where the card was grabbed
+const snapCenterToCursor = ({ activatorEvent, draggingNodeRect, transform }: Parameters<import("@dnd-kit/core").Modifier>[0]) => {
+  if (draggingNodeRect && activatorEvent && "clientX" in activatorEvent) {
+    const ev = activatorEvent as PointerEvent;
+    return {
+      ...transform,
+      x: transform.x + draggingNodeRect.width / 2 - (ev.clientX - draggingNodeRect.left),
+      y: transform.y + draggingNodeRect.height / 2 - (ev.clientY - draggingNodeRect.top),
+    };
+  }
+  return transform;
+};
+
 // --- Kanban Task Card (Asana-style with color accent) ---
 
 function TaskCard({
@@ -448,7 +462,7 @@ function TaskCard({
                 </span>
               );
             })()}
-            {totalTime > 0 && !isTimerActive && (
+            {totalTime > 0 && (
               <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 {formatDurationShort(totalTime)}
@@ -645,61 +659,107 @@ function KanbanColumn({
 
 // --- Time Entries Section ---
 
-function TimeEntryRow({ entry, isClient, onDelete }: { entry: any; isClient: boolean; onDelete: (id: string) => void }) {
-  const [expanded, setExpanded] = useState(false);
+function TimeEntryRow({
+  entry,
+  isClient,
+  onDelete,
+  onSave,
+}: {
+  entry: any;
+  isClient: boolean;
+  onDelete: (id: string) => void;
+  onSave: (id: string, data: { hours: number; minutes: number; date: string; description: string }) => void;
+}) {
+  const [editing, setEditing] = useState(false);
   const isRunning = !entry.stoppedAt;
   const startDate = new Date(entry.startedAt);
-  const hasDescription = !!entry.description?.trim();
+
+  const initHours = Math.floor(entry.duration / 3600);
+  const initMinutes = Math.floor((entry.duration % 3600) / 60);
+  const initDate = startDate.toISOString().slice(0, 10);
+
+  const [editHours, setEditHours] = useState(initHours);
+  const [editMinutes, setEditMinutes] = useState(initMinutes);
+  const [editDate, setEditDate] = useState(initDate);
+  const [editDesc, setEditDesc] = useState(entry.description ?? "");
+
+  if (editing) {
+    return (
+      <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5 text-xs">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Datum</Label>
+            <DatePicker value={editDate} onChange={setEditDate} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Dauer</Label>
+            <div className="flex items-center gap-1">
+              <Input type="number" min={0} max={99} value={editHours}
+                onChange={(e) => setEditHours(Number(e.target.value))}
+                className="h-9 w-14 text-center text-sm" />
+              <span className="text-muted-foreground text-xs">h</span>
+              <Input type="number" min={0} max={59} value={editMinutes}
+                onChange={(e) => setEditMinutes(Number(e.target.value))}
+                className="h-9 w-14 text-center text-sm" />
+              <span className="text-muted-foreground text-xs">min</span>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Beschreibung</Label>
+          <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
+            className="h-8 text-sm" placeholder="Optionale Notiz" />
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" className="h-7 text-xs px-3" onClick={() => {
+            onSave(entry.id, { hours: editHours, minutes: editMinutes, date: editDate, description: editDesc });
+            setEditing(false);
+          }}>Speichern</Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs px-3" onClick={() => setEditing(false)}>Abbrechen</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
-      "rounded-lg border px-3 py-2 text-xs",
+      "group flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition-colors",
       isRunning && "border-primary/30 bg-primary/5"
     )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          {isRunning && (
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-          )}
-          <span className="text-muted-foreground shrink-0">
-            {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
-            {" "}
-            {startDate.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+      <div className="flex items-center gap-2 min-w-0">
+        {isRunning && (
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
           </span>
-          {entry.user && (
-            <span className="text-muted-foreground truncate">- {entry.user.name || entry.user.email}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="font-mono font-medium tabular-nums">
-            {isRunning ? "läuft..." : formatDuration(entry.duration)}
-          </span>
-          {!isRunning && !isClient && (
+        )}
+        <span className="text-muted-foreground shrink-0">
+          {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+        </span>
+        {entry.user && (
+          <span className="text-muted-foreground truncate">– {entry.user.name || entry.user.email}</span>
+        )}
+        {entry.description && (
+          <span className="text-muted-foreground/60 truncate italic">{entry.description}</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="font-mono font-semibold tabular-nums">
+          {isRunning ? "läuft…" : formatDuration(entry.duration)}
+        </span>
+        {!isRunning && !isClient && (
+          <>
+            <button type="button" onClick={() => setEditing(true)}
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all">
+              <Pencil className="h-3 w-3" />
+            </button>
             <button type="button" onClick={() => onDelete(entry.id)}
-              className="text-muted-foreground transition-colors hover:text-destructive">
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
               <X className="h-3 w-3" />
             </button>
-          )}
-        </div>
+          </>
+        )}
       </div>
-      {hasDescription && (
-        <div className="mt-1.5 pl-0.5">
-          {expanded ? (
-            <p className="text-[11px] text-muted-foreground whitespace-pre-wrap">{entry.description}</p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground truncate">{entry.description}</p>
-          )}
-          {entry.description.length > 80 && (
-            <button type="button" onClick={() => setExpanded(!expanded)}
-              className="text-[10px] text-primary hover:underline mt-0.5">
-              {expanded ? "weniger anzeigen" : "mehr anzeigen"}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -715,6 +775,14 @@ function TimeEntriesSection({
 }) {
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [addDate, setAddDate] = useState(todayStr);
+  const [addHours, setAddHours] = useState(0);
+  const [addMinutes, setAddMinutes] = useState(30);
+  const [addDesc, setAddDesc] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchEntries = useCallback(async () => {
     const res = await fetch(`/api/time-entries?taskId=${taskId}`);
@@ -726,6 +794,49 @@ function TimeEntriesSection({
 
   async function deleteEntry(id: string) {
     await fetch(`/api/time-entries/${id}`, { method: "DELETE" });
+    fetchEntries();
+    onUpdate();
+  }
+
+  async function saveEdit(id: string, data: { hours: number; minutes: number; date: string; description: string }) {
+    const durationSec = data.hours * 3600 + data.minutes * 60;
+    const startedAt = new Date(data.date + "T12:00:00");
+    const stoppedAt = new Date(startedAt.getTime() + durationSec * 1000);
+    await fetch(`/api/time-entries/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        startedAt: startedAt.toISOString(),
+        stoppedAt: stoppedAt.toISOString(),
+        duration: durationSec,
+        description: data.description,
+      }),
+    });
+    fetchEntries();
+    onUpdate();
+  }
+
+  async function addManualEntry() {
+    const durationSec = addHours * 3600 + addMinutes * 60;
+    if (durationSec === 0) return;
+    setSaving(true);
+    await fetch("/api/time-entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        taskId,
+        manual: true,
+        startedAt: new Date(addDate + "T12:00:00").toISOString(),
+        duration: durationSec,
+        description: addDesc.trim() || null,
+      }),
+    });
+    setSaving(false);
+    setAdding(false);
+    setAddDate(todayStr);
+    setAddHours(0);
+    setAddMinutes(30);
+    setAddDesc("");
     fetchEntries();
     onUpdate();
   }
@@ -743,17 +854,64 @@ function TimeEntriesSection({
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Zeiterfassung
         </Label>
-        <span className="flex items-center gap-1.5 text-xs font-medium">
-          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-          {formatDuration(totalSeconds)} gesamt
-        </span>
+        <div className="flex items-center gap-3">
+          {totalSeconds > 0 && (
+            <span className="flex items-center gap-1.5 text-xs font-medium">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              {formatDuration(totalSeconds)} gesamt
+            </span>
+          )}
+          {!isClient && (
+            <button type="button" onClick={() => setAdding(!adding)}
+              className="flex items-center gap-1 text-xs text-primary hover:underline">
+              <Plus className="h-3 w-3" />Zeit hinzufügen
+            </button>
+          )}
+        </div>
       </div>
-      {entries.length === 0 ? (
+
+      {/* Manual add form */}
+      {adding && !isClient && (
+        <div className="rounded-lg border bg-muted/20 p-3 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Datum</Label>
+              <DatePicker value={addDate} onChange={setAddDate} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Dauer</Label>
+              <div className="flex items-center gap-1">
+                <Input type="number" min={0} max={99} value={addHours}
+                  onChange={(e) => setAddHours(Number(e.target.value))}
+                  className="h-9 w-14 text-center text-sm" />
+                <span className="text-muted-foreground text-xs">h</span>
+                <Input type="number" min={0} max={59} value={addMinutes}
+                  onChange={(e) => setAddMinutes(Number(e.target.value))}
+                  className="h-9 w-14 text-center text-sm" />
+                <span className="text-muted-foreground text-xs">min</span>
+              </div>
+            </div>
+          </div>
+          <Input value={addDesc} onChange={(e) => setAddDesc(e.target.value)}
+            className="h-8 text-sm" placeholder="Beschreibung (optional)" />
+          <div className="flex gap-2">
+            <Button size="sm" className="h-7 text-xs px-3"
+              disabled={saving || (addHours === 0 && addMinutes === 0)}
+              onClick={addManualEntry}>
+              {saving ? "…" : "Eintragen"}
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs px-3" onClick={() => setAdding(false)}>Abbrechen</Button>
+          </div>
+        </div>
+      )}
+
+      {entries.length === 0 && !adding ? (
         <p className="text-xs text-muted-foreground py-1">Noch keine Zeit erfasst</p>
       ) : (
-        <div className="max-h-[200px] space-y-1 overflow-y-auto">
+        <div className="max-h-[220px] space-y-1 overflow-y-auto">
           {entries.map((entry: any) => (
-            <TimeEntryRow key={entry.id} entry={entry} isClient={isClient} onDelete={deleteEntry} />
+            <TimeEntryRow key={entry.id} entry={entry} isClient={isClient}
+              onDelete={deleteEntry} onSave={saveEdit} />
           ))}
         </div>
       )}
@@ -1480,6 +1638,41 @@ export default function TasksPage() {
     }
   }
 
+  // Team-side action: after a rejection, resubmit the task to the client for
+  // another round of review. Clears the previous decision metadata and
+  // notifies the client.
+  async function resubmitApproval() {
+    if (!editTask) return;
+    setApprovalSubmitting(true);
+    try {
+      const res = await fetch(`/api/tasks/${editTask.id}/resubmit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: approvalComment.trim() || undefined }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTasks((prev) => prev.map((t) => (t.id === editTask.id ? { ...t, ...updated } : t)));
+        setEditTask((prev) => prev ? { ...prev, ...updated } : prev);
+        setApprovalComment("");
+        toast({
+          title: "Erneut zur Abnahme gesendet",
+          description: "Der Kunde wurde benachrichtigt.",
+          variant: "success",
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast({
+          title: "Konnte nicht erneut einreichen",
+          description: err.error || "Bitte erneut versuchen.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setApprovalSubmitting(false);
+    }
+  }
+
   const activeTask = tasks.find((t) => t.id === activeId);
 
   // --- Filter helpers ---
@@ -1934,7 +2127,7 @@ export default function TasksPage() {
               );
             })}
           </div>
-          <DragOverlay>
+          <DragOverlay modifiers={[snapCenterToCursor]}>
             {activeTask && (
               <div className="w-[280px] rotate-2 rounded-lg border bg-card p-3 shadow-2xl">
                 <div className="space-y-2">
@@ -2005,7 +2198,7 @@ export default function TasksPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
-                            {totalTime > 0 && !isTimerActive && (
+                            {totalTime > 0 && (
                               <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
                                 <Clock className="h-3 w-3" />{formatDurationShort(totalTime)}
                               </span>
@@ -2335,8 +2528,8 @@ export default function TasksPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="dueDate">Fällig am</Label>
-                  <Input id="dueDate" type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} />
+                  <Label>Fällig am</Label>
+                  <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
                 </div>
                 <div className="space-y-2">
                   <Label>Zugewiesen an</Label>
@@ -2380,6 +2573,27 @@ export default function TasksPage() {
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Kunden-Kommentar</p>
                       <p className="text-xs whitespace-pre-wrap">{editTask.approvalComment}</p>
+                    </div>
+                  )}
+                  {/* Team can resubmit after a rejection */}
+                  {editTask.approvalStatus === "REJECTED" && (
+                    <div className="space-y-2 pt-1">
+                      <Textarea
+                        placeholder="Kurze Notiz zu den Änderungen (optional)"
+                        value={approvalComment}
+                        onChange={(e) => setApprovalComment(e.target.value)}
+                        rows={2}
+                        className="text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={resubmitApproval}
+                        disabled={approvalSubmitting}
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Erneut zur Abnahme einreichen
+                      </Button>
                     </div>
                   )}
                 </div>

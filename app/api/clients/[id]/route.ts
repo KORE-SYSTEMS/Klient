@@ -21,6 +21,13 @@ export async function GET(
       company: true,
       image: true,
       active: true,
+      phone: true,
+      website: true,
+      address: true,
+      leadStatus: true,
+      leadValue: true,
+      leadSource: true,
+      tags: true,
       createdAt: true,
       updatedAt: true,
       projects: {
@@ -32,7 +39,11 @@ export async function GET(
               status: true,
               description: true,
               dueDate: true,
+              color: true,
               createdAt: true,
+              invoices: {
+                select: { id: true, status: true, items: { select: { quantity: true, unitPrice: true } } },
+              },
             },
           },
         },
@@ -74,6 +85,13 @@ export async function PATCH(
     if (body.company !== undefined) updateData.company = body.company;
     if (body.image !== undefined) updateData.image = body.image;
     if (body.active !== undefined) updateData.active = body.active;
+    if (body.phone !== undefined) updateData.phone = body.phone || null;
+    if (body.website !== undefined) updateData.website = body.website || null;
+    if (body.address !== undefined) updateData.address = body.address || null;
+    if (body.leadStatus !== undefined) updateData.leadStatus = body.leadStatus || null;
+    if (body.leadValue !== undefined) updateData.leadValue = body.leadValue ? Number(body.leadValue) : null;
+    if (body.leadSource !== undefined) updateData.leadSource = body.leadSource || null;
+    if (body.tags !== undefined) updateData.tags = JSON.stringify(body.tags);
 
     const updated = await prisma.user.update({
       where: { id },

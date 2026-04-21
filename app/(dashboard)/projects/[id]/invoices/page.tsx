@@ -44,11 +44,16 @@ import {
   Euro,
   FileText,
   AlertCircle,
+  FolderKanban,
+  Layers,
+  Check,
+  Import,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { DatePicker } from "@/components/ui/date-picker";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,6 +135,68 @@ export default function InvoicesPage() {
   const [formDueDate, setFormDueDate] = useState("");
   const [formNotes,   setFormNotes]   = useState("");
   const [formItems,   setFormItems]   = useState<InvoiceItem[]>([EMPTY_ITEM()]);
+
+  // Task/Epic import state
+  const [importOpen, setImportOpen] = useState(false);
+  const [importTasks, setImportTasks] = useState<any[]>([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [importMode, setImportMode] = useState<"task" | "epic">("task");
+
+  async function loadImportTasks() {
+    setImportLoading(true);
+    const res = await fetch(`/api/tasks?projectId=${projectId}`);
+    if (res.ok) {
+      const all = await res.json();
+      setImportTasks(all.filter((t: any) => !t._isPreview && (t.totalTime ?? 0) > 0));
+    }
+    setImportLoading(false);
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function applyImport() {
+    const chosen = importTasks.filter((t) => selectedIds.has(t.id));
+    let newItems: InvoiceItem[];
+
+    if (importMode === "epic") {
+      // Group by epic, one item per epic
+      const epicMap = new Map<string, { label: string; seconds: number }>();
+      for (const t of chosen) {
+        const key = t.epic?.id ?? "__none__";
+        const label = t.epic?.title ?? "Ohne Epic";
+        const ex = epicMap.get(key);
+        epicMap.set(key, { label, seconds: (ex?.seconds ?? 0) + (t.totalTime ?? 0) });
+      }
+      newItems = Array.from(epicMap.values()).map(({ label, seconds }) => ({
+        description: label,
+        quantity: Math.round((seconds / 3600) * 100) / 100,
+        unitPrice: 0,
+        unit: "Std.",
+      }));
+    } else {
+      // One item per task
+      newItems = chosen.map((t) => ({
+        description: t.title,
+        quantity: Math.round(((t.totalTime ?? 0) / 3600) * 100) / 100,
+        unitPrice: 0,
+        unit: "Std.",
+      }));
+    }
+
+    setFormItems((prev) => {
+      const existing = prev.filter((i) => i.description.trim());
+      return [...(existing.length ? existing : []), ...newItems];
+    });
+    setImportOpen(false);
+    setSelectedIds(new Set());
+  }
 
   const fetchInvoices = useCallback(async () => {
     const res = await fetch(`/api/invoices?projectId=${projectId}`);
@@ -480,13 +547,8 @@ export default function InvoicesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="inv-due">Fälligkeitsdatum</Label>
-                <Input
-                  id="inv-due"
-                  type="date"
-                  value={formDueDate}
-                  onChange={(e) => setFormDueDate(e.target.value)}
-                />
+                <Label>Fälligkeitsdatum</Label>
+                <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
               </div>
             </div>
 
@@ -494,10 +556,92 @@ export default function InvoicesPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Positionen</Label>
-                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={addItem}>
-                  <Plus className="mr-1 h-3.5 w-3.5" />Position hinzufügen
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1"
+                    onClick={() => { setImportOpen(!importOpen); if (!importOpen) loadImportTasks(); }}>
+                    <Import className="h-3.5 w-3.5" />Aus Aufgaben
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={addItem}>
+                    <Plus className="mr-1 h-3.5 w-3.5" />Position
+                  </Button>
+                </div>
               </div>
+
+              {/* Task/Epic import panel */}
+              {importOpen && (
+                <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Aufgaben mit erfasster Zeit
+                    </p>
+                    {/* Mode toggle */}
+                    <div className="flex items-center rounded-md border overflow-hidden text-xs">
+                      <button type="button"
+                        onClick={() => setImportMode("task")}
+                        className={cn("flex items-center gap-1 px-2.5 py-1 transition-colors",
+                          importMode === "task" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                        <FolderKanban className="h-3 w-3" />Aufgaben
+                      </button>
+                      <button type="button"
+                        onClick={() => setImportMode("epic")}
+                        className={cn("flex items-center gap-1 px-2.5 py-1 transition-colors",
+                          importMode === "epic" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}>
+                        <Layers className="h-3 w-3" />Epics
+                      </button>
+                    </div>
+                  </div>
+
+                  {importLoading ? (
+                    <p className="text-xs text-muted-foreground">Lade Aufgaben…</p>
+                  ) : importTasks.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Keine Aufgaben mit erfasster Zeit gefunden.</p>
+                  ) : (
+                    <div className="max-h-[200px] space-y-1 overflow-y-auto">
+                      {importTasks.map((task: any) => {
+                        const hours = Math.floor((task.totalTime ?? 0) / 3600);
+                        const mins = Math.floor(((task.totalTime ?? 0) % 3600) / 60);
+                        const isSelected = selectedIds.has(task.id);
+                        return (
+                          <label key={task.id}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-md px-2.5 py-2 cursor-pointer transition-colors",
+                              isSelected ? "bg-primary/10" : "hover:bg-accent"
+                            )}>
+                            <input type="checkbox" checked={isSelected}
+                              onChange={() => toggleSelect(task.id)}
+                              className="h-3.5 w-3.5 rounded accent-primary" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{task.title}</p>
+                              {task.epic && (
+                                <p className="text-[10px] text-muted-foreground">{task.epic.title}</p>
+                              )}
+                            </div>
+                            <span className="text-xs font-mono font-semibold text-muted-foreground shrink-0">
+                              {hours}h {mins > 0 ? `${mins}min` : ""}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2 border-t pt-2">
+                    <span className="text-[11px] text-muted-foreground">
+                      {selectedIds.size} ausgewählt · Zeit wird als Menge (Std.) übernommen
+                    </span>
+                    <div className="flex gap-1.5">
+                      <Button type="button" size="sm" variant="ghost" className="h-7 text-xs"
+                        onClick={() => { setImportOpen(false); setSelectedIds(new Set()); }}>
+                        Abbrechen
+                      </Button>
+                      <Button type="button" size="sm" className="h-7 text-xs gap-1"
+                        disabled={selectedIds.size === 0} onClick={applyImport}>
+                        <Check className="h-3.5 w-3.5" />Übernehmen
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Items header */}
               <div className="hidden sm:grid sm:grid-cols-[1fr_80px_100px_80px_30px] gap-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

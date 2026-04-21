@@ -52,26 +52,31 @@ export async function PATCH(
     updateData.paidAt = new Date();
   }
 
-  // Replace all items if provided
-  if (Array.isArray(body.items)) {
-    await prisma.invoiceItem.deleteMany({ where: { invoiceId: id } });
-    await prisma.invoiceItem.createMany({
-      data: body.items.map((item: any, i: number) => ({
-        invoiceId:   id,
-        description: item.description,
-        quantity:    item.quantity  ?? 1,
-        unitPrice:   item.unitPrice ?? 0,
-        unit:        item.unit      ?? "Std.",
-        order:       i,
-        timeEntryId: item.timeEntryId || null,
-      })),
-    });
-  }
+  // Items replace + field update must be atomic: if the update fails after
+  // delete, the old items would be lost. Wrap in a single transaction.
+  const updated = await prisma.$transaction(async (tx) => {
+    if (Array.isArray(body.items)) {
+      await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
+      if (body.items.length > 0) {
+        await tx.invoiceItem.createMany({
+          data: body.items.map((item: any, i: number) => ({
+            invoiceId:   id,
+            description: item.description,
+            quantity:    item.quantity  ?? 1,
+            unitPrice:   item.unitPrice ?? 0,
+            unit:        item.unit      ?? "Std.",
+            order:       i,
+            timeEntryId: item.timeEntryId || null,
+          })),
+        });
+      }
+    }
 
-  const updated = await prisma.invoice.update({
-    where: { id },
-    data: updateData,
-    include: invoiceInclude,
+    return tx.invoice.update({
+      where: { id },
+      data: updateData,
+      include: invoiceInclude,
+    });
   });
 
   return NextResponse.json(updated);

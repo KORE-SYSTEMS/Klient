@@ -104,11 +104,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Resolve a valid default status if none provided.
+    // Task.status is a loose string reference to TaskStatus.id — using the
+    // hardcoded "BACKLOG" breaks for projects whose statuses are project-scoped.
+    let resolvedStatus: string = status;
+    if (!resolvedStatus) {
+      const first = await prisma.taskStatus.findFirst({
+        where: { projectId },
+        orderBy: { order: "asc" },
+        select: { id: true },
+      });
+      resolvedStatus = first?.id ?? "BACKLOG";
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
         description,
-        status: status || "BACKLOG",
+        status: resolvedStatus,
         priority: priority || "MEDIUM",
         clientVisible: clientVisible ?? false,
         dueDate: dueDate ? new Date(dueDate) : undefined,

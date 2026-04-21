@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember } from "@/lib/auth-guard";
 
+// Default task statuses that are seeded when a new project is created.
+// Keep in sync with app/api/projects/[id]/statuses/route.ts
+const DEFAULT_STATUSES = [
+  { id: "BACKLOG",     name: "Backlog",   color: "#6b7280", order: 0 },
+  { id: "TODO",        name: "To Do",     color: "#3b82f6", order: 1 },
+  { id: "IN_PROGRESS", name: "In Arbeit", color: "#f97316", order: 2 },
+  { id: "IN_REVIEW",   name: "In Review", color: "#eab308", order: 3 },
+  { id: "DONE",        name: "Erledigt",  color: "#10b981", order: 4 },
+];
+
 export async function GET(request: NextRequest) {
   const session = await requireAuth();
   if (session instanceof NextResponse) return session;
@@ -122,29 +132,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Project name is required" }, { status: 400 });
     }
 
-    const project = await prisma.project.create({
-      data: {
-        name,
-        description,
-        status: status || undefined,
-        color,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
-        members: {
-          create: [
-            // Add the creator as a member
-            { userId: session.user.id },
-            // Add any additional members
-            ...(memberIds || [])
-              .filter((id: string) => id !== session.user.id)
-              .map((id: string) => ({ userId: id })),
-          ],
+    // Create project + default statuses atomically, so every new project is
+    // immediately usable and `task.status` references (which store TaskStatus IDs)
+    // always resolve to a real row.
+    const project = await prisma.$transaction(async (tx) => {
+      const created = await tx.project.create({
+        data: {
+          name,
+          description,
+          status: status || undefined,
+          color,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          members: {
+            create: [
+              // Add the creator as a member
+              { userId: session.user.id },
+              // Add any additional members
+              ...(memberIds || [])
+                .filter((id: string) => id !== session.user.id)
+                .map((id: string) => ({ userId: id })),
+            ],
+          },
         },
-      },
-      include: {
-        members: {
-          include: { user: { select: { id: true, name: true, email: true, role: true, image: true } } },
+        include: {
+          members: {
+            include: { user: { select: { id: true, name: true, email: true, role: true, image: true } } },
+          },
         },
-      },
+      });
+
+      // Seed the default 5-column workflow. Status IDs are globally namespaced
+      // with the project ID to keep them unique across projects.
+      await tx.taskStatus.createMany({
+        data: DEFAULT_STATUSES.map((s) => ({
+          ...s,
+          id: `${created.id}_${s.id}`,
+          projectId: created.id,
+        })),
+      });
+
+      return created;
     });
 
     return NextResponse.json(project, { status: 201 });
