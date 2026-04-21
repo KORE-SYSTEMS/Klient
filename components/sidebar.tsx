@@ -260,11 +260,11 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                               className={cn(
                                 "flex items-center gap-2.5 rounded-sm py-1.5 pl-4 pr-3 text-[13px] font-medium transition-colors border-l-2",
                                 isActive
-                                  ? "border-primary text-primary bg-primary/5"
+                                  ? "border-foreground/25 text-foreground bg-accent"
                                   : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
                               )}
                             >
-                              <child.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+                              <child.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-foreground/80" : "text-muted-foreground")} />
                               <span>{child.label}</span>
                             </Link>
                           );

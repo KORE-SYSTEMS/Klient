@@ -33,8 +33,6 @@ import {
   Trash2,
   Pin,
   PinOff,
-  Phone as PhoneIcon,
-  Mail as MailIcon,
   Users,
   Handshake,
   Presentation,
@@ -103,8 +101,8 @@ interface Client {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const ACTIVITY_TYPES = [
-  { value: "CALL",     label: "Anruf",     icon: PhoneIcon },
-  { value: "EMAIL",    label: "E-Mail",    icon: MailIcon },
+  { value: "CALL",     label: "Anruf",     icon: Phone },
+  { value: "EMAIL",    label: "E-Mail",    icon: Mail },
   { value: "MEETING",  label: "Meeting",   icon: Users },
   { value: "DEMO",     label: "Demo",      icon: Presentation },
   { value: "PROPOSAL", label: "Angebot",   icon: Handshake },

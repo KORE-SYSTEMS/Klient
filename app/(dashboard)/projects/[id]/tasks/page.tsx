@@ -313,18 +313,6 @@ function InlineTitle({
   );
 }
 
-// Positions the DragOverlay center under the cursor regardless of where the card was grabbed
-const snapCenterToCursor = ({ activatorEvent, draggingNodeRect, transform }: Parameters<import("@dnd-kit/core").Modifier>[0]) => {
-  if (draggingNodeRect && activatorEvent && "clientX" in activatorEvent) {
-    const ev = activatorEvent as PointerEvent;
-    return {
-      ...transform,
-      x: transform.x + draggingNodeRect.width / 2 - (ev.clientX - draggingNodeRect.left),
-      y: transform.y + draggingNodeRect.height / 2 - (ev.clientY - draggingNodeRect.top),
-    };
-  }
-  return transform;
-};
 
 // --- Kanban Task Card (Asana-style with color accent) ---
 
@@ -2127,7 +2115,7 @@ export default function TasksPage() {
               );
             })}
           </div>
-          <DragOverlay modifiers={[snapCenterToCursor]}>
+          <DragOverlay>
             {activeTask && (
               <div className="w-[280px] rotate-2 rounded-lg border bg-card p-3 shadow-2xl">
                 <div className="space-y-2">
