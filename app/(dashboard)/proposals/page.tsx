@@ -476,7 +476,7 @@ export default function ProposalsPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const validTaxRates = [...new Set([...TAX_RATES, parseInt(formTaxRate, 10)])].sort((a, b) => a - b);
+  const validTaxRates = Array.from(new Set([...TAX_RATES, parseInt(formTaxRate, 10)])).sort((a, b) => a - b);
   const nettoPreview  = calcNetto(formItems.filter((i) => i.description.trim()));
   const taxPreview    = nettoPreview * parseInt(formTaxRate, 10) / 100;
   const bruttoPreview = nettoPreview + taxPreview;

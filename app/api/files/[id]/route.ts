@@ -70,9 +70,43 @@ export async function PATCH(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
+  const userId = session.user.id;
+  const role = session.user.role;
+
+  if (role !== "ADMIN") {
+    const hasAccess = await requireProjectAccess(file.projectId, userId);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  const data: {
+    clientVisible?: boolean;
+    name?: string;
+    folderId?: string | null;
+  } = {};
+
+  if (body.clientVisible !== undefined) data.clientVisible = body.clientVisible;
+  if (body.name !== undefined) {
+    const trimmed = String(body.name).trim();
+    if (!trimmed) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+    data.name = trimmed;
+  }
+  if ("folderId" in body) {
+    data.folderId = body.folderId ?? null;
+  }
+
   const updated = await prisma.file.update({
     where: { id },
-    data: { clientVisible: body.clientVisible },
+    data,
+    include: {
+      uploadedBy: { select: { id: true, name: true, email: true } },
+      versions: {
+        orderBy: { version: "desc" },
+        take: 1,
+        select: { version: true },
+      },
+    },
   });
 
   return NextResponse.json(updated);

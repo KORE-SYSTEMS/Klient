@@ -24,15 +24,36 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const where: any = { projectId };
+  const folderId = searchParams.get("folderId");
+
+  const where: {
+    projectId: string;
+    clientVisible?: boolean;
+    folderId?: string | null;
+  } = { projectId };
+
   if (role === "CLIENT") {
     where.clientVisible = true;
   }
+
+  if (folderId !== null) {
+    if (folderId === "root") {
+      where.folderId = null;
+    } else {
+      where.folderId = folderId;
+    }
+  }
+  // If no folderId param: return all files in project (backwards compat)
 
   const files = await prisma.file.findMany({
     where,
     include: {
       uploadedBy: { select: { id: true, name: true, email: true } },
+      versions: {
+        orderBy: { version: "desc" },
+        take: 1,
+        select: { version: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -66,6 +87,7 @@ export async function POST(request: NextRequest) {
     const uploadDir = path.join(process.cwd(), "uploads", projectId);
     await mkdir(uploadDir, { recursive: true });
 
+    const folderIdValue = formData.get("folderId") as string | null;
     const results = [];
 
     for (const file of fileEntries) {
@@ -87,9 +109,15 @@ export async function POST(request: NextRequest) {
           clientVisible: false,
           projectId,
           uploadedById: userId,
+          folderId: folderIdValue || null,
         },
         include: {
           uploadedBy: { select: { id: true, name: true, email: true } },
+          versions: {
+            orderBy: { version: "desc" },
+            take: 1,
+            select: { version: true },
+          },
         },
       });
 

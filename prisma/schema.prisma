@@ -39,6 +39,7 @@ model User {
   clientNotes      ClientNote[]     @relation("clientNotes")
   clientActivities ClientActivity[] @relation("clientActivities")
   proposals        Proposal[]       @relation("clientProposals")
+  fileVersions     FileVersion[]    @relation("fileVersionUploader")
 }
 
 model ClientNote {
@@ -133,6 +134,7 @@ model Project {
   statuses    TaskStatus[]
   epics       Epic[]
   files       File[]
+  folders     FileFolder[]
   updates     Update[]
   messages    Message[]
   invoices    Invoice[]
@@ -226,20 +228,51 @@ model TimeEntry {
   invoiceItems  InvoiceItem[]
 }
 
+model FileFolder {
+  id          String       @id @default(cuid())
+  name        String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  parent      FileFolder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId    String?
+  children    FileFolder[] @relation("FolderTree")
+  files       File[]
+  createdById String
+  createdAt   DateTime     @default(now())
+}
+
 model File {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String
   path          String
   size          Int
   mimeType      String
-  clientVisible Boolean  @default(false)
-  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  clientVisible Boolean     @default(false)
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId     String
-  task          Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  folder        FileFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  folderId      String?
+  task          Task?       @relation(fields: [taskId], references: [id], onDelete: SetNull)
   taskId        String?
-  uploadedBy    User     @relation("uploadedBy", fields: [uploadedById], references: [id])
+  uploadedBy    User        @relation("uploadedBy", fields: [uploadedById], references: [id])
   uploadedById  String
-  createdAt     DateTime @default(now())
+  versions      FileVersion[]
+  createdAt     DateTime    @default(now())
+}
+
+model FileVersion {
+  id           String   @id @default(cuid())
+  file         File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId       String
+  version      Int
+  path         String
+  size         Int
+  note         String?
+  uploadedBy   User     @relation("fileVersionUploader", fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@unique([fileId, version])
 }
 
 model Update {
