@@ -58,10 +58,9 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Better focus rings */
+  /* Remove browser default focus outlines — shadcn/ui components handle their own */
   :focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
+    outline: none;
   }
 }
 

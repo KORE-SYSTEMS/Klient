@@ -461,14 +461,9 @@ export default function GlobalInvoicesPage() {
       {/* Header */}
       <div className="border-b bg-card px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-              <Receipt className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold">Rechnungen</h1>
-              <p className="text-xs text-muted-foreground">Alle Rechnungen im Überblick</p>
-            </div>
+          <div>
+            <h1 className="font-heading text-2xl font-bold tracking-tight">Rechnungen</h1>
+            <p className="text-sm text-muted-foreground">Alle Rechnungen im Überblick</p>
           </div>
           {!isReadOnly && (
             <Button size="sm" className="gap-2" onClick={openNew}>

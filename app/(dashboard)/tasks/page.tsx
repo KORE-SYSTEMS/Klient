@@ -200,10 +200,7 @@ export default function MyTasksPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CheckSquare className="h-6 w-6 text-primary" />
-            Meine Tasks
-          </h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Meine Tasks</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {filteredTasks.length} {filteredTasks.length === 1 ? "Task" : "Tasks"} zugewiesen
           </p>
