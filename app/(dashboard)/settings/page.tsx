@@ -172,7 +172,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold tracking-tight">Einstellungen</h1>
-        <p className="text-muted-foreground">Workspace, Updates und SMTP konfigurieren</p>
+        <p className="text-muted-foreground">Workspace und Updates konfigurieren</p>
       </div>
 
       {/* Version & Updates */}
@@ -331,102 +331,6 @@ export default function SettingsPage() {
                 value={settings.primaryColor}
                 onChange={(c) => setSettings({ ...settings, primaryColor: c })}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">SMTP / E-Mail</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>SMTP Host</Label>
-                <Input
-                  value={settings.smtpHost || ""}
-                  onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
-                  placeholder="smtp.example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>SMTP Port</Label>
-                <Input
-                  type="number"
-                  value={settings.smtpPort}
-                  onChange={(e) => setSettings({ ...settings, smtpPort: parseInt(e.target.value) || 587 })}
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>SMTP Benutzer</Label>
-                <Input
-                  value={settings.smtpUser || ""}
-                  onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>SMTP Passwort</Label>
-                <Input
-                  type="password"
-                  value={settings.smtpPass || ""}
-                  onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Absender-Adresse</Label>
-              <Input
-                type="email"
-                value={settings.smtpFrom || ""}
-                onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
-                placeholder="noreply@yourdomain.com"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">E-Mail Einladungsvorlage</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Wird automatisch versendet, wenn SMTP konfiguriert ist. Verfügbare Platzhalter:
-              {" "}<code className="bg-muted px-1 rounded text-xs">&#123;&#123;inviteLink&#125;&#125;</code>{" "}
-              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;name&#125;&#125;</code>{" "}
-              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;workspace&#125;&#125;</code>{" "}
-              <code className="bg-muted px-1 rounded text-xs">&#123;&#123;primaryColor&#125;&#125;</code>
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Betreff</Label>
-              <Input
-                value={settings.inviteEmailSubject || ""}
-                onChange={(e) => setSettings({ ...settings, inviteEmailSubject: e.target.value })}
-                placeholder="Du wurdest eingeladen – {{workspace}}"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>HTML-Template</Label>
-              <div className="relative">
-                <textarea
-                  value={settings.inviteEmailTemplate || ""}
-                  onChange={(e) => setSettings({ ...settings, inviteEmailTemplate: e.target.value })}
-                  rows={16}
-                  placeholder="Leer lassen für das Standard-Template..."
-                  className="w-full rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
-                />
-              </div>
-              {settings.inviteEmailTemplate && (
-                <button
-                  type="button"
-                  onClick={() => setSettings({ ...settings, inviteEmailTemplate: "" })}
-                  className="text-xs text-muted-foreground hover:text-destructive"
-                >
-                  Zurücksetzen auf Standard-Template
-                </button>
-              )}
             </div>
           </CardContent>
         </Card>

@@ -242,10 +242,6 @@ export default async function DashboardPage() {
                       {task.title}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span
-                        className="inline-block h-1.5 w-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: task.project.color || "#6b7280" }}
-                      />
                       <span className="text-[11px] text-muted-foreground truncate">{task.project.name}</span>
                       {task.epic && (
                         <span
@@ -312,10 +308,6 @@ export default async function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className="inline-block h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: task.project.color || "#6b7280" }}
-                        />
                         <span className="text-[11px] text-muted-foreground">{task.project.name}</span>
                       </div>
                     </div>
@@ -364,10 +356,6 @@ export default async function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className="inline-block h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: task.project.color || "#6b7280" }}
-                        />
                         <span className="text-[11px] text-muted-foreground">{task.project.name}</span>
                       </div>
                     </div>
@@ -417,11 +405,6 @@ export default async function DashboardPage() {
                       href={`/projects/${project.id}`}
                       className="group flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
                     >
-                      {/* Color dot */}
-                      <div
-                        className="mt-0.5 h-3 w-3 shrink-0 rounded-full"
-                        style={{ backgroundColor: project.color || "#6b7280" }}
-                      />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-semibold group-hover:text-primary transition-colors">
                           {project.name}

@@ -18,6 +18,11 @@ import {
   LayoutList,
   TrendingUp,
   CalendarClock,
+  Receipt,
+  FileSignature,
+  SlidersHorizontal,
+  Mail,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,7 +44,9 @@ const adminNav: NavSection[] = [
     items: [
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
-      { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
+      { label: "Meine Tasks",  href: "/tasks",      icon: CheckSquare },
+      { label: "Angebote",     href: "/proposals",  icon: FileSignature },
+      { label: "Rechnungen",   href: "/invoices",   icon: Receipt },
       {
         label: "Kunden",
         href: "/clients",
@@ -56,7 +63,16 @@ const adminNav: NavSection[] = [
   {
     section: "System",
     items: [
-      { label: "Einstellungen", href: "/settings", icon: Settings },
+      {
+        label: "Einstellungen",
+        href: "/settings",
+        icon: Settings,
+        children: [
+          { label: "Allgemein",   href: "/settings",          icon: SlidersHorizontal, exact: true },
+          { label: "Mail",        href: "/settings/mail",     icon: Mail },
+          { label: "Abrechnung",  href: "/settings/billing",  icon: CreditCard },
+        ],
+      },
     ],
   },
 ];
@@ -68,6 +84,7 @@ const memberNav: NavSection[] = [
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
       { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
+      { label: "Rechnungen",  href: "/invoices",  icon: Receipt },
       { label: "Reports",     href: "/reports",   icon: BarChart3 },
     ],
   },
@@ -80,6 +97,7 @@ const clientNav: NavSection[] = [
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
       { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
+      { label: "Rechnungen",  href: "/invoices",  icon: Receipt },
     ],
   },
 ];

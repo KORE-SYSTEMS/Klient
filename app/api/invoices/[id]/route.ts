@@ -1,9 +1,10 @@
 /**
  * GET    /api/invoices/[id]  — fetch single invoice
- * PATCH  /api/invoices/[id]  — update invoice (status, fields, items replace)
+ * PATCH  /api/invoices/[id]  — update invoice (status, fields, items replace, shareToken)
  * DELETE /api/invoices/[id]  — delete invoice
  */
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAdminOrMember } from "@/lib/auth-guard";
 
@@ -44,12 +45,23 @@ export async function PATCH(
   if (body.number  !== undefined) updateData.number  = body.number;
   if (body.status  !== undefined) updateData.status  = body.status;
   if (body.notes   !== undefined) updateData.notes   = body.notes || null;
+  if (body.taxRate !== undefined) updateData.taxRate = Number(body.taxRate);
   if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
-  if (body.paidAt  !== undefined) updateData.paidAt  = body.paidAt ? new Date(body.paidAt)  : null;
+  if (body.paidAt  !== undefined) updateData.paidAt  = body.paidAt  ? new Date(body.paidAt)  : null;
 
   // If status changes to PAID, auto-set paidAt
   if (body.status === "PAID" && !existing.paidAt) {
     updateData.paidAt = new Date();
+  }
+
+  // Generate a new shareToken on demand
+  if (body.generateShareToken === true) {
+    updateData.shareToken = crypto.randomBytes(32).toString("hex");
+  }
+
+  // Explicitly revoke share access by setting shareToken to null
+  if (body.shareToken === null) {
+    updateData.shareToken = null;
   }
 
   // Items replace + field update must be atomic: if the update fails after

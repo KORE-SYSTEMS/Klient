@@ -357,10 +357,6 @@ export default function ProjectsPage() {
                     {/* Title row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div
-                          className="h-3 w-3 shrink-0 rounded-sm"
-                          style={{ backgroundColor: project.color || "#E8520A" }}
-                        />
                         <h3 className="font-heading font-semibold truncate text-sm">
                           {project.name}
                         </h3>

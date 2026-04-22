@@ -344,10 +344,6 @@ export default function MyTasksPage() {
                     ? <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     : <ChevronDown  className="h-4 w-4 text-muted-foreground shrink-0" />
                   }
-                  <span
-                    className="h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: group.color }}
-                  />
                   <span className="text-sm font-semibold">{group.label}</span>
                   <span className="text-xs text-muted-foreground">{group.tasks.length}</span>
                 </button>
@@ -395,10 +391,6 @@ export default function MyTasksPage() {
                       {/* Project (when not grouping by project) */}
                       {groupBy !== "project" && (
                         <div className="w-[160px] shrink-0 hidden sm:flex items-center gap-1.5">
-                          <span
-                            className="h-2 w-2 rounded-full shrink-0"
-                            style={{ backgroundColor: task.project.color || "#6b7280" }}
-                          />
                           <span className="text-xs text-muted-foreground truncate">{task.project.name}</span>
                         </div>
                       )}

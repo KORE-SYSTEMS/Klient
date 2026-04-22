@@ -38,6 +38,7 @@ model User {
   notificationSettings NotificationSettings?
   clientNotes      ClientNote[]     @relation("clientNotes")
   clientActivities ClientActivity[] @relation("clientActivities")
+  proposals        Proposal[]       @relation("clientProposals")
 }
 
 model ClientNote {
@@ -123,6 +124,8 @@ model Project {
   color       String?
   dueDate     DateTime?
   archived    Boolean         @default(false)
+  hourlyRate  Float?          // default rate for time billing
+  budget      Float?          // project budget in currency
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   members     ProjectMember[]
@@ -133,6 +136,7 @@ model Project {
   updates     Update[]
   messages    Message[]
   invoices    Invoice[]
+  proposals   Proposal[]
 }
 
 model ProjectMember {
@@ -288,18 +292,51 @@ model TaskActivity {
 
 model Invoice {
   id          String        @id @default(cuid())
-  number      String        // e.g. "2024-001"
+  number      String
   title       String
   status      String        @default("DRAFT") // DRAFT | SENT | PAID | CANCELLED
+  taxRate     Int           @default(19)       // MwSt. %
   dueDate     DateTime?
   issuedAt    DateTime      @default(now())
   paidAt      DateTime?
   notes       String?
+  shareToken  String?       @unique
   project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String
   items       InvoiceItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+}
+
+model Proposal {
+  id          String         @id @default(cuid())
+  number      String
+  title       String
+  status      String         @default("DRAFT") // DRAFT | SENT | ACCEPTED | DECLINED | EXPIRED
+  taxRate     Int            @default(19)
+  validUntil  DateTime?
+  issuedAt    DateTime       @default(now())
+  notes       String?
+  shareToken  String?        @unique
+  project     Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId   String?
+  client      User?          @relation("clientProposals", fields: [clientId], references: [id], onDelete: SetNull)
+  clientId    String?
+  items       ProposalItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ProposalItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  unit        String   @default("Std.")
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId  String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
 }
 
 model InvoiceItem {
@@ -317,15 +354,32 @@ model InvoiceItem {
 }
 
 model Workspace {
-  id                  String  @id @default(cuid())
-  name                String  @default("Klient")
-  logo                String?
-  primaryColor        String  @default("#E8520A")
-  smtpHost            String?
-  smtpPort            Int     @default(587)
-  smtpUser            String?
-  smtpPass            String?
-  smtpFrom            String?
-  inviteEmailSubject  String?
-  inviteEmailTemplate String?
+  id                      String  @id @default(cuid())
+  name                    String  @default("Klient")
+  logo                    String?
+  primaryColor            String  @default("#E8520A")
+  // SMTP
+  smtpHost                String?
+  smtpPort                Int     @default(587)
+  smtpUser                String?
+  smtpPass                String?
+  smtpFrom                String?
+  // Mail templates
+  inviteEmailSubject      String?
+  inviteEmailTemplate     String?
+  invoiceEmailSubject     String?
+  invoiceEmailTemplate    String?
+  updateEmailSubject      String?
+  updateEmailTemplate     String?
+  // Billing / company
+  companyName             String?
+  companyAddress          String?
+  companyTaxId            String?   // USt-IdNr.
+  companyIban             String?
+  currency                String  @default("EUR")
+  defaultHourlyRate       Float?
+  defaultTaxRate          Int     @default(19)  // MwSt. %
+  invoicePrefix           String  @default("RE")
+  proposalPrefix          String  @default("AN")
+  paymentTermsDays        Int     @default(14)
 }

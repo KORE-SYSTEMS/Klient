@@ -52,8 +52,24 @@ export async function PATCH(request: NextRequest) {
     if (body.smtpUser !== undefined) updateData.smtpUser = body.smtpUser;
     if (body.smtpPass !== undefined) updateData.smtpPass = body.smtpPass;
     if (body.smtpFrom !== undefined) updateData.smtpFrom = body.smtpFrom;
-    if (body.inviteEmailSubject !== undefined) updateData.inviteEmailSubject = body.inviteEmailSubject;
-    if (body.inviteEmailTemplate !== undefined) updateData.inviteEmailTemplate = body.inviteEmailTemplate;
+    if (body.inviteEmailSubject   !== undefined) updateData.inviteEmailSubject   = body.inviteEmailSubject;
+    if (body.inviteEmailTemplate  !== undefined) updateData.inviteEmailTemplate  = body.inviteEmailTemplate;
+    if (body.invoiceEmailSubject  !== undefined) updateData.invoiceEmailSubject  = body.invoiceEmailSubject;
+    if (body.invoiceEmailTemplate !== undefined) updateData.invoiceEmailTemplate = body.invoiceEmailTemplate;
+    if (body.updateEmailSubject   !== undefined) updateData.updateEmailSubject   = body.updateEmailSubject;
+    if (body.updateEmailTemplate  !== undefined) updateData.updateEmailTemplate  = body.updateEmailTemplate;
+
+    // Billing fields
+    if (body.companyName       !== undefined) updateData.companyName       = body.companyName;
+    if (body.companyAddress    !== undefined) updateData.companyAddress    = body.companyAddress;
+    if (body.companyTaxId      !== undefined) updateData.companyTaxId      = body.companyTaxId;
+    if (body.companyIban       !== undefined) updateData.companyIban       = body.companyIban;
+    if (body.currency          !== undefined) updateData.currency          = body.currency;
+    if (body.defaultHourlyRate !== undefined) updateData.defaultHourlyRate = body.defaultHourlyRate === "" ? null : Number(body.defaultHourlyRate);
+    if (body.defaultTaxRate    !== undefined) updateData.defaultTaxRate    = Number(body.defaultTaxRate);
+    if (body.invoicePrefix     !== undefined) updateData.invoicePrefix     = body.invoicePrefix;
+    if (body.proposalPrefix    !== undefined) updateData.proposalPrefix    = body.proposalPrefix;
+    if (body.paymentTermsDays  !== undefined) updateData.paymentTermsDays  = Number(body.paymentTermsDays);
 
     const updated = await prisma.workspace.update({
       where: { id: workspace.id },

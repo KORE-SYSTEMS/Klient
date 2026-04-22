@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, description, status, color, dueDate, memberIds } = body;
+    const { name, description, status, color, dueDate, memberIds, hourlyRate, budget } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Project name is required" }, { status: 400 });
@@ -142,7 +142,9 @@ export async function POST(request: NextRequest) {
           description,
           status: status || undefined,
           color,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
+          dueDate:    dueDate    ? new Date(dueDate)  : undefined,
+          hourlyRate: hourlyRate !== undefined ? Number(hourlyRate) : undefined,
+          budget:     budget     !== undefined ? Number(budget)     : undefined,
           members: {
             create: [
               // Add the creator as a member
