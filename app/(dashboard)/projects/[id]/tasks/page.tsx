@@ -379,7 +379,7 @@ function TaskCard({
       ref={setNodeRef}
       style={style}
       {...(isClient ? {} : { ...attributes, ...listeners })}
-      className={cn(!isClient && "touch-none")}
+      className={cn(!isClient && "touch-none", "outline-none")}
     >
       <div
         className={cn(
@@ -543,7 +543,7 @@ function KanbanColumn({
       ref={setNodeRef}
       className={cn(
         "flex min-w-[280px] max-w-[320px] flex-col rounded-lg transition-colors",
-        isOver ? "bg-primary/5" : "bg-transparent"
+        isOver ? "bg-muted/60" : "bg-transparent"
       )}
     >
       {/* Column header with color bar */}
