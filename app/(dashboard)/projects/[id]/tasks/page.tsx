@@ -93,6 +93,9 @@ import {
   Search,
   Users,
   SlidersHorizontal,
+  User as UserIcon,
+  UserX,
+  Flag,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,6 +117,20 @@ interface TaskStatus {
   color: string;
   order: number;
   isApproval: boolean;
+  category?: "TODO" | "IN_PROGRESS" | "DONE";
+}
+
+/**
+ * Returns the status that comes after `current` in the workflow, or null if
+ * `current` is already the last phase. Approval columns aren't auto-skipped —
+ * callers should branch on `targetStatus.isApproval` to decide whether to
+ * trigger the handoff flow.
+ */
+function getNextStatus(current: string, statuses: TaskStatus[]): TaskStatus | null {
+  const sorted = [...statuses].sort((a, b) => a.order - b.order);
+  const idx = sorted.findIndex((s) => s.id === current);
+  if (idx < 0 || idx >= sorted.length - 1) return null;
+  return sorted[idx + 1];
 }
 
 interface Epic {
@@ -194,6 +211,7 @@ interface Task {
   approvedAt?: string | null;
   approvedById?: string | null;
   _isPreview?: boolean;
+  _count?: { comments?: number; files?: number; checklistItems?: number; checklistDone?: number };
   [key: string]: unknown;
 }
 
@@ -331,6 +349,7 @@ function TaskCard({
   isClient,
   currentUserId,
   onUpdateTitle,
+  onNextPhase,
 }: {
   task: Task;
   onClick: () => void;
@@ -342,10 +361,13 @@ function TaskCard({
   isClient: boolean;
   currentUserId?: string;
   onUpdateTitle?: (id: string, title: string) => void;
+  onNextPhase?: (task: Task) => void;
 }) {
   const isAssignedToClient = isClient && task.assigneeId === currentUserId;
   const isGreyedOut = isClient && !isAssignedToClient;
   const statusInfo = statuses.find((s) => s.id === task.status);
+  const nextStatus = getNextStatus(task.status, statuses);
+  const isDone = statusInfo?.category === "DONE";
 
   const {
     attributes,
@@ -394,7 +416,8 @@ function TaskCard({
           task.approvalStatus === "APPROVED" && "border-success/40",
           task.approvalStatus === "REJECTED" && "border-destructive/40",
           isTimerActive && "ring-2 ring-primary/30 border-primary/40",
-          isGreyedOut && "opacity-50"
+          isGreyedOut && "opacity-50",
+          isDone && "bg-muted/30 [&_.task-title-text]:line-through [&_.task-title-text]:text-muted-foreground"
         )}
         onClick={(e) => {
           if (!(e.target as HTMLElement).closest("[data-no-click]")) {
@@ -419,7 +442,7 @@ function TaskCard({
           )}
 
           {/* Title — double-click to edit inline */}
-          <div className="text-[13px] font-medium leading-snug" data-no-click="">
+          <div className="task-title-text text-[13px] font-medium leading-snug" data-no-click="">
             <InlineTitle
               value={task.title}
               onSave={(t) => onUpdateTitle?.(task.id, t)}
@@ -460,6 +483,38 @@ function TaskCard({
                 {formatDurationShort(totalTime)}
               </span>
             )}
+            {task._count?.comments ? (
+              <span
+                className="flex items-center gap-0.5 text-[11px] text-muted-foreground"
+                title={`${task._count.comments} Kommentar${task._count.comments === 1 ? "" : "e"}`}
+              >
+                <MessageSquare className="h-3 w-3" />
+                {task._count.comments}
+              </span>
+            ) : null}
+            {task._count?.files ? (
+              <span
+                className="flex items-center gap-0.5 text-[11px] text-muted-foreground"
+                title={`${task._count.files} Datei${task._count.files === 1 ? "" : "en"}`}
+              >
+                <Paperclip className="h-3 w-3" />
+                {task._count.files}
+              </span>
+            ) : null}
+            {task._count?.checklistItems ? (
+              <span
+                className={cn(
+                  "flex items-center gap-0.5 text-[11px] tabular-nums",
+                  (task._count.checklistDone ?? 0) === task._count.checklistItems
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-muted-foreground"
+                )}
+                title="Checkliste"
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                {task._count.checklistDone ?? 0}/{task._count.checklistItems}
+              </span>
+            ) : null}
           </div>
 
           {/* Bottom row: avatar, priority, timer */}
@@ -482,6 +537,20 @@ function TaskCard({
             <div className="flex items-center gap-1.5">
               {task.clientVisible && (
                 <Eye className="h-3 w-3 text-muted-foreground" />
+              )}
+              {!isClient && nextStatus && onNextPhase && (
+                <button
+                  data-no-click
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNextPhase(task);
+                  }}
+                  title={`→ ${nextStatus.name}`}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:border-border hover:bg-background hover:text-primary"
+                  aria-label={`Nächste Phase: ${nextStatus.name}`}
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               )}
               {!isClient && (
                 <span data-no-click>
@@ -522,6 +591,7 @@ function KanbanColumn({
   onTimerStop,
   currentUserId,
   onUpdateTitle,
+  onNextPhase,
 }: {
   status: TaskStatus;
   tasks: Task[];
@@ -538,6 +608,7 @@ function KanbanColumn({
   onTimerStop: () => void;
   currentUserId?: string;
   onUpdateTitle?: (id: string, title: string) => void;
+  onNextPhase?: (task: Task) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: status.id });
   const columnTotalTime = tasks.reduce((sum, t) => sum + (t.totalTime || 0), 0);
@@ -629,6 +700,7 @@ function KanbanColumn({
                 isClient={isClient}
                 currentUserId={currentUserId}
                 onUpdateTitle={onUpdateTitle}
+                onNextPhase={onNextPhase}
               />
             ))}
           </div>
@@ -912,6 +984,269 @@ function TimeEntriesSection({
 }
 
 // --- Comments Section ---
+
+interface ChecklistItem {
+  id: string;
+  title: string;
+  done: boolean;
+  order: number;
+}
+
+/**
+ * Task checklist — lightweight inline sub-tasks.
+ *
+ * - Admin/member can add/rename/toggle/delete items.
+ * - Clients (if they can see the task) can only toggle `done`.
+ * - Parent can pass `onCountsChange` to update kanban card counters
+ *   without a full fetchTasks() round-trip.
+ */
+function ChecklistSection({
+  taskId,
+  canEdit,
+  canToggle,
+  onCountsChange,
+}: {
+  taskId: string;
+  canEdit: boolean;
+  canToggle: boolean;
+  onCountsChange?: (total: number, done: number) => void;
+}) {
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+
+  const emitCounts = useCallback(
+    (list: ChecklistItem[]) => {
+      onCountsChange?.(list.length, list.filter((i) => i.done).length);
+    },
+    [onCountsChange]
+  );
+
+  const fetchItems = useCallback(async () => {
+    const res = await fetch(`/api/tasks/${taskId}/checklist`);
+    if (res.ok) {
+      const data: ChecklistItem[] = await res.json();
+      setItems(data);
+      emitCounts(data);
+    }
+    setLoading(false);
+  }, [taskId, emitCounts]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  async function addItem() {
+    const title = newTitle.trim();
+    if (!title || adding) return;
+    setAdding(true);
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/checklist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (res.ok) {
+        const created: ChecklistItem = await res.json();
+        setItems((prev) => {
+          const next = [...prev, created];
+          emitCounts(next);
+          return next;
+        });
+        setNewTitle("");
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function toggleDone(item: ChecklistItem) {
+    // Optimistic flip — roll back on error.
+    const next = items.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i));
+    setItems(next);
+    emitCounts(next);
+    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: !item.done }),
+    });
+    if (!res.ok) {
+      setItems(items);
+      emitCounts(items);
+    }
+  }
+
+  async function saveTitle(item: ChecklistItem) {
+    const title = editingTitle.trim();
+    if (!title) {
+      setEditingId(null);
+      return;
+    }
+    if (title === item.title) {
+      setEditingId(null);
+      return;
+    }
+    const next = items.map((i) => (i.id === item.id ? { ...i, title } : i));
+    setItems(next);
+    setEditingId(null);
+    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) setItems(items);
+  }
+
+  async function removeItem(item: ChecklistItem) {
+    const next = items.filter((i) => i.id !== item.id);
+    setItems(next);
+    emitCounts(next);
+    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      setItems(items);
+      emitCounts(items);
+    }
+  }
+
+  const total = items.length;
+  const done = items.filter((i) => i.done).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground">Checkliste</Label>
+        <div className="h-8 rounded-md bg-muted/50 animate-pulse" />
+      </div>
+    );
+  }
+
+  // Hide entirely if the user can't see/add anything
+  if (!canEdit && !canToggle && items.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Checkliste
+        </Label>
+        {total > 0 && (
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {done}/{total} · {pct}%
+          </span>
+        )}
+      </div>
+
+      {total > 0 && (
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full transition-all",
+              pct === 100 ? "bg-emerald-500" : "bg-primary"
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+
+      <ul className="space-y-0.5">
+        {items.map((item) => {
+          const isEditing = editingId === item.id;
+          return (
+            <li
+              key={item.id}
+              className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40"
+            >
+              <input
+                type="checkbox"
+                checked={item.done}
+                disabled={!canToggle && !canEdit}
+                onChange={() => toggleDone(item)}
+                className="h-3.5 w-3.5 shrink-0 rounded accent-primary"
+              />
+              {isEditing ? (
+                <Input
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onBlur={() => saveTitle(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveTitle(item);
+                    } else if (e.key === "Escape") {
+                      setEditingId(null);
+                    }
+                  }}
+                  autoFocus
+                  className="h-7 text-sm"
+                />
+              ) : (
+                <button
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => {
+                    if (!canEdit) return;
+                    setEditingId(item.id);
+                    setEditingTitle(item.title);
+                  }}
+                  className={cn(
+                    "flex-1 cursor-text truncate text-left text-sm",
+                    item.done && "text-muted-foreground line-through",
+                    !canEdit && "cursor-default"
+                  )}
+                >
+                  {item.title}
+                </button>
+              )}
+              {canEdit && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => removeItem(item)}
+                  className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                  aria-label="Element löschen"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {canEdit && (
+        <div className="flex items-center gap-2 pt-1">
+          <Input
+            placeholder="Neuer Checklist-Punkt..."
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem();
+              }
+            }}
+            className="h-8 text-sm"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={!newTitle.trim() || adding}
+            onClick={addItem}
+            className="h-8 shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CommentsSection({
   taskId, members, currentUserId,
@@ -1573,6 +1908,26 @@ export default function TasksPage() {
 
   async function deleteLink(linkId: string) { await fetch(`/api/task-links/${linkId}`, { method: "DELETE" }); fetchTasks(); }
 
+  // --- Next Phase ---
+  // Moves a task to the next status in workflow order. If the next status is
+  // an approval column, the handoff dialog is opened instead so staff can
+  // attach a message for the client.
+  async function handleNextPhase(task: Task) {
+    if (isClient) return;
+    const next = getNextStatus(task.status, statuses);
+    if (!next) return;
+    if (next.isApproval) {
+      const clientMembers = members.filter((m) => m.role === "CLIENT");
+      setPendingHandoffTaskId(task.id);
+      setPendingHandoffStatusId(next.id);
+      setHandoffMsg("");
+      setHandoffClientId(clientMembers[0]?.id || "");
+      setHandoffDialogOpen(true);
+      return;
+    }
+    await optimisticUpdate(task.id, { status: next.id } as any);
+  }
+
   // --- Drag & Drop ---
   function handleDragStart(event: DragStartEvent) { if (isClient) return; setActiveId(event.active.id as string); }
   function handleDragOver(event: DragOverEvent) {
@@ -1962,6 +2317,87 @@ export default function TasksPage() {
         </div>
       </div>
 
+      {/* ===== Quick-Filter Chips ===== */}
+      {/*
+        Lightweight presets that write into the same filterAssignees / filterDue /
+        filterPriorities state used by the full filter bar — so chip state and
+        filter bar stay in sync automatically.
+      */}
+      {(() => {
+        const myActive =
+          filterAssignees.length === 1 && filterAssignees[0] === currentUserId;
+        const unassignedActive =
+          filterAssignees.length === 1 && filterAssignees[0] === "";
+        const overdueActive = filterDue === "overdue";
+        const highPrioActive =
+          filterPriorities.length > 0 &&
+          filterPriorities.every((p) => p === "HIGH" || p === "URGENT") &&
+          (filterPriorities.includes("HIGH") || filterPriorities.includes("URGENT"));
+
+        const chipCls = (active: boolean) =>
+          cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+            active
+              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+              : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+          );
+
+        return (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              className={chipCls(myActive)}
+              onClick={() =>
+                setFilterAssignees(myActive ? [] : [currentUserId])
+              }
+            >
+              <UserIcon className="h-3 w-3" />
+              Mir zugewiesen
+            </button>
+            {!isClient && (
+              <button
+                type="button"
+                className={chipCls(unassignedActive)}
+                onClick={() =>
+                  setFilterAssignees(unassignedActive ? [] : [""])
+                }
+              >
+                <UserX className="h-3 w-3" />
+                Ohne Assignee
+              </button>
+            )}
+            <button
+              type="button"
+              className={chipCls(overdueActive)}
+              onClick={() => setFilterDue(overdueActive ? "" : "overdue")}
+            >
+              <AlertCircle className="h-3 w-3" />
+              Überfällig
+            </button>
+            <button
+              type="button"
+              className={chipCls(highPrioActive)}
+              onClick={() =>
+                setFilterPriorities(highPrioActive ? [] : ["HIGH", "URGENT"])
+              }
+            >
+              <Flag className="h-3 w-3" />
+              Hoch-Prio
+            </button>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Zurücksetzen
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ===== Filter Bar ===== */}
       {filterOpen && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
@@ -2181,7 +2617,8 @@ export default function TasksPage() {
                   onEditColumn={openColumnDialog} onDeleteColumn={deleteColumn} isClient={isClient} statuses={statuses}
                   isOver={overId === status.id} activeTimerTaskId={activeTimer?.taskId || null} timerElapsed={elapsed}
                   onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} currentUserId={currentUserId}
-                  onUpdateTitle={isClient ? undefined : handleUpdateTitle} />
+                  onUpdateTitle={isClient ? undefined : handleUpdateTitle}
+                  onNextPhase={isClient ? undefined : handleNextPhase} />
               );
             })}
           </div>
@@ -2403,6 +2840,48 @@ export default function TasksPage() {
             </div>
           )}
 
+          {/* Workflow strip — current phase + quick "next phase" action */}
+          {editTask && !isClient && detailTab === "details" && (() => {
+            const current = statuses.find((s) => s.id === editTask.status);
+            const next = getNextStatus(editTask.status, statuses);
+            const isDone = current?.category === "DONE";
+            return (
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 mb-3">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Phase</span>
+                {current && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    style={{ backgroundColor: current.color + "22", color: current.color }}
+                  >
+                    {current.name}
+                    {current.isApproval && <ClipboardCheck className="h-3 w-3" />}
+                  </span>
+                )}
+                <div className="flex-1" />
+                {next ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 h-7 text-xs"
+                    onClick={() => {
+                      handleNextPhase(editTask);
+                      setTaskDialogOpen(false);
+                    }}
+                  >
+                    Nächste Phase
+                    <ArrowRight className="h-3.5 w-3.5" />
+                    <span className="font-medium" style={{ color: next.color }}>{next.name}</span>
+                  </Button>
+                ) : (
+                  <span className={cn("inline-flex items-center gap-1 text-[11px]", isDone ? "text-success" : "text-muted-foreground")}>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {isDone ? "Abgeschlossen" : "Letzte Phase"}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Client read-only details */}
           {isClientViewingTask && detailTab === "details" && editTask && (
             <div className="space-y-4">
@@ -2552,6 +3031,31 @@ export default function TasksPage() {
                 <Label htmlFor="description">Beschreibung</Label>
                 <Textarea id="description" value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={3} />
               </div>
+              {editTask && (
+                <ChecklistSection
+                  taskId={editTask.id}
+                  canEdit={!isClient}
+                  canToggle={!isClient || canClientInteract}
+                  onCountsChange={(total, done) => {
+                    // Pure local state update — no PATCH needed, these counts
+                    // are derived from checklist endpoints on next refetch anyway.
+                    setTasks((prev) =>
+                      prev.map((t) =>
+                        t.id === editTask.id
+                          ? {
+                              ...t,
+                              _count: {
+                                ...(t._count || {}),
+                                checklistItems: total,
+                                checklistDone: done,
+                              },
+                            }
+                          : t
+                      )
+                    );
+                  }}
+                />
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Status</Label>

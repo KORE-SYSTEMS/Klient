@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember } from "@/lib/auth-guard";
-
-// Default task statuses that are seeded when a new project is created.
-// Keep in sync with app/api/projects/[id]/statuses/route.ts
-const DEFAULT_STATUSES = [
-  { id: "BACKLOG",     name: "Backlog",   color: "#6b7280", order: 0 },
-  { id: "TODO",        name: "To Do",     color: "#3b82f6", order: 1 },
-  { id: "IN_PROGRESS", name: "In Arbeit", color: "#f97316", order: 2 },
-  { id: "IN_REVIEW",   name: "In Review", color: "#eab308", order: 3 },
-  { id: "DONE",        name: "Erledigt",  color: "#10b981", order: 4 },
-];
+import { getTemplate, DEFAULT_TEMPLATE_ID } from "@/lib/workflow-templates";
 
 export async function GET(request: NextRequest) {
   const session = await requireAuth();
@@ -80,27 +71,20 @@ export async function GET(request: NextRequest) {
   const projectIds = projects.map((p) => p.id);
 
   // Enrich each project with a doneTaskCount.
-  // "Done" = task whose status belongs to the highest-order TaskStatus of that project
-  // (the rightmost column = the final/done column in any workflow).
-  // Two extra queries total — not N.
+  // "Done" = task whose status has category === "DONE" in that project.
+  // Uses the semantic category rather than "last column" so that inserting new
+  // phases after Done (e.g. "Archived") doesn't silently break completion %.
   let doneCountMap: Record<string, number> = {};
   if (projectIds.length > 0) {
-    // Get the max-order status id per project
-    const allStatuses = await prisma.taskStatus.findMany({
-      where: { projectId: { in: projectIds } },
-      select: { id: true, projectId: true, order: true },
-      orderBy: { order: "asc" },
+    const doneStatuses = await prisma.taskStatus.findMany({
+      where: { projectId: { in: projectIds }, category: "DONE" },
+      select: { id: true, projectId: true },
     });
-    // Pick the last status (highest order) per project
-    const lastStatusPerProject: Record<string, string> = {};
-    for (const s of allStatuses) {
-      lastStatusPerProject[s.projectId] = s.id; // later entries overwrite → highest order wins
-    }
-    const lastStatusIds = Object.values(lastStatusPerProject);
-    if (lastStatusIds.length > 0) {
+    const doneStatusIds = doneStatuses.map((s) => s.id);
+    if (doneStatusIds.length > 0) {
       const doneCounts = await prisma.task.groupBy({
         by: ["projectId"],
-        where: { status: { in: lastStatusIds } },
+        where: { status: { in: doneStatusIds } },
         _count: { id: true },
       });
       for (const row of doneCounts) {
@@ -135,6 +119,11 @@ export async function POST(request: NextRequest) {
     // Create project + default statuses atomically, so every new project is
     // immediately usable and `task.status` references (which store TaskStatus IDs)
     // always resolve to a real row.
+    // Allow callers to pick a starting workflow template (e.g. "simple" for
+    // lightweight projects, "client-approval" when a client sign-off phase is needed).
+    const templateId = typeof body.workflowTemplateId === "string" ? body.workflowTemplateId : DEFAULT_TEMPLATE_ID;
+    const tpl = getTemplate(templateId) || getTemplate(DEFAULT_TEMPLATE_ID)!;
+
     const project = await prisma.$transaction(async (tx) => {
       const created = await tx.project.create({
         data: {
@@ -163,12 +152,16 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Seed the default 5-column workflow. Status IDs are globally namespaced
-      // with the project ID to keep them unique across projects.
+      // Seed the chosen workflow. Status IDs are globally namespaced with the
+      // project id to keep them unique across projects.
       await tx.taskStatus.createMany({
-        data: DEFAULT_STATUSES.map((s) => ({
-          ...s,
-          id: `${created.id}_${s.id}`,
+        data: tpl.statuses.map((s, idx) => ({
+          id: `${created.id}_${s.slug}`,
+          name: s.name,
+          color: s.color,
+          order: idx,
+          category: s.category,
+          isApproval: s.isApproval ?? false,
           projectId: created.id,
         })),
       });

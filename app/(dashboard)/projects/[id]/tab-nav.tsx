@@ -10,16 +10,18 @@ import {
   Bell,
   MessageSquare,
   Receipt,
+  Settings,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 const allTabs = [
-  { label: "Übersicht",  href: "",          icon: LayoutDashboard, staffOnly: false },
-  { label: "Tasks",      href: "/tasks",    icon: CheckSquare,     staffOnly: false },
-  { label: "Dateien",    href: "/files",    icon: FileIcon,        staffOnly: false },
-  { label: "Updates",    href: "/updates",  icon: Bell,            staffOnly: false },
-  { label: "Chat",       href: "/chat",     icon: MessageSquare,   staffOnly: false },
-  { label: "Rechnungen", href: "/invoices", icon: Receipt,         staffOnly: true  },
+  { label: "Übersicht",     href: "",                  icon: LayoutDashboard, staffOnly: false },
+  { label: "Tasks",         href: "/tasks",            icon: CheckSquare,     staffOnly: false },
+  { label: "Dateien",       href: "/files",            icon: FileIcon,        staffOnly: false },
+  { label: "Updates",       href: "/updates",          icon: Bell,            staffOnly: false },
+  { label: "Chat",          href: "/chat",             icon: MessageSquare,   staffOnly: false },
+  { label: "Rechnungen",    href: "/invoices",         icon: Receipt,         staffOnly: true  },
+  { label: "Einstellungen", href: "/settings/workflow", icon: Settings,       staffOnly: true  },
 ];
 
 export function ProjectTabNav({ projectId }: { projectId: string }) {

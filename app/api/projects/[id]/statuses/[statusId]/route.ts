@@ -28,6 +28,10 @@ export async function PATCH(
     if (body.color !== undefined) updateData.color = body.color;
     if (body.order !== undefined) updateData.order = body.order;
     if (body.isApproval !== undefined) updateData.isApproval = body.isApproval;
+    if (body.category !== undefined) {
+      const c = body.category;
+      updateData.category = c === "TODO" || c === "IN_PROGRESS" || c === "DONE" ? c : "IN_PROGRESS";
+    }
 
     const status = await prisma.taskStatus.update({
       where: { id: statusId },

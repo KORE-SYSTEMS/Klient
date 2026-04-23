@@ -46,7 +46,28 @@ export async function GET(
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  return NextResponse.json(project);
+  // Compute doneTasks via category === "DONE" (semantic, survives workflow edits).
+  // For clients, also respect clientVisible filter so progress matches their task view.
+  const doneStatuses = await prisma.taskStatus.findMany({
+    where: { projectId: id, category: "DONE" },
+    select: { id: true },
+  });
+  const doneStatusIds = doneStatuses.map((s) => s.id);
+  let doneTasks = 0;
+  if (doneStatusIds.length > 0) {
+    doneTasks = await prisma.task.count({
+      where: {
+        projectId: id,
+        status: { in: doneStatusIds },
+        ...(isClient ? { clientVisible: true } : {}),
+      },
+    });
+  }
+
+  return NextResponse.json({
+    ...project,
+    _count: { ...project._count, doneTasks },
+  });
 }
 
 export async function PATCH(

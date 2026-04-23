@@ -12,7 +12,7 @@
  * Mounted globally in (dashboard)/layout so every page gets it for free.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -28,6 +28,12 @@ import {
   Command as CmdIcon,
   X,
   Loader2,
+  Bell,
+  Receipt,
+  Clock,
+  BarChart3,
+  User as UserIcon,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,8 +60,16 @@ export function openCommandPalette() {
 
 export function CommandPalette() {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = useSession();
   const role = session?.user?.role;
+
+  // Detect current project from URL, e.g. /projects/cmabc123/..., so contextual
+  // actions ("Neuer Task im aktuellen Projekt") can deep-link accurately.
+  const currentProjectId = useMemo(() => {
+    const m = pathname?.match(/^\/projects\/([^/]+)/);
+    return m?.[1] ?? null;
+  }, [pathname]);
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -138,28 +152,91 @@ export function CommandPalette() {
     return () => clearTimeout(handle);
   }, [query]);
 
-  // Quick actions always available
+  // Quick actions — nav + contextual (current project) + global "Neu".
+  // The palette is meant to be a jump-to for any entity, so we deliberately
+  // include a broad set and let the query filter them down.
   const actions = useMemo<Hit[]>(() => {
     const navActions: Hit[] = [
       { type: "action", id: "nav-dashboard", title: "Dashboard öffnen", subtitle: "/dashboard", href: "/dashboard", icon: LayoutDashboard },
       { type: "action", id: "nav-projects", title: "Projekte öffnen", subtitle: "/projects", href: "/projects", icon: FolderKanban },
+      { type: "action", id: "nav-my-tasks", title: "Meine Tasks", subtitle: "/tasks", href: "/tasks", icon: CheckSquare },
     ];
     if (role !== "CLIENT") {
       navActions.push(
         { type: "action", id: "nav-clients", title: "Kunden öffnen", subtitle: "/clients", href: "/clients", icon: Users },
+        { type: "action", id: "nav-invoices", title: "Rechnungen", subtitle: "/invoices", href: "/invoices", icon: Receipt },
+        { type: "action", id: "nav-proposals", title: "Angebote", subtitle: "/proposals", href: "/proposals", icon: FileSignature },
+        { type: "action", id: "nav-reports", title: "Auswertungen", subtitle: "/reports", href: "/reports", icon: BarChart3 },
       );
     }
+    navActions.push(
+      { type: "action", id: "nav-profile", title: "Profil", subtitle: "/profile", href: "/profile", icon: UserIcon },
+    );
     if (role === "ADMIN") {
       navActions.push(
         { type: "action", id: "nav-settings", title: "Einstellungen", subtitle: "/settings", href: "/settings", icon: Settings },
         { type: "action", id: "new-project", title: "Neues Projekt anlegen", subtitle: "/projects → Neu", href: "/projects?new=1", icon: Plus },
       );
     }
-    // Filter by query
-    if (!query.trim()) return navActions.slice(0, 4);
+
+    // Contextual actions — only surface when a project context exists.
+    // Pinned to the top so the most likely action is one keystroke away.
+    const contextActions: Hit[] = [];
+    if (currentProjectId && role !== "CLIENT") {
+      contextActions.push(
+        {
+          type: "action",
+          id: "ctx-new-task",
+          title: "Neuer Task im aktuellen Projekt",
+          subtitle: "Drücke Enter, um einen Task zu erstellen",
+          href: `/projects/${currentProjectId}/tasks?new=1`,
+          icon: Plus,
+        },
+        {
+          type: "action",
+          id: "ctx-project-overview",
+          title: "Projektübersicht",
+          subtitle: "Zur Übersicht des aktuellen Projekts",
+          href: `/projects/${currentProjectId}`,
+          icon: LayoutDashboard,
+        },
+        {
+          type: "action",
+          id: "ctx-project-files",
+          title: "Dateien des aktuellen Projekts",
+          subtitle: "Alle Dateien & Uploads",
+          href: `/projects/${currentProjectId}/files`,
+          icon: FileIcon,
+        },
+        {
+          type: "action",
+          id: "ctx-project-chat",
+          title: "Chat des aktuellen Projekts",
+          subtitle: "Projekt-Messenger öffnen",
+          href: `/projects/${currentProjectId}/chat`,
+          icon: Bell,
+        },
+      );
+      if (role === "ADMIN" || role === "MEMBER") {
+        contextActions.push({
+          type: "action",
+          id: "ctx-project-settings",
+          title: "Workflow-Einstellungen",
+          subtitle: "Spalten & Phasen bearbeiten",
+          href: `/projects/${currentProjectId}/settings/workflow`,
+          icon: Settings,
+        });
+      }
+    }
+
+    const all = [...contextActions, ...navActions];
+    // When query empty, keep the list short — just the top 6 most useful.
+    if (!query.trim()) return all.slice(0, 6);
     const q = query.toLowerCase();
-    return navActions.filter((a) => a.title.toLowerCase().includes(q) || a.subtitle?.toLowerCase().includes(q));
-  }, [role, query]);
+    return all.filter(
+      (a) => a.title.toLowerCase().includes(q) || a.subtitle?.toLowerCase().includes(q)
+    );
+  }, [role, query, currentProjectId]);
 
   const sections = useMemo(() => {
     return [

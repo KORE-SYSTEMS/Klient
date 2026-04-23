@@ -156,6 +156,9 @@ model TaskStatus {
   color      String  @default("#6b7280")
   order      Int     @default(0)
   isApproval Boolean @default(false)
+  // Semantic bucket used for progress/"done" logic regardless of custom naming.
+  // One of: TODO | IN_PROGRESS | DONE
+  category   String  @default("IN_PROGRESS")
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId  String
 }
@@ -204,6 +207,7 @@ model Task {
   comments        TaskComment[]
   activities      TaskActivity[]
   files           File[]
+  checklistItems  TaskChecklistItem[]
   // Approval workflow
   approvalStatus  String?   // null | "PENDING" | "APPROVED" | "REJECTED"
   handoffComment  String?   // comment from team to client when requesting approval
@@ -308,6 +312,23 @@ model TaskComment {
   mentions  String   @default("[]") // JSON array of user IDs
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Lightweight checklist items ("sub-tasks") attached to a Task.
+/// Deliberately not a full Task (no status/assignee/etc.) — just a title + done
+/// flag + sort order. Surfaced as `_count.checklistItems` / `checklistDone`
+/// on kanban cards so teams see progress at a glance.
+model TaskChecklistItem {
+  id        String   @id @default(cuid())
+  title     String
+  done      Boolean  @default(false)
+  order     Int      @default(0)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId, order])
 }
 
 model TaskActivity {

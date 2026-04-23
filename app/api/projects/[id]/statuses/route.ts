@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember, requireProjectAccess } from "@/lib/auth-guard";
-
-// Template for default statuses created lazily when a project has none.
-// IDs are derived per-project (project-scoped) to avoid PK collisions across
-// projects. Keep the "slugs" in sync with app/api/projects/route.ts
-const DEFAULT_STATUS_TEMPLATES = [
-  { slug: "BACKLOG",     name: "Backlog",   color: "#6b7280", order: 0 },
-  { slug: "TODO",        name: "To Do",     color: "#3b82f6", order: 1 },
-  { slug: "IN_PROGRESS", name: "In Arbeit", color: "#f97316", order: 2 },
-  { slug: "IN_REVIEW",   name: "In Review", color: "#eab308", order: 3 },
-  { slug: "DONE",        name: "Erledigt",  color: "#10b981", order: 4 },
-];
+import { getTemplate, DEFAULT_TEMPLATE_ID } from "@/lib/workflow-templates";
 
 export async function GET(
   request: NextRequest,
@@ -36,26 +26,27 @@ export async function GET(
     orderBy: { order: "asc" },
   });
 
-  // Auto-create default statuses if none exist.
-  // Project-scoped IDs avoid PK collisions when multiple projects are seeded.
+  // Auto-create default workflow if none exist. Project-scoped IDs avoid
+  // PK collisions when multiple projects are seeded.
   if (statuses.length === 0) {
+    const tpl = getTemplate(DEFAULT_TEMPLATE_ID)!;
     await prisma.taskStatus.createMany({
-      data: DEFAULT_STATUS_TEMPLATES.map((s) => ({
+      data: tpl.statuses.map((s, idx) => ({
         id: `${projectId}_${s.slug}`,
         name: s.name,
         color: s.color,
-        order: s.order,
+        order: idx,
+        category: s.category,
+        isApproval: s.isApproval ?? false,
         projectId,
       })),
     });
 
-    // Back-fill any existing tasks on this project that still reference legacy
-    // bare status slugs (e.g. "BACKLOG") so they map to the new project-scoped
-    // status rows and don't render as "unknown status".
-    for (const tpl of DEFAULT_STATUS_TEMPLATES) {
+    // Back-fill any legacy tasks that still reference bare slugs.
+    for (const s of tpl.statuses) {
       await prisma.task.updateMany({
-        where: { projectId, status: tpl.slug },
-        data: { status: `${projectId}_${tpl.slug}` },
+        where: { projectId, status: s.slug },
+        data: { status: `${projectId}_${s.slug}` },
       });
     }
 
@@ -88,13 +79,14 @@ export async function POST(
 
   try {
     const body = await request.json();
-    const { name, color } = body;
+    const { name, color, category } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // Get max order
+    const cat = normalizeCategory(category);
+
     const maxOrder = await prisma.taskStatus.findFirst({
       where: { projectId },
       orderBy: { order: "desc" },
@@ -110,6 +102,7 @@ export async function POST(
         color: color || "#6b7280",
         order: (maxOrder?.order ?? -1) + 1,
         isApproval: body.isApproval ?? false,
+        category: cat,
         projectId,
       },
     });
@@ -119,4 +112,9 @@ export async function POST(
     console.error("Failed to create status:", error);
     return NextResponse.json({ error: "Failed to create status" }, { status: 500 });
   }
+}
+
+function normalizeCategory(value: unknown): "TODO" | "IN_PROGRESS" | "DONE" {
+  if (value === "TODO" || value === "IN_PROGRESS" || value === "DONE") return value;
+  return "IN_PROGRESS";
 }

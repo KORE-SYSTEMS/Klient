@@ -45,6 +45,17 @@ export async function GET(request: NextRequest) {
         select: { id: true, duration: true, startedAt: true, stoppedAt: true, userId: true },
         orderBy: { startedAt: "desc" },
       },
+      // Surfaced on kanban cards as small counter badges.
+      // Clients only ever see full counts on fully-visible tasks (preview tasks
+      // strip _count away in the mapping below), so no extra filter needed here.
+      _count: {
+        select: {
+          comments: true,
+          files: isClient ? { where: { clientVisible: true } } : true,
+          checklistItems: true,
+        },
+      },
+      checklistItems: { select: { done: true } },
     },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
@@ -56,6 +67,7 @@ export async function GET(request: NextRequest) {
       return sum + Math.floor((Date.now() - new Date(e.startedAt).getTime()) / 1000);
     }, 0);
     const activeEntry = task.timeEntries.find((e) => !e.stoppedAt) || null;
+    const checklistDone = task.checklistItems.filter((c) => c.done).length;
 
     if (isClient) {
       // Full visibility: explicitly client-visible OR pending approval assigned to this client
@@ -76,7 +88,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return { ...task, totalTime, activeEntry, _isPreview: false };
+    // Strip raw checklistItems; expose derived counts only (callers who need
+    // the full list hit /api/tasks/[id]/checklist).
+    const { checklistItems: _omit, ...rest } = task;
+    return {
+      ...rest,
+      totalTime,
+      activeEntry,
+      _isPreview: false,
+      _count: { ...task._count, checklistDone },
+    };
   });
 
   return NextResponse.json(tasksWithTime);

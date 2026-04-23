@@ -46,6 +46,8 @@ interface Props {
   };
   canEdit: boolean;
   initialMembers?: Member[];
+  /** Optional task progress — omit or pass {total:0} to hide the bar. */
+  progress?: { done: number; total: number };
 }
 
 const PROJECT_STATUSES = [
@@ -56,7 +58,11 @@ const PROJECT_STATUSES = [
   { value: "CANCELLED", label: "Abgebrochen" },
 ];
 
-export function ProjectHeader({ project, canEdit, initialMembers = [] }: Props) {
+export function ProjectHeader({ project, canEdit, initialMembers = [], progress }: Props) {
+  const pct =
+    progress && progress.total > 0
+      ? Math.round((progress.done / progress.total) * 100)
+      : null;
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -218,6 +224,35 @@ export function ProjectHeader({ project, canEdit, initialMembers = [] }: Props) 
             <p className="text-sm text-muted-foreground max-w-2xl">
               {project.description}
             </p>
+          )}
+          {pct !== null && progress && (
+            <div className="flex items-center gap-3 max-w-md pt-1">
+              <div
+                className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Fortschritt: ${pct} Prozent`}
+              >
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    pct === 100
+                      ? "bg-emerald-500"
+                      : pct >= 66
+                      ? "bg-primary"
+                      : pct >= 33
+                      ? "bg-amber-500"
+                      : "bg-muted-foreground/40"
+                  )}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                {progress.done}/{progress.total} · {pct}%
+              </span>
+            </div>
           )}
         </div>
         {canEdit && (
