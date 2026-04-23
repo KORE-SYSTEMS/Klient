@@ -1339,6 +1339,7 @@ export default function TasksPage() {
   const [pendingHandoffStatusId, setPendingHandoffStatusId] = useState<string | null>(null);
   const [handoffMsg, setHandoffMsg] = useState("");
   const [handoffClientId, setHandoffClientId] = useState("");
+  const [handoffClientLocked, setHandoffClientLocked] = useState(false); // true when triggered from assignee selection
   const [handoffSubmitting, setHandoffSubmitting] = useState(false);
 
   // Approval submit (client view)
@@ -1443,9 +1444,13 @@ export default function TasksPage() {
       assigneeId: formAssigneeId === "none" ? null : formAssigneeId,
       epicId: formEpicId === "none" ? null : formEpicId,
     };
+    const newAssigneeId = formAssigneeId === "none" ? null : formAssigneeId;
+    const selectedAssignee = members.find((m) => m.id === newAssigneeId);
+    const isAssigningToClient = selectedAssignee?.role === "CLIENT";
+
     try {
       if (editTask) {
-        // Intercept: if status changed to an approval column, show handoff dialog
+        // Intercept 1: status changed to an approval column → handoff dialog
         const targetStatus = statuses.find((s) => s.id === formStatus);
         if (targetStatus?.isApproval && editTask.status !== formStatus && !editTask.approvalStatus) {
           setTaskDialogOpen(false);
@@ -1454,19 +1459,43 @@ export default function TasksPage() {
           setPendingHandoffTaskId(editTask.id);
           setPendingHandoffStatusId(formStatus);
           setHandoffMsg("");
-          setHandoffClientId(clientMembers[0]?.id || "");
+          setHandoffClientId(newAssigneeId && isAssigningToClient ? newAssigneeId : (clientMembers[0]?.id || ""));
+          setHandoffClientLocked(false);
           setHandoffDialogOpen(true);
           return;
         }
-        // Close dialog immediately — optimistic update in background
+
+        // Intercept 2: assignee changed to a client → approval flow
+        const alreadyPendingForThisClient =
+          editTask.approvalStatus === "PENDING" && editTask.assigneeId === newAssigneeId;
+        if (isAssigningToClient && !alreadyPendingForThisClient) {
+          setTaskDialogOpen(false);
+          setEditTask(null);
+          setPendingHandoffTaskId(editTask.id);
+          setPendingHandoffStatusId(formStatus);
+          setHandoffMsg("");
+          setHandoffClientId(newAssigneeId || "");
+          setHandoffClientLocked(true); // client already chosen — lock the selector
+          setHandoffDialogOpen(true);
+          return;
+        }
+
+        // Normal save
         setTaskDialogOpen(false);
         setEditTask(null);
         await optimisticUpdate(editTask.id, patch);
       } else {
-        // Create: close dialog, add optimistic placeholder
+        // Create — if client assigned, auto-set visibility + pending approval
         setTaskDialogOpen(false);
         setEditTask(null);
-        await optimisticCreate({ ...patch, projectId });
+        await optimisticCreate({
+          ...patch,
+          projectId,
+          ...(isAssigningToClient && {
+            clientVisible: true,
+            approvalStatus: "PENDING",
+          }),
+        });
       }
     } finally { setFormSubmitting(false); }
   }
@@ -2562,15 +2591,39 @@ export default function TasksPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Zugewiesen an</Label>
-                  <Select value={formAssigneeId} onValueChange={setFormAssigneeId}>
+                  <Select
+                    value={formAssigneeId}
+                    onValueChange={(v) => {
+                      setFormAssigneeId(v);
+                      const m = members.find((mem) => mem.id === v);
+                      if (m?.role === "CLIENT") setFormClientVisible(true);
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Niemand</SelectItem>
                       {members.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>
+                          <span className="flex items-center gap-2">
+                            {m.name || m.email}
+                            {m.role === "CLIENT" && (
+                              <span className="text-[10px] text-muted-foreground">(Kunde)</span>
+                            )}
+                          </span>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* Hint when a client is selected */}
+                  {(() => {
+                    const assignee = members.find((m) => m.id === formAssigneeId);
+                    return assignee?.role === "CLIENT" ? (
+                      <p className="flex items-center gap-1.5 text-xs text-warning">
+                        <ClipboardCheck className="h-3 w-3 shrink-0" />
+                        Speichern startet die Kunden-Abnahme
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -2687,34 +2740,58 @@ export default function TasksPage() {
       </Dialog>
 
       {/* Handoff Dialog — shown when staff moves task to approval column */}
-      <Dialog open={handoffDialogOpen} onOpenChange={(o) => { if (!handoffSubmitting) setHandoffDialogOpen(o); }}>
+      <Dialog open={handoffDialogOpen} onOpenChange={(o) => {
+        if (!handoffSubmitting) {
+          setHandoffDialogOpen(o);
+          if (!o) setHandoffClientLocked(false);
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardCheck className="h-4 w-4 text-warning" />
-              Übergabe an Kunden
+              {handoffClientLocked ? "Zur Kunden-Abnahme übergeben" : "Übergabe an Kunden"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
             <p className="text-sm text-muted-foreground">
-              Schreibe eine Nachricht an den Kunden und weise den Task zu. Der Kunde erhält eine Benachrichtigung und kann den Task dann genehmigen oder ablehnen.
+              {handoffClientLocked
+                ? "Schreibe dem Kunden eine Nachricht dazu, was er prüfen oder abnehmen soll."
+                : "Schreibe eine Nachricht an den Kunden und weise den Task zu. Der Kunde kann den Task dann genehmigen oder ablehnen."}
             </p>
 
-            {/* Client selector */}
-            {members.filter((m) => m.role === "CLIENT").length > 0 && (
-              <div className="space-y-2">
-                <Label>Kunden auswählen</Label>
-                <select
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  value={handoffClientId}
-                  onChange={(e) => setHandoffClientId(e.target.value)}
-                >
-                  <option value="">— Kein Kunde zuweisen —</option>
-                  {members.filter((m) => m.role === "CLIENT").map((m) => (
-                    <option key={m.id} value={m.id}>{m.name || m.email}</option>
-                  ))}
-                </select>
+            {/* Client: locked display (from assignee selection) OR dropdown (from column drag) */}
+            {handoffClientLocked ? (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Zugewiesen an</Label>
+                <div className="flex items-center gap-2 rounded-sm border bg-muted/30 px-3 py-2">
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-[9px]">
+                      {getInitials(members.find((m) => m.id === handoffClientId)?.name || members.find((m) => m.id === handoffClientId)?.email || "?")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">
+                    {members.find((m) => m.id === handoffClientId)?.name || members.find((m) => m.id === handoffClientId)?.email}
+                  </span>
+                  <span className="ml-auto text-[10px] text-muted-foreground rounded-full border px-1.5 py-0.5">Kunde</span>
+                </div>
               </div>
+            ) : (
+              members.filter((m) => m.role === "CLIENT").length > 0 && (
+                <div className="space-y-2">
+                  <Label>Kunden auswählen</Label>
+                  <select
+                    className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    value={handoffClientId}
+                    onChange={(e) => setHandoffClientId(e.target.value)}
+                  >
+                    <option value="">— Kein Kunde zuweisen —</option>
+                    {members.filter((m) => m.role === "CLIENT").map((m) => (
+                      <option key={m.id} value={m.id}>{m.name || m.email}</option>
+                    ))}
+                  </select>
+                </div>
+              )
             )}
 
             {/* Handoff message */}
@@ -2728,11 +2805,12 @@ export default function TasksPage() {
                 placeholder="Was wurde umgesetzt? Was soll der Kunde prüfen? Gibt es besondere Hinweise?"
                 rows={4}
                 className="resize-none"
+                autoFocus
               />
             </div>
 
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setHandoffDialogOpen(false)} disabled={handoffSubmitting}>
+              <Button variant="outline" onClick={() => { setHandoffDialogOpen(false); setHandoffClientLocked(false); }} disabled={handoffSubmitting}>
                 Abbrechen
               </Button>
               <Button

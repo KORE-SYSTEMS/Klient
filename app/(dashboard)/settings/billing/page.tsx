@@ -22,6 +22,8 @@ import {
   Save,
   Loader2,
 } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { FieldHint } from "@/components/ui/field-hint";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -163,6 +165,7 @@ export default function BillingSettingsPage() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold tracking-tight">Abrechnung</h1>
@@ -240,19 +243,16 @@ export default function BillingSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="companyIban" className="flex items-center gap-1.5">
-                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                    IBAN
-                  </Label>
-                  <Input
-                    id="companyIban"
-                    value={s.companyIban}
-                    onChange={field("companyIban")}
-                    placeholder="DE89 3704 0044 0532 0130 00"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Wird als Zahlungsinformation auf Rechnungen angezeigt.
-                  </p>
+                  <Label htmlFor="companyIban">IBAN</Label>
+                  <FieldHint hint="Wird als Zahlungsinformation auf Rechnungen angezeigt.">
+                    <Input
+                      id="companyIban"
+                      value={s.companyIban}
+                      onChange={field("companyIban")}
+                      placeholder="DE89 3704 0044 0532 0130 00"
+                      className="pr-8"
+                    />
+                  </FieldHint>
                 </div>
               </div>
             </CardContent>
@@ -275,20 +275,21 @@ export default function BillingSettingsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="defaultHourlyRate">Standard-Stundensatz</Label>
-                  <div className="relative">
-                    <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      id="defaultHourlyRate"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={s.defaultHourlyRate}
-                      onChange={field("defaultHourlyRate")}
-                      placeholder="95.00"
-                      className="pl-9"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">Pro Stunde, wird für neue Projekte vorausgefüllt.</p>
+                  <FieldHint hint="Pro Stunde, wird für neue Projekte vorausgefüllt.">
+                    <div className="relative">
+                      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="defaultHourlyRate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={s.defaultHourlyRate}
+                        onChange={field("defaultHourlyRate")}
+                        placeholder="95.00"
+                        className="pl-9 pr-8"
+                      />
+                    </div>
+                  </FieldHint>
                 </div>
 
                 <div className="space-y-2">
@@ -312,18 +313,18 @@ export default function BillingSettingsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="paymentTermsDays">Zahlungsziel (Tage)</Label>
-                  <Input
-                    id="paymentTermsDays"
-                    type="number"
-                    min="0"
-                    max="365"
-                    value={s.paymentTermsDays}
-                    onChange={field("paymentTermsDays")}
-                    placeholder="14"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Anzahl Tage bis zur Fälligkeit nach Rechnungsstellung.
-                  </p>
+                  <FieldHint hint="Anzahl Tage bis zur Fälligkeit nach Rechnungsstellung.">
+                    <Input
+                      id="paymentTermsDays"
+                      type="number"
+                      min="0"
+                      max="365"
+                      value={s.paymentTermsDays}
+                      onChange={field("paymentTermsDays")}
+                      placeholder="14"
+                      className="pr-8"
+                    />
+                  </FieldHint>
                 </div>
 
                 <div className="space-y-2">
@@ -366,37 +367,31 @@ export default function BillingSettingsPage() {
                   {/* Invoice prefix */}
                   <div className="space-y-2">
                     <Label htmlFor="invoicePrefix">Rechnungsnummer-Präfix</Label>
-                    <Input
-                      id="invoicePrefix"
-                      value={s.invoicePrefix}
-                      onChange={field("invoicePrefix")}
-                      placeholder="RE"
-                      maxLength={10}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Beispiel:{" "}
-                      <code className="font-mono rounded bg-muted px-1.5 py-0.5 text-foreground">
-                        {prefixExample(s.invoicePrefix)}
-                      </code>
-                    </p>
+                    <FieldHint hint={`Nummern werden automatisch vergeben. Beispiel: ${prefixExample(s.invoicePrefix)}`}>
+                      <Input
+                        id="invoicePrefix"
+                        value={s.invoicePrefix}
+                        onChange={field("invoicePrefix")}
+                        placeholder="RE"
+                        maxLength={10}
+                        className="pr-8"
+                      />
+                    </FieldHint>
                   </div>
 
                   {/* Proposal prefix */}
                   <div className="space-y-2">
                     <Label htmlFor="proposalPrefix">Angebotsnummer-Präfix</Label>
-                    <Input
-                      id="proposalPrefix"
-                      value={s.proposalPrefix}
-                      onChange={field("proposalPrefix")}
-                      placeholder="AN"
-                      maxLength={10}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Beispiel:{" "}
-                      <code className="font-mono rounded bg-muted px-1.5 py-0.5 text-foreground">
-                        {prefixExample(s.proposalPrefix)}
-                      </code>
-                    </p>
+                    <FieldHint hint={`Nummern werden automatisch vergeben. Beispiel: ${prefixExample(s.proposalPrefix)}`}>
+                      <Input
+                        id="proposalPrefix"
+                        value={s.proposalPrefix}
+                        onChange={field("proposalPrefix")}
+                        placeholder="AN"
+                        maxLength={10}
+                        className="pr-8"
+                      />
+                    </FieldHint>
                   </div>
                 </div>
 
@@ -429,5 +424,6 @@ export default function BillingSettingsPage() {
         </div>
       </form>
     </div>
+    </TooltipProvider>
   );
 }

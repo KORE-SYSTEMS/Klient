@@ -49,7 +49,9 @@ import {
   Import,
   ArrowRightLeft,
   ExternalLink,
+  TrendingUp,
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -161,13 +163,23 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function StatCard({
+  label, value, icon: Icon, iconClass, accent,
+}: {
+  label: string; value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconClass?: string; accent?: string;
+}) {
   return (
-    <div className="rounded-xl border bg-card px-5 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{label}</p>
-      <p className={cn("mt-1 text-2xl font-bold", accent)}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+        <Icon className={cn("h-4 w-4", iconClass ?? "text-muted-foreground")} />
+      </CardHeader>
+      <CardContent>
+        <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -482,66 +494,65 @@ export default function ProposalsPage() {
   const bruttoPreview = nettoPreview + taxPreview;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b bg-card px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight">Angebote</h1>
-            <p className="text-sm text-muted-foreground">Alle Angebote im Überblick</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Angebote</h1>
+          <p className="text-sm text-muted-foreground">Alle Angebote im Überblick</p>
+        </div>
+        <Button size="sm" className="gap-2" onClick={openNew}>
+          <Plus className="h-4 w-4" />
+          Neues Angebot
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Versendet"              value={String(stats.totalSent)}       icon={Send}         iconClass="text-muted-foreground" />
+        <StatCard label="Akzeptiert"             value={String(stats.accepted)}        icon={CheckCircle2} iconClass={stats.accepted > 0 ? "text-emerald-400" : "text-muted-foreground"} accent={stats.accepted > 0 ? "text-emerald-400" : undefined} />
+        <StatCard label="Abgelehnt / Abgelaufen" value={String(stats.declined)}        icon={AlertCircle}  iconClass={stats.declined > 0 ? "text-red-400" : "text-muted-foreground"} accent={stats.declined > 0 ? "text-red-400" : undefined} />
+        <StatCard label="Annahmequote"           value={`${stats.acceptanceRate} %`}   icon={TrendingUp}   iconClass={stats.acceptanceRate >= 50 ? "text-emerald-400" : "text-muted-foreground"} accent={stats.acceptanceRate >= 50 ? "text-emerald-400" : undefined} />
+      </div>
+
+      {/* Filter + List */}
+      <div className="rounded-lg border overflow-hidden">
+        {/* Filter bar */}
+        <div className="border-b px-4 py-3 flex items-center gap-3 flex-wrap bg-card">
+          <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Suchen…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
           </div>
-          <Button size="sm" className="gap-2" onClick={openNew}>
-            <Plus className="h-4 w-4" />
-            Neues Angebot
-          </Button>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-8 w-[170px] text-sm">
+              <SelectValue placeholder="Alle Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Alle Status</SelectItem>
+              {ALL_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_CONFIG[s]?.label ?? s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            {filtered.length} Angebot{filtered.length !== 1 ? "e" : ""}
+          </span>
         </div>
 
-        {/* Stats */}
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Versendet"       value={String(stats.totalSent)}    />
-          <StatCard label="Akzeptiert"      value={String(stats.accepted)}     accent={stats.accepted > 0 ? "text-emerald-400" : undefined} />
-          <StatCard label="Abgelehnt / Abgelaufen" value={String(stats.declined)} accent={stats.declined > 0 ? "text-red-400" : undefined} />
-          <StatCard label="Annahmequote"    value={`${stats.acceptanceRate} %`} accent={stats.acceptanceRate >= 50 ? "text-emerald-400" : "text-muted-foreground"} />
-        </div>
-      </div>
-
-      {/* Filter bar */}
-      <div className="border-b px-6 py-3 flex items-center gap-3 flex-wrap bg-card/50">
-        <div className="relative flex-1 min-w-[200px] max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Suchen…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8 text-sm"
-          />
-        </div>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 w-[170px] text-sm">
-            <SelectValue placeholder="Alle Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Alle Status</SelectItem>
-            {ALL_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{STATUS_CONFIG[s]?.label ?? s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <span className="ml-auto text-xs text-muted-foreground">
-          {filtered.length} Angebot{filtered.length !== 1 ? "e" : ""}
-        </span>
-      </div>
-
-      {/* List */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+        {/* List */}
         {loading ? (
-          <div className="space-y-2">
+          <div className="p-4 space-y-2">
             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center bg-card">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
               <FileText className="h-6 w-6 text-muted-foreground" />
             </div>
@@ -557,7 +568,7 @@ export default function ProposalsPage() {
             )}
           </div>
         ) : (
-          <div className="rounded-xl border overflow-hidden">
+          <div className="bg-card">
             {/* Table header */}
             <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1fr_1fr_auto] gap-4 border-b bg-muted/30 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Angebot</span>

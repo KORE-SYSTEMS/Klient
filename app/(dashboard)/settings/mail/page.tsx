@@ -24,6 +24,8 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { FieldHint } from "@/components/ui/field-hint";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -397,6 +399,7 @@ export default function MailSettingsPage() {
   const activeTemplate = TEMPLATES.find((t) => t.key === activeTab);
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold tracking-tight">Mail</h1>
@@ -539,12 +542,14 @@ export default function MailSettingsPage() {
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-2">
                   <Label>Betreff</Label>
-                  <Input
-                    value={(s as any)[activeTemplate.subjectKey] || ""}
-                    onChange={(e) => setS({ ...s, [activeTemplate.subjectKey]: e.target.value })}
-                    placeholder={activeTemplate.defaultSubject}
-                  />
-                  <p className="text-xs text-muted-foreground">Leer lassen für Standard-Betreff</p>
+                  <FieldHint hint="Leer lassen, um den Standard-Betreff zu verwenden.">
+                    <Input
+                      value={(s as any)[activeTemplate.subjectKey] || ""}
+                      onChange={(e) => setS({ ...s, [activeTemplate.subjectKey]: e.target.value })}
+                      placeholder={activeTemplate.defaultSubject}
+                      className="pr-8"
+                    />
+                  </FieldHint>
                 </div>
 
                 <div className="space-y-2">
@@ -650,5 +655,6 @@ export default function MailSettingsPage() {
         );
       })()}
     </div>
+    </TooltipProvider>
   );
 }
