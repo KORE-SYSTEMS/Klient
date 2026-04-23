@@ -6,15 +6,19 @@ import { useSession } from "next-auth/react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   useDroppable,
+  pointerWithin,
+  rectIntersection,
+  closestCenter,
+  getFirstCollision,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
+  type CollisionDetection,
+  type Modifier,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -22,7 +26,7 @@ import {
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { CSS, getEventCoordinates } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -611,7 +615,7 @@ function KanbanColumn({
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2 px-0.5 pb-2" style={{ minHeight: 40 }}>
+          <div className="space-y-2 px-0.5 pb-2" style={{ minHeight: 80 }}>
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}
@@ -1257,6 +1261,37 @@ function ActivityTimeline({ taskId, statuses, members }: {
   );
 }
 
+// --- DnD helpers ---
+
+/** Snaps the drag overlay's top-left corner ~12px below/right of the cursor */
+const snapToCursor: Modifier = ({ activatorEvent, draggingNodeRect, transform }) => {
+  if (draggingNodeRect && activatorEvent) {
+    const coords = getEventCoordinates(activatorEvent as MouseEvent | TouchEvent);
+    if (!coords) return transform;
+    const offsetX = coords.x - draggingNodeRect.left;
+    const offsetY = coords.y - draggingNodeRect.top;
+    return {
+      ...transform,
+      x: transform.x - offsetX + 12,
+      y: transform.y - offsetY + 12,
+    };
+  }
+  return transform;
+};
+
+/**
+ * Prefer pointer-within (exact hit-test) so hovering over a column or card
+ * registers immediately; fall back to closest-center when the pointer is
+ * between droppables (e.g. gap between columns).
+ */
+const kanbanCollision: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args);
+  if (pointerHits.length > 0) return pointerHits;
+  const rectHits = rectIntersection(args);
+  if (rectHits.length > 0) return rectHits;
+  return closestCenter(args);
+};
+
 // --- Main Page ---
 
 export default function TasksPage() {
@@ -1335,8 +1370,7 @@ export default function TasksPage() {
   const [filterDue, setFilterDue] = useState<"" | "overdue" | "today" | "week" | "none">("");
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
   // --- Data fetching ---
@@ -1512,7 +1546,14 @@ export default function TasksPage() {
 
   // --- Drag & Drop ---
   function handleDragStart(event: DragStartEvent) { if (isClient) return; setActiveId(event.active.id as string); }
-  function handleDragOver(event: DragOverEvent) { if (isClient) return; setOverId(event.over ? (event.over.id as string) : null); }
+  function handleDragOver(event: DragOverEvent) {
+    if (isClient) return;
+    if (!event.over) { setOverId(null); return; }
+    const id = event.over.id as string;
+    // If hovering over a task, resolve its column so the column highlights
+    const overTask = tasks.find((t) => t.id === id);
+    setOverId(overTask ? overTask.status : id);
+  }
 
   async function handleDragEnd(event: DragEndEvent) {
     if (isClient) return;
@@ -2100,7 +2141,7 @@ export default function TasksPage() {
 
       {/* Kanban View */}
       {view === "kanban" ? (
-        <DndContext sensors={isClient ? [] : sensors} collisionDetection={closestCorners}
+        <DndContext sensors={isClient ? [] : sensors} collisionDetection={kanbanCollision}
           onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {statuses.map((status) => {
@@ -2115,7 +2156,7 @@ export default function TasksPage() {
               );
             })}
           </div>
-          <DragOverlay>
+          <DragOverlay modifiers={[snapToCursor]} dropAnimation={null}>
             {activeTask && (
               <div className="w-[280px] rotate-2 rounded-lg border bg-card p-3 shadow-2xl">
                 <div className="space-y-2">
