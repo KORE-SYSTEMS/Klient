@@ -51,7 +51,6 @@ import {
   ExternalLink,
   TrendingUp,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -171,15 +170,13 @@ function StatCard({
   iconClass?: string; accent?: string;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className={cn("h-4 w-4", iconClass ?? "text-muted-foreground")} />
-      </CardHeader>
-      <CardContent>
-        <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <Icon className={cn("h-3.5 w-3.5", iconClass)} />
+        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+      </div>
+      <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
+    </div>
   );
 }
 

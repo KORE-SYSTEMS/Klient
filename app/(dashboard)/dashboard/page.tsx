@@ -457,16 +457,14 @@ function StatCard({
   href?: string;
 }) {
   const inner = (
-    <Card className={cn("transition-colors", href && "hover:bg-accent cursor-pointer")}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className={cn("h-4 w-4", iconClass)} />
-      </CardHeader>
-      <CardContent>
-        <div className={cn("text-2xl font-bold tabular-nums", valueClass)}>{value}</div>
-        {sublabel && <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>}
-      </CardContent>
-    </Card>
+    <div className={cn("rounded-xl border bg-card p-4 transition-colors", href && "hover:bg-accent cursor-pointer")}>
+      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <Icon className={cn("h-3.5 w-3.5", iconClass)} />
+        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+      </div>
+      <div className={cn("text-2xl font-bold tabular-nums", valueClass)}>{value}</div>
+      {sublabel && <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>}
+    </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;
 }

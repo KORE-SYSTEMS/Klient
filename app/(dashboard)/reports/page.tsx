@@ -435,16 +435,14 @@ export default function ReportsPage() {
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; sub: string }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{sub}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <Icon className="h-3.5 w-3.5" />
+        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+      </div>
+      <div className="text-2xl font-bold tabular-nums">{value}</div>
+      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</p>
+    </div>
   );
 }
 
@@ -453,16 +451,14 @@ function ReportSkeleton() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-4 rounded" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-3 w-24 mt-1" />
-            </CardContent>
-          </Card>
+          <div key={i} className="rounded-xl border bg-card p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Skeleton className="h-3.5 w-3.5 rounded" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <Skeleton className="h-7 w-16" />
+            <Skeleton className="h-3 w-24 mt-1" />
+          </div>
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-3">

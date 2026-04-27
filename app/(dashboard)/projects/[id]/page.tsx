@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +10,7 @@ import {
   MessageSquare,
   Users,
   Calendar,
-  Clock,
+  TrendingUp,
 } from "lucide-react";
 import { formatDate, getInitials } from "@/lib/utils";
 
@@ -129,59 +128,45 @@ export default function ProjectDetailPage() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <CheckSquare className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="text-2xl font-bold">{totalTasks}</p>
-              <p className="text-xs text-muted-foreground">Tasks gesamt</p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { icon: CheckSquare,    label: "Tasks gesamt", value: totalTasks },
+          { icon: FileIcon,       label: "Dateien",      value: project._count.files },
+          { icon: MessageSquare,  label: "Nachrichten",  value: project._count.messages },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="rounded-xl border bg-card p-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Icon className="h-3.5 w-3.5" />
+              <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <FileIcon className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="text-2xl font-bold">{project._count.files}</p>
-              <p className="text-xs text-muted-foreground">Dateien</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <MessageSquare className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="text-2xl font-bold">{project._count.messages}</p>
-              <p className="text-xs text-muted-foreground">Nachrichten</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex-1">
-              <p className="text-2xl font-bold">{progress}%</p>
-              <p className="text-xs text-muted-foreground">Fortschritt</p>
-            </div>
-            <div className="h-2 w-20 rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            <div className="text-2xl font-bold tabular-nums">{value}</div>
+          </div>
+        ))}
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span className="text-[11px] uppercase tracking-wider font-medium">Fortschritt</span>
+          </div>
+          <div className="text-2xl font-bold tabular-nums">{progress}%</div>
+          <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Task breakdown + Members */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading text-base">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 text-muted-foreground mb-3">
+            <CheckSquare className="h-3.5 w-3.5" />
+            <span className="text-[11px] uppercase tracking-wider font-medium">
               Task-Verteilung
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+            </span>
+          </div>
+          <div className="space-y-2">
             {taskStats.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Noch keine Tasks vorhanden
@@ -199,20 +184,21 @@ export default function ProjectDetailPage() {
                     />
                     <span className="text-sm">{stat.statusName || stat.status}</span>
                   </div>
-                  <span className="text-sm font-medium">{stat._count}</span>
+                  <span className="text-sm font-medium tabular-nums">{stat._count}</span>
                 </div>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading text-base">
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 text-muted-foreground mb-3">
+            <Users className="h-3.5 w-3.5" />
+            <span className="text-[11px] uppercase tracking-wider font-medium">
               Mitglieder
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </span>
+          </div>
+          <div className="space-y-3">
             {project.members.map((m) => (
               <div key={m.user.id} className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
@@ -248,13 +234,13 @@ export default function ProjectDetailPage() {
                 Noch keine Mitglieder zugewiesen
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Meta info */}
-      <Card>
-        <CardContent className="flex flex-wrap gap-6 p-4 text-sm text-muted-foreground">
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4" />
             Erstellt: {formatDate(project.createdAt)}
@@ -269,8 +255,8 @@ export default function ProjectDetailPage() {
             <Users className="h-4 w-4" />
             {project.members.length} Mitglieder
           </span>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
