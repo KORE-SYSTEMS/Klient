@@ -114,7 +114,7 @@ export default async function PipelinePage() {
                       <Link
                         key={client.id}
                         href={`/clients/${client.id}`}
-                        className="block rounded-lg border bg-card p-3.5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all group"
+                        className="block rounded-lg border bg-card p-3.5 group"
                       >
                         <div className="flex items-center gap-2.5 mb-2">
                           <Avatar className="h-7 w-7 shrink-0">

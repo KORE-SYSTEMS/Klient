@@ -31,7 +31,7 @@ export function Topbar({ user }: TopbarProps) {
       <button
         type="button"
         onClick={openCommandPalette}
-        className="group hidden md:flex items-center gap-2 rounded-sm border bg-background/50 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors min-w-[280px]"
+        className="group hidden md:flex items-center gap-2 rounded-md border bg-background/50 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors min-w-[280px]"
         aria-label="Suche öffnen"
       >
         <Search className="h-3.5 w-3.5" />

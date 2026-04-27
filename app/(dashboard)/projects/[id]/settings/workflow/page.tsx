@@ -254,7 +254,7 @@ export default function WorkflowSettingsPage() {
             <button
               key={tpl.id}
               onClick={() => setTemplateConfirmId(tpl.id)}
-              className="rounded-lg border bg-background p-3 text-left transition hover:border-primary hover:shadow-sm"
+              className="rounded-lg border bg-background p-3 text-left"
             >
               <div className="flex items-center gap-1 mb-2">
                 {tpl.statuses.map((s) => (
@@ -468,7 +468,7 @@ function SortableRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border bg-card px-2.5 py-2 transition hover:border-primary/40",
+        "group flex items-center gap-3 rounded-lg border bg-card px-2.5 py-2",
         isDragging && "shadow-md"
       )}
     >

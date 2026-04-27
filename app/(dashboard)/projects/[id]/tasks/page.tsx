@@ -413,7 +413,7 @@ function TaskCard({
     >
       <div
         className={cn(
-          "card-hover group rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md",
+          "group rounded-xl border bg-card",
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
           isTimerActive && "ring-2 ring-primary/30",

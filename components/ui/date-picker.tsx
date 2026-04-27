@@ -90,7 +90,7 @@ export function DatePicker({ value, onChange, placeholder = "Datum wählen", cla
           type="button"
           className={cn(
             "flex h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background transition-colors",
-            "hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "focus-visible:outline-none focus-visible:border-foreground/30",
             !label && "text-muted-foreground",
             className
           )}

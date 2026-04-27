@@ -209,7 +209,7 @@ export function FloatingTimer({
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setMinimized(false)}
-          className="group flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-primary-foreground shadow-lg transition-all hover:shadow-xl hover:scale-105"
+          className="group flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-primary-foreground shadow-lg transition-opacity hover:opacity-90"
         >
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/60" />

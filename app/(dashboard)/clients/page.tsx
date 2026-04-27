@@ -127,7 +127,7 @@ export default async function ClientsPage() {
           {clients.map((client) => {
             const lastActivity = client.clientActivities[0];
             return (
-              <Card key={client.id} className="group relative overflow-hidden hover:border-primary/40 transition-colors">
+              <Card key={client.id} className="group relative overflow-hidden">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     {/* Avatar + identity */}

@@ -349,7 +349,7 @@ export default function ProjectsPage() {
             return (
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className={cn(
-                  "card-hover group cursor-pointer hover:border-primary/40 relative",
+                  "group cursor-pointer relative",
                   isOverdue    && "border-red-500/40",
                   project.archived && "opacity-60"
                 )}>

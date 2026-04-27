@@ -870,7 +870,7 @@ export default function FilesPage() {
                 <div
                   className={cn(
                     "rounded-lg border-2 border-dashed p-4 text-center transition-colors cursor-pointer",
-                    versionDragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                    versionDragOver ? "border-primary bg-primary/5" : "border-border"
                   )}
                   onDragOver={(e) => { e.preventDefault(); setVersionDragOver(true); }}
                   onDragLeave={() => setVersionDragOver(false)}
@@ -994,7 +994,7 @@ function FolderCard({
         "group relative rounded-xl border bg-card p-4 cursor-pointer transition-all select-none",
         isDragOver
           ? "border-primary bg-primary/10 scale-[1.02]"
-          : "hover:bg-accent/40 hover:border-border/60"
+          : "hover:bg-accent/40"
       )}
       onClick={() => !isRenaming && onOpen()}
       onDragOver={onDragOver}
@@ -1160,7 +1160,7 @@ function FileCard({
 
   return (
     <div
-      className="group relative rounded-xl border bg-card overflow-hidden cursor-grab active:cursor-grabbing transition-all hover:border-border/60 hover:shadow-sm"
+      className="group relative rounded-xl border bg-card overflow-hidden cursor-grab active:cursor-grabbing"
       draggable={!isClient}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}

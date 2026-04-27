@@ -79,10 +79,9 @@ export default async function DashboardPage() {
     ? { members: { some: { userId } }, archived: false }
     : { archived: false };
 
-  // Ignore archived — fall back gracefully if column doesn't exist yet
   const safeProjectWhere = isClient
-    ? { members: { some: { userId } } }
-    : {};
+    ? { members: { some: { userId } }, archived: false }
+    : { archived: false };
 
   // ── parallel queries ───────────────────────────────────────────────────────
   const [
@@ -108,7 +107,7 @@ export default async function DashboardPage() {
     prisma.task.findMany({
       where: {
         assigneeId: userId,
-        project:    { ...(isClient ? { members: { some: { userId } } } : {}) },
+        project:    { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
         ...(isClient ? { clientVisible: true } : {}),
       },
       include: {
@@ -122,7 +121,7 @@ export default async function DashboardPage() {
     // Upcoming + overdue (has a due date, not null, and date <= 7 days from now)
     prisma.task.findMany({
       where: {
-        project:  { ...(isClient ? { members: { some: { userId } } } : {}) },
+        project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
         ...(isClient ? { clientVisible: true } : {}),
         dueDate:  { not: null, lte: weekLater },
       },
@@ -137,8 +136,8 @@ export default async function DashboardPage() {
     // Pending approvals for this user (client) or across all projects (staff)
     prisma.task.findMany({
       where: isClient
-        ? { assigneeId: userId, approvalStatus: "PENDING" }
-        : { approvalStatus: "PENDING" },
+        ? { assigneeId: userId, approvalStatus: "PENDING", project: { archived: false } }
+        : { approvalStatus: "PENDING", project: { archived: false } },
       include: {
         project:  { select: { id: true, name: true, color: true } },
         assignee: { select: { id: true, name: true, email: true } },
@@ -153,7 +152,7 @@ export default async function DashboardPage() {
     // Overdue task count
     prisma.task.count({
       where: {
-        project:  { ...(isClient ? { members: { some: { userId } } } : {}) },
+        project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
         ...(isClient ? { clientVisible: true } : {}),
         dueDate:  { not: null, lt: now },
       },
