@@ -263,7 +263,7 @@ export default function ClientDetailPage() {
 
   // Activity form
   const [actOpen, setActOpen] = useState(false);
-  const [actForm, setActForm] = useState({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "" });
+  const [actForm, setActForm] = useState({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "__none__" });
   const [savingAct, setSavingAct] = useState(false);
 
   const load = useCallback(async () => {
@@ -323,11 +323,11 @@ export default function ClientDetailPage() {
     const res = await fetch(`/api/clients/${id}/activities`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...actForm, duration: actForm.duration ? Number(actForm.duration) : null, outcome: actForm.outcome || null }),
+      body: JSON.stringify({ ...actForm, duration: actForm.duration ? Number(actForm.duration) : null, outcome: actForm.outcome === "__none__" ? null : actForm.outcome || null }),
     });
     const a = await res.json();
     setActivities((prev) => [a, ...prev]);
-    setActForm({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "" });
+    setActForm({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "__none__" });
     setActOpen(false);
     setSavingAct(false);
   }
@@ -467,12 +467,12 @@ export default function ClientDetailPage() {
                 {/* Lead status */}
                 <div className="space-y-1.5">
                   <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">Status</Label>
-                  <Select value={client.leadStatus ?? ""} onValueChange={(v) => patchClient({ leadStatus: v || null })}>
+                  <Select value={client.leadStatus ?? "__none__"} onValueChange={(v) => patchClient({ leadStatus: v === "__none__" ? null : v })}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="Kein Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Kein Status</SelectItem>
+                      <SelectItem value="__none__">Kein Status</SelectItem>
                       {LEAD_STATUSES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -493,12 +493,12 @@ export default function ClientDetailPage() {
                 {/* Lead source */}
                 <div className="space-y-1.5">
                   <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">Quelle</Label>
-                  <Select value={client.leadSource ?? ""} onValueChange={(v) => patchClient({ leadSource: v || null })}>
+                  <Select value={client.leadSource ?? "__none__"} onValueChange={(v) => patchClient({ leadSource: v === "__none__" ? null : v })}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="Keine" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Keine</SelectItem>
+                      <SelectItem value="__none__">Keine</SelectItem>
                       {["Website", "Empfehlung", "Kaltakquise", "Messe", "Social Media", "Sonstiges"].map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
@@ -628,7 +628,7 @@ export default function ClientDetailPage() {
                   <Select value={actForm.outcome} onValueChange={(v) => setActForm((f) => ({ ...f, outcome: v }))}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Kein Ergebnis" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Kein Ergebnis</SelectItem>
+                      <SelectItem value="__none__">Kein Ergebnis</SelectItem>
                       {OUTCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                     </SelectContent>
                   </Select>

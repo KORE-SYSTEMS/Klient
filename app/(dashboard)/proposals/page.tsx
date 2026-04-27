@@ -203,8 +203,8 @@ export default function ProposalsPage() {
   const [sending,       setSending]       = useState<string | null>(null);
   const [converting,    setConverting]    = useState<string | null>(null);
 
-  const [formProjectId, setFormProjectId] = useState("");
-  const [formClientId,  setFormClientId]  = useState("");
+  const [formProjectId, setFormProjectId] = useState("__none__");
+  const [formClientId,  setFormClientId]  = useState("__none__");
   const [formTitle,     setFormTitle]     = useState("");
   const [formNumber,    setFormNumber]    = useState("");
   const [formStatus,    setFormStatus]    = useState("DRAFT");
@@ -253,7 +253,7 @@ export default function ProposalsPage() {
   // ── Task import ────────────────────────────────────────────────────────────
 
   async function loadImportTasks() {
-    if (!formProjectId) return;
+    if (!formProjectId || formProjectId === "__none__") return;
     setImportLoading(true);
     const res = await fetch(`/api/tasks?projectId=${formProjectId}`);
     if (res.ok) {
@@ -307,8 +307,8 @@ export default function ProposalsPage() {
 
   function openNew() {
     setEditProposal(null);
-    setFormProjectId(projects[0]?.id ?? "");
-    setFormClientId("");
+    setFormProjectId(projects[0]?.id ?? "__none__");
+    setFormClientId("__none__");
     setFormTitle("");
     setFormNumber("");
     setFormStatus("DRAFT");
@@ -321,8 +321,8 @@ export default function ProposalsPage() {
 
   function openEdit(p: Proposal) {
     setEditProposal(p);
-    setFormProjectId(p.projectId ?? "");
-    setFormClientId(p.clientId ?? "");
+    setFormProjectId(p.projectId ?? "__none__");
+    setFormClientId(p.clientId ?? "__none__");
     setFormTitle(p.title);
     setFormNumber(p.number);
     setFormStatus(p.status);
@@ -347,8 +347,8 @@ export default function ProposalsPage() {
     setSubmitting(true);
     try {
       const body = {
-        projectId:  formProjectId || null,
-        clientId:   formClientId  || null,
+        projectId:  formProjectId === "__none__" ? null : formProjectId || null,
+        clientId:   formClientId  === "__none__" ? null : formClientId  || null,
         title:      formTitle,
         number:     formNumber.trim() || undefined,
         status:     formStatus,
@@ -733,7 +733,7 @@ export default function ProposalsPage() {
                   <SelectValue placeholder="Kein Projekt" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Kein Projekt</SelectItem>
+                  <SelectItem value="__none__">Kein Projekt</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
@@ -749,7 +749,7 @@ export default function ProposalsPage() {
                   <SelectValue placeholder="Keinen Kunden zuordnen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keinen Kunden zuordnen</SelectItem>
+                  <SelectItem value="__none__">Keinen Kunden zuordnen</SelectItem>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name ?? c.email}{c.company ? ` (${c.company})` : ""}
@@ -820,7 +820,7 @@ export default function ProposalsPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Positionen</Label>
-                {formProjectId && (
+                {formProjectId && formProjectId !== "__none__" && (
                   <Button
                     type="button"
                     variant="ghost"

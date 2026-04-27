@@ -390,7 +390,7 @@ function TaskCard({
   if (task._isPreview) {
     return (
       <div ref={setNodeRef} style={style}>
-        <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2.5 opacity-40 select-none">
+        <div className="rounded-xl border border-dashed bg-muted/20 px-3 py-3 opacity-40 select-none">
           <div className="flex items-center gap-2">
             <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
             <span className="text-[12px] text-muted-foreground truncate">{task.title}</span>
@@ -399,6 +399,10 @@ function TaskCard({
       </div>
     );
   }
+
+  const checkTotal = task._count?.checklistItems ?? 0;
+  const checkDone  = task._count?.checklistDone  ?? 0;
+  const checkPct   = checkTotal > 0 ? Math.round((checkDone / checkTotal) * 100) : 0;
 
   return (
     <div
@@ -409,147 +413,139 @@ function TaskCard({
     >
       <div
         className={cn(
-          "card-hover group rounded-lg border bg-card shadow-sm",
+          "card-hover group rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md",
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
-          task.approvalStatus === "PENDING" && "border-warning/40",
-          task.approvalStatus === "APPROVED" && "border-success/40",
-          task.approvalStatus === "REJECTED" && "border-destructive/40",
-          isTimerActive && "ring-2 ring-primary/30 border-primary/40",
+          isTimerActive && "ring-2 ring-primary/30",
           isGreyedOut && "opacity-50",
-          isDone && "bg-muted/30 [&_.task-title-text]:line-through [&_.task-title-text]:text-muted-foreground"
         )}
         onClick={(e) => {
-          if (!(e.target as HTMLElement).closest("[data-no-click]")) {
-            onClick();
-          }
+          if (!(e.target as HTMLElement).closest("[data-no-click]")) onClick();
         }}
       >
-        {/* Color accent bar */}
-        {task.epic && (
+        <div className="p-3.5 space-y-3">
+
+          {/* Title */}
           <div
-            className="h-1 rounded-t-lg"
-            style={{ backgroundColor: task.epic.color }}
-          />
-        )}
-
-        <div className="p-3 space-y-2.5">
-          {/* Epic tag */}
-          {task.epic && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              {task.epic.title}
-            </span>
-          )}
-
-          {/* Title — double-click to edit inline */}
-          <div className="task-title-text text-[13px] font-medium leading-snug" data-no-click="">
+            className={cn(
+              "task-title-text text-sm font-semibold leading-snug",
+              isDone && "line-through text-muted-foreground"
+            )}
+            data-no-click=""
+          >
             <InlineTitle
               value={task.title}
               onSave={(t) => onUpdateTitle?.(task.id, t)}
               disabled={isClient || !onUpdateTitle}
-              inputClassName="text-[13px] font-medium leading-snug"
+              inputClassName="text-sm font-semibold leading-snug"
             />
           </div>
 
-          {/* Approval badge */}
-          {task.approvalStatus && (
-            <div><ApprovalBadge status={task.approvalStatus as string} /></div>
-          )}
+          {/* Tags: epic · priority · approval · clientVisible */}
+          <div className="flex flex-wrap gap-1.5">
+            {task.epic && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: task.epic.color }}
+                />
+                {task.epic.title}
+              </span>
+            )}
+            <span className={cn(
+              "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              getPriorityPillStyle(task.priority)
+            )}>
+              {PRIORITY_LABELS[task.priority] || task.priority}
+            </span>
+            {task.approvalStatus && (
+              <ApprovalBadge status={task.approvalStatus as string} />
+            )}
+            {task.clientVisible && !isClient && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                <Eye className="h-3 w-3" />
+              </span>
+            )}
+          </div>
 
-          {/* Description */}
+          {/* Description (optional) */}
           {task.description && (
             <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
               {task.description}
             </p>
           )}
 
-          {/* Meta row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {task.dueDate && (() => {
-              const overdue = new Date(task.dueDate) < new Date();
-              return (
-                <span className={cn(
-                  "flex items-center gap-1 text-[11px]",
-                  overdue ? "text-red-400 font-medium" : "text-muted-foreground"
-                )}>
-                  {overdue ? <AlertCircle className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
-                  {formatDate(task.dueDate)}
-                </span>
-              );
-            })()}
-            {totalTime > 0 && (
-              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {formatDurationShort(totalTime)}
+          {/* Checklist progress bar */}
+          {checkTotal > 0 && (
+            <div className="space-y-1">
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    checkPct === 100 ? "bg-emerald-500" : "bg-primary"
+                  )}
+                  style={{ width: `${checkPct}%` }}
+                />
+              </div>
+              <span className={cn(
+                "text-[10px] tabular-nums",
+                checkPct === 100 ? "text-emerald-500" : "text-muted-foreground"
+              )}>
+                {checkDone}/{checkTotal}
               </span>
-            )}
-            {task._count?.comments ? (
-              <span
-                className="flex items-center gap-0.5 text-[11px] text-muted-foreground"
-                title={`${task._count.comments} Kommentar${task._count.comments === 1 ? "" : "e"}`}
-              >
-                <MessageSquare className="h-3 w-3" />
-                {task._count.comments}
-              </span>
-            ) : null}
-            {task._count?.files ? (
-              <span
-                className="flex items-center gap-0.5 text-[11px] text-muted-foreground"
-                title={`${task._count.files} Datei${task._count.files === 1 ? "" : "en"}`}
-              >
-                <Paperclip className="h-3 w-3" />
-                {task._count.files}
-              </span>
-            ) : null}
-            {task._count?.checklistItems ? (
-              <span
-                className={cn(
-                  "flex items-center gap-0.5 text-[11px] tabular-nums",
-                  (task._count.checklistDone ?? 0) === task._count.checklistItems
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-muted-foreground"
-                )}
-                title="Checkliste"
-              >
-                <CheckCircle2 className="h-3 w-3" />
-                {task._count.checklistDone ?? 0}/{task._count.checklistItems}
-              </span>
-            ) : null}
-          </div>
+            </div>
+          )}
 
-          {/* Bottom row: avatar, priority, timer */}
-          <div className="flex items-center justify-between pt-0.5">
-            <div className="flex items-center gap-2">
-              {task.assignee && (
-                <Avatar className="h-6 w-6 border-2 border-background">
+          {/* Bottom row: avatar + date left | counts + timer right */}
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <div className="flex items-center gap-2 min-w-0">
+              {task.assignee ? (
+                <Avatar className="h-6 w-6 shrink-0 border-2 border-background">
                   <AvatarFallback className="text-[9px] font-semibold">
                     {getInitials(task.assignee.name || task.assignee.email)}
                   </AvatarFallback>
                 </Avatar>
+              ) : (
+                <div className="h-6 w-6 shrink-0 rounded-full border-2 border-dashed border-muted-foreground/20" />
               )}
-              <span className={cn(
-                "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                getPriorityPillStyle(task.priority)
-              )}>
-                {PRIORITY_LABELS[task.priority] || task.priority}
-              </span>
+              {task.dueDate && (() => {
+                const overdue = new Date(task.dueDate) < new Date();
+                return (
+                  <span className={cn(
+                    "flex items-center gap-1 text-[11px] truncate",
+                    overdue ? "text-red-400 font-medium" : "text-muted-foreground"
+                  )}>
+                    {overdue ? <AlertCircle className="h-3 w-3 shrink-0" /> : <Calendar className="h-3 w-3 shrink-0" />}
+                    {formatDate(task.dueDate)}
+                  </span>
+                );
+              })()}
             </div>
-            <div className="flex items-center gap-1.5">
-              {task.clientVisible && (
-                <Eye className="h-3 w-3 text-muted-foreground" />
+
+            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+              {task._count?.comments ? (
+                <span className="flex items-center gap-0.5 text-[11px]">
+                  <MessageSquare className="h-3 w-3" />{task._count.comments}
+                </span>
+              ) : null}
+              {task._count?.files ? (
+                <span className="flex items-center gap-0.5 text-[11px]">
+                  <Paperclip className="h-3 w-3" />{task._count.files}
+                </span>
+              ) : null}
+              {totalTime > 0 && (
+                <span className="flex items-center gap-0.5 text-[11px]">
+                  <Clock className="h-3 w-3" />{formatDurationShort(totalTime)}
+                </span>
               )}
               {!isClient && nextStatus && onNextPhase && (
                 <button
                   data-no-click
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNextPhase(task);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onNextPhase(task); }}
                   title={`→ ${nextStatus.name}`}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:border-border hover:bg-background hover:text-primary"
-                  aria-label={`Nächste Phase: ${nextStatus.name}`}
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 opacity-0 transition group-hover:opacity-100 hover:bg-muted hover:text-primary"
                 >
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-3 w-3" />
                 </button>
               )}
               {!isClient && (
@@ -2624,15 +2620,20 @@ export default function TasksPage() {
           </div>
           <DragOverlay modifiers={[snapToCursor]} dropAnimation={null}>
             {activeTask && (
-              <div className="w-[280px] rotate-2 rounded-lg border bg-card p-3 shadow-2xl">
-                <div className="space-y-2">
-                  {activeTask.epic && (
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{activeTask.epic.title}</span>
-                  )}
-                  <div className="text-sm font-medium">{activeTask.title}</div>
-                  <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold", getPriorityPillStyle(activeTask.priority))}>
-                    {PRIORITY_LABELS[activeTask.priority] || activeTask.priority}
-                  </span>
+              <div className="w-[280px] rotate-1 rounded-xl border bg-card p-3.5 shadow-2xl opacity-95">
+                <div className="space-y-2.5">
+                  <div className="text-sm font-semibold leading-snug">{activeTask.title}</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeTask.epic && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: activeTask.epic.color }} />
+                        {activeTask.epic.title}
+                      </span>
+                    )}
+                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", getPriorityPillStyle(activeTask.priority))}>
+                      {PRIORITY_LABELS[activeTask.priority] || activeTask.priority}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
