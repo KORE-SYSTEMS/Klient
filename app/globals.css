@@ -117,6 +117,24 @@
     opacity: 1;
   }
 
+  /*
+   * Compact density mode — scales the major spacing tokens (main padding,
+   * card padding, table row height) ~20–25% tighter when the user opts in.
+   * Toggle via DensityProvider; we only override the highest-impact spots
+   * here so individual components don't have to be density-aware.
+   */
+  [data-density="compact"] main {
+    padding: 1.25rem;
+  }
+  [data-density="compact"] [data-card],
+  [data-density="compact"] .card-compact-target {
+    padding: 0.75rem;
+  }
+  [data-density="compact"] .row-compact-target {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
   /* Animated gradient skeleton */
   .skeleton-shimmer {
     background: linear-gradient(

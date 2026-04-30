@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/session-provider";
 import { GlobalTimerProvider } from "@/components/global-timer";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardShortcutOverlay } from "@/components/keyboard-shortcut-overlay";
+import { DensityProvider } from "@/components/density-provider";
 
 import { prisma } from "@/lib/prisma";
 
@@ -21,17 +22,19 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider session={session}>
-      <GlobalTimerProvider>
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar role={session.user.role} logo={workspace?.logo} />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <Topbar user={session.user} />
-            <main className="flex-1 overflow-y-auto p-8">{children}</main>
+      <DensityProvider>
+        <GlobalTimerProvider>
+          <div className="flex h-screen overflow-hidden">
+            <Sidebar role={session.user.role} logo={workspace?.logo} />
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <Topbar user={session.user} />
+              <main className="flex-1 overflow-y-auto p-8">{children}</main>
+            </div>
           </div>
-        </div>
-        <CommandPalette />
-        <KeyboardShortcutOverlay />
-      </GlobalTimerProvider>
+          <CommandPalette />
+          <KeyboardShortcutOverlay />
+        </GlobalTimerProvider>
+      </DensityProvider>
     </SessionProvider>
   );
 }

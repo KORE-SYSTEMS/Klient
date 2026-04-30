@@ -11,10 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Search } from "lucide-react";
+import { LogOut, User, Search, Maximize2, Minimize2 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { openCommandPalette } from "@/components/command-palette";
+import { useDensity } from "@/components/density-provider";
 
 interface TopbarProps {
   user: {
@@ -26,6 +27,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ user }: TopbarProps) {
+  const { density, toggle } = useDensity();
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       <button
@@ -50,6 +52,18 @@ export function Topbar({ user }: TopbarProps) {
       </button>
 
       <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        title={density === "compact" ? "Komfortabel" : "Kompakt"}
+        aria-label="Dichte umschalten"
+      >
+        {density === "compact"
+          ? <Maximize2 className="h-3.5 w-3.5" />
+          : <Minimize2 className="h-3.5 w-3.5" />
+        }
+      </button>
       <NotificationsBell />
 
       <DropdownMenu>

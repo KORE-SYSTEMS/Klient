@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P1 (Aufräumen) abgeschlossen ✅ — `tasks/page.tsx` von 3.386 → 1.580 LOC (-53%)
-**Nächste Phase:** P2 — Design-System & UI-Konsistenz (Spacing, Type-Skala, Hex-Werte raus, Compact-Mode)
+**Phase:** P2 (Design-System) zu großen Teilen abgeschlossen ✅
+**Nächste Phase:** P3 — Daily-Use Power-Features (Tastatur, Bulk-Aktionen, Saved Views, Subtasks)
 
 ---
 
@@ -84,7 +84,49 @@ Single State-Objekt `TaskFilterState` ersetzt fünf einzelne useStates.
 Search ist jetzt always-on, Chips immer sichtbar als Presets, "Mehr Filter"
 expandiert die Multi-Selects nur wenn nötig — kein redundantes Toggle-Button mehr.
 
-### P1.8 · `Card`-Komponente konsequent oder gar nicht — offen, P2 verschoben
+### P1.8 · `Card`-Komponente — Entscheidung getroffen ✅
+
+`<Card>` wird in 19 Files konsequent für Auth-Forms + Dashboard-Summary-Cards
+benutzt. Rohe `<div className="rounded-xl border bg-card p-4">` für simple
+bordered Container. Klare Rollen, keine weitere Migration nötig.
+
+---
+
+## P2 · Design-System & UI-Konsistenz
+
+### P2.1+P2.2 · Type-Skala + Bulk-Replace — abgeschlossen ✅
+
+Commit `fed9101`. Drei neue Tokens in `tailwind.config.ts`:
+
+- `text-micro`   = 9px (Avatar-Initialen, dichte Badges)
+- `text-meta`    = 10px (Date-Stamps, Mini-Counter)
+- `text-caption` = 11px (Chips, Pills, sekundäre Labels)
+
+234 Vorkommen von `text-[Npx]` in 42 Files durch semantische Tokens ersetzt.
+
+### P2.3 · Empty-State — abgeschlossen ✅
+
+Commit `e8b3b89`. Neuer EmptyState mit drei Größen (default/compact/inline)
+und drei Tones (default/info/error).
+
+### P2.4 · Hover-Pattern (`.hover-action`) — abgeschlossen ✅
+
+Commit `e8b3b89`. CSS-Utility ersetzt 16 verschiedene Schreibweisen von
+`opacity-0 group-hover:opacity-100 transition-...`. Inkl. `:focus-within`
+für Tastatur-User.
+
+### P2.5 · Compact-Mode — abgeschlossen ✅
+
+- `components/density-provider.tsx`: React Context + localStorage-Persistenz
+- `[data-density="compact"]` Selektoren in globals.css (main padding, card padding)
+- Toggle in **Settings → Design** und **Topbar** (Maximize/Minimize-Icon)
+
+### P2.6 · Light-Theme + System-Preference — verschoben ⏸
+
+Die App ist aktuell Dark-Only (`<html className="dark">` hartkodiert, nur
+`:root` in globals.css = Dark-Palette). Ein echter Light/Dark-Switch braucht
+separate Design-Arbeit für die Light-Palette und Component-Audit. Nicht
+blockiert P3 — wird als Standalone-Task später angegangen.
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -98,8 +140,6 @@ Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variable
 
 Roadmap im ursprünglichen Plan-Posting (siehe Konversation). Reihenfolge nach P1:
 
-- **P1.8** `<Card>` konsequent oder rohe `<div>`-Karten — Entscheidung als Teil von P2
-- **P2** Design-System & UI-Konsistenz (Spacing, Type-Skala, Hex-Werte raus, Compact-Mode)
 - **P3** Daily-Use Power-Features (Tastatur, Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations)
 - **P4** Views (Calendar, Timeline/Gantt, Swimlanes, My Day, Inbox)
 - **P5** Real-time (SSE, Optimistic Updates flächendeckend, Presence)
@@ -121,6 +161,9 @@ c894f7e P0: Polling raus + DnD Drop-Indicator + Auto-Scroll
 ffb7006 P1.4: Add kanban task components and types (Sub-Komponenten)
 e0a43d8 P1.4: Splitte tasks/page.tsx in Sub-Komponenten (Imports + Cleanup)
 ecb8e7e P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
+fed9101 P2.1+P2.2: Type-Skala + Bulk-Replace text-[Npx]
+e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
+<HEAD>  P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
 ```
 
 ---

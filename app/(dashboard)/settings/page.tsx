@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { UpdateManager } from "@/components/update-manager";
+import { Switch } from "@/components/ui/switch";
+import { useDensity } from "@/components/density-provider";
 
 // ─── Design Sets ─────────────────────────────────────────────────────────────
 
@@ -404,6 +406,11 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Density toggle */}
+            <DensityToggle />
           </div>
         </Section>
 
@@ -493,6 +500,25 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/**
+ * Toggle between comfortable + compact UI density. Persisted client-side
+ * via DensityProvider — no server round-trip needed.
+ */
+function DensityToggle() {
+  const { density, toggle } = useDensity();
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold">Kompakte Ansicht</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Engere Abstände & dichtere Listen — gut für große Boards und Power-User.
+        </p>
+      </div>
+      <Switch checked={density === "compact"} onCheckedChange={toggle} aria-label="Kompakte Ansicht" />
     </div>
   );
 }
