@@ -120,7 +120,7 @@ c894f7e P0: Polling raus + DnD Drop-Indicator + Auto-Scroll
 04598d8 P1.5/P1.6: API-Layer + run() Toast-Helper
 ffb7006 P1.4: Add kanban task components and types (Sub-Komponenten)
 e0a43d8 P1.4: Splitte tasks/page.tsx in Sub-Komponenten (Imports + Cleanup)
-<HEAD>  P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
+ecb8e7e P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
 ```
 
 ---
