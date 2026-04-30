@@ -183,7 +183,7 @@ ecb8e7e P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
 fed9101 P2.1+P2.2: Type-Skala + Bulk-Replace text-[Npx]
 e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
 c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
-<HEAD>  P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
+c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 ```
 
 ---
