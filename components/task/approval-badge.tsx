@@ -13,7 +13,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "PENDING") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning">
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-meta font-semibold text-warning">
         <Hourglass className="h-2.5 w-2.5" />
         Abnahme ausstehend
       </span>
@@ -22,7 +22,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "APPROVED") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-meta font-semibold text-success">
         <ThumbsUp className="h-2.5 w-2.5" />
         Abgenommen
       </span>
@@ -31,7 +31,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "REJECTED") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-meta font-semibold text-destructive">
         <ThumbsDown className="h-2.5 w-2.5" />
         Abgelehnt
       </span>

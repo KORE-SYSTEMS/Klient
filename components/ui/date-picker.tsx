@@ -138,7 +138,7 @@ export function DatePicker({ value, onChange, placeholder = "Datum wählen", cla
           {/* Day headers */}
           <div className="mb-1 grid grid-cols-7 text-center">
             {DAYS_DE.map((d) => (
-              <div key={d} className="py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <div key={d} className="py-1 text-caption font-semibold uppercase tracking-wider text-muted-foreground/70">
                 {d}
               </div>
             ))}

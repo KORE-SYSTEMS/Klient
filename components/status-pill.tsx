@@ -51,7 +51,7 @@ export function StatusPill({
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full border font-medium transition-colors select-none",
-        size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
+        size === "sm" ? "px-2 py-0.5 text-caption" : "px-3 py-1 text-xs",
         colorClass,
         editable && "cursor-pointer hover:brightness-125",
         className,

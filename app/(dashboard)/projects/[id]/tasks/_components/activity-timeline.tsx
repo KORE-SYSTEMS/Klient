@@ -85,18 +85,18 @@ export function ActivityTimeline({ taskId, statuses, members }: ActivityTimeline
               </span>
             </div>
             {activity.type === "STATUS_CHANGE" && activity.oldValue && activity.newValue && (
-              <div className="flex items-center gap-1.5 mt-1 text-[11px]">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              <div className="flex items-center gap-1.5 mt-1 text-caption">
+                <Badge variant="outline" className="text-meta px-1.5 py-0">
                   {getStatusName(activity.oldValue)}
                 </Badge>
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                <Badge variant="outline" className="text-meta px-1.5 py-0">
                   {getStatusName(activity.newValue)}
                 </Badge>
               </div>
             )}
             {activity.type === "PRIORITY_CHANGE" && activity.oldValue && activity.newValue && (
-              <div className="flex items-center gap-1.5 mt-1 text-[11px]">
+              <div className="flex items-center gap-1.5 mt-1 text-caption">
                 <span className={cn("font-medium", getPriorityColor(activity.oldValue))}>
                   {PRIORITY_LABELS[activity.oldValue] || activity.oldValue}
                 </span>
@@ -107,7 +107,7 @@ export function ActivityTimeline({ taskId, statuses, members }: ActivityTimeline
               </div>
             )}
             {activity.type === "ASSIGNMENT" && (
-              <div className="flex items-center gap-1.5 mt-1 text-[11px]">
+              <div className="flex items-center gap-1.5 mt-1 text-caption">
                 <span className="text-muted-foreground">
                   {activity.oldValue ? getUserName(activity.oldValue) : "Niemand"}
                 </span>
@@ -118,17 +118,17 @@ export function ActivityTimeline({ taskId, statuses, members }: ActivityTimeline
               </div>
             )}
             {activity.type === "FILE_UPLOAD" && activity.newValue && (
-              <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-1 mt-1 text-caption text-muted-foreground">
                 <Paperclip className="h-3 w-3" />
                 {activity.newValue}
               </div>
             )}
             {activity.type === "COMMENT" && activity.newValue && (
-              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
+              <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
                 &ldquo;{activity.newValue}&rdquo;
               </p>
             )}
-            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+            <span className="text-meta text-muted-foreground mt-0.5 block">
               {new Date(activity.createdAt).toLocaleDateString("de-DE", {
                 day: "2-digit", month: "2-digit", year: "2-digit",
                 hour: "2-digit", minute: "2-digit",

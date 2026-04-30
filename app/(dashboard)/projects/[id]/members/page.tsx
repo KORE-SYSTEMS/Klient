@@ -64,7 +64,7 @@ export default async function ProjectMembersPage({ params }: Props) {
                   {user.email.startsWith("placeholder-") ? "Keine E-Mail" : user.email}
                 </div>
                 <div className="mt-1">
-                  <Badge variant={user.role === "CLIENT" ? "outline" : "secondary"} className="text-[10px]">
+                  <Badge variant={user.role === "CLIENT" ? "outline" : "secondary"} className="text-meta">
                     {user.role === "CLIENT" ? "Kunde" : user.role === "ADMIN" ? "Admin" : "Mitarbeiter"}
                   </Badge>
                 </div>

@@ -389,7 +389,7 @@ function LayerLine({ line }: { line: PullProgressLine }) {
           <Progress value={pct} className="h-1" />
         </div>
       ) : (
-        <span className="text-muted-foreground text-[10px]">{line.raw}</span>
+        <span className="text-muted-foreground text-meta">{line.raw}</span>
       )}
     </div>
   );

@@ -88,7 +88,7 @@ export function FilesSection({ taskId, isClient, canUpload }: FilesSectionProps)
                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0">
                   <div className="font-medium truncate">{file.name}</div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-meta text-muted-foreground">
                     {formatFileSize(file.size)} - {file.uploadedBy.name || file.uploadedBy.email}
                   </div>
                 </div>

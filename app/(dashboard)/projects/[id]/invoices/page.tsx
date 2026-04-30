@@ -93,7 +93,7 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.DRAFT;
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold", cfg.class)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-semibold", cfg.class)}>
       <Icon className="h-3 w-3" />
       {cfg.label}
     </span>
@@ -365,7 +365,7 @@ export default function InvoicesPage() {
             { label: "Bezahlt",    amount: totalPaid,  cls: "text-emerald-600 dark:text-emerald-400" },
           ].map((card) => (
             <div key={card.label} className="rounded-lg border bg-card px-4 py-3">
-              <div className="text-[11px] font-medium text-muted-foreground">{card.label}</div>
+              <div className="text-caption font-medium text-muted-foreground">{card.label}</div>
               <div className={cn("text-lg font-bold tabular-nums mt-0.5", card.cls)}>
                 {formatCurrency(card.amount)}
               </div>
@@ -390,7 +390,7 @@ export default function InvoicesPage() {
       ) : (
         <div className="rounded-lg border">
           {/* Table header */}
-          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-caption font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="flex-1 min-w-0">Rechnung</div>
             <div className="w-[100px] shrink-0">Status</div>
             <div className="w-[120px] shrink-0 text-right">Betrag</div>
@@ -415,12 +415,12 @@ export default function InvoicesPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm truncate">{invoice.title}</span>
                         {overdue && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-meta font-semibold text-destructive">
                             <AlertCircle className="h-2.5 w-2.5" />Überfällig
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-caption text-muted-foreground">
                         Nr. {invoice.number} · {new Date(invoice.issuedAt).toLocaleDateString("de-DE")}
                         {invoice.items.length > 0 && ` · ${invoice.items.length} Position${invoice.items.length === 1 ? "" : "en"}`}
                       </div>
@@ -613,7 +613,7 @@ export default function InvoicesPage() {
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium truncate">{task.title}</p>
                               {task.epic && (
-                                <p className="text-[10px] text-muted-foreground">{task.epic.title}</p>
+                                <p className="text-meta text-muted-foreground">{task.epic.title}</p>
                               )}
                             </div>
                             <span className="text-xs font-mono font-semibold text-muted-foreground shrink-0">
@@ -626,7 +626,7 @@ export default function InvoicesPage() {
                   )}
 
                   <div className="flex items-center justify-between gap-2 border-t pt-2">
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-caption text-muted-foreground">
                       {selectedIds.size} ausgewählt · Zeit wird als Menge (Std.) übernommen
                     </span>
                     <div className="flex gap-1.5">
@@ -644,7 +644,7 @@ export default function InvoicesPage() {
               )}
 
               {/* Items header */}
-              <div className="hidden sm:grid sm:grid-cols-[1fr_80px_100px_80px_30px] gap-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="hidden sm:grid sm:grid-cols-[1fr_80px_100px_80px_30px] gap-2 px-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>Beschreibung</span>
                 <span className="text-right">Menge</span>
                 <span className="text-right">Preis</span>

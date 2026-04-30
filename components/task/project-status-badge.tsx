@@ -18,7 +18,7 @@ export function ProjectStatusBadge({ status, className }: ProjectStatusBadgeProp
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
+        "inline-flex rounded-full px-2 py-0.5 text-meta font-semibold",
         getProjectStatusPillStyle(status),
         className,
       )}

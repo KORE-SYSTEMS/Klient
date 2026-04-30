@@ -342,7 +342,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Avatar className="h-7 w-7 shrink-0">
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-meta">
                             {getInitials(user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -351,7 +351,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                             {user.name || user.email}
                           </div>
                           {user.name && (
-                            <div className="text-[11px] text-muted-foreground truncate">
+                            <div className="text-caption text-muted-foreground truncate">
                               {user.email.startsWith("placeholder-") ? "" : user.email}
                             </div>
                           )}
@@ -360,7 +360,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge
                           variant="outline"
-                          className={cn("text-[10px] px-1.5 py-0", getRoleColor(user.role))}
+                          className={cn("text-meta px-1.5 py-0", getRoleColor(user.role))}
                         >
                           {getRoleLabel(user.role)}
                         </Badge>
@@ -392,7 +392,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                         className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent"
                       >
                         <Avatar className="h-6 w-6 shrink-0">
-                          <AvatarFallback className="text-[9px]">
+                          <AvatarFallback className="text-micro">
                             {getInitials(user.name || user.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -403,7 +403,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                         </div>
                         <Badge
                           variant="outline"
-                          className={cn("text-[10px] px-1.5 py-0 shrink-0", getRoleColor(user.role))}
+                          className={cn("text-meta px-1.5 py-0 shrink-0", getRoleColor(user.role))}
                         >
                           {getRoleLabel(user.role)}
                         </Badge>

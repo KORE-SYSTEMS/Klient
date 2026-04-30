@@ -60,6 +60,16 @@ const config: Config = {
         sans: ["var(--font-public-sans)", "system-ui", "sans-serif"],
         heading: ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
+      fontSize: {
+        // Extended type scale.
+        // - micro: 9px, used inside small avatars / dense badges
+        // - meta:  10px, super-tiny meta info (date stamps, counters)
+        // - caption: 11px, the workhorse for chips, pills, secondary labels
+        // Tailwind defaults still apply: text-xs (12px), text-sm (14px), etc.
+        micro:   ["0.5625rem", { lineHeight: "0.75rem" }],
+        meta:    ["0.625rem",  { lineHeight: "0.875rem" }],
+        caption: ["0.6875rem", { lineHeight: "0.875rem" }],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

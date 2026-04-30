@@ -47,11 +47,11 @@ function TimeEntryRow({
       <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5 text-xs">
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Datum</Label>
+            <Label className="text-meta uppercase tracking-wider text-muted-foreground">Datum</Label>
             <DatePicker value={editDate} onChange={setEditDate} />
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Dauer</Label>
+            <Label className="text-meta uppercase tracking-wider text-muted-foreground">Dauer</Label>
             <div className="flex items-center gap-1">
               <Input
                 type="number" min={0} max={99} value={editHours}
@@ -69,7 +69,7 @@ function TimeEntryRow({
           </div>
         </div>
         <div className="space-y-1">
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Beschreibung</Label>
+          <Label className="text-meta uppercase tracking-wider text-muted-foreground">Beschreibung</Label>
           <Input
             value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
             className="h-8 text-sm" placeholder="Optionale Notiz"
@@ -257,11 +257,11 @@ export function TimeEntriesSection({ taskId, onUpdate, isClient }: TimeEntriesSe
         <div className="rounded-lg border bg-muted/20 p-3 space-y-2.5">
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Datum</Label>
+              <Label className="text-meta uppercase tracking-wider text-muted-foreground">Datum</Label>
               <DatePicker value={addDate} onChange={setAddDate} />
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Dauer</Label>
+              <Label className="text-meta uppercase tracking-wider text-muted-foreground">Dauer</Label>
               <div className="flex items-center gap-1">
                 <Input
                   type="number" min={0} max={99} value={addHours}

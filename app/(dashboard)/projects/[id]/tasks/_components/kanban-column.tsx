@@ -79,7 +79,7 @@ export function KanbanColumn({
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{status.name}</span>
             {status.isApproval && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[9px] font-semibold text-warning uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-micro font-semibold text-warning uppercase tracking-wide">
                 <ClipboardCheck className="h-2.5 w-2.5" />
                 Abnahme
               </span>
@@ -88,7 +88,7 @@ export function KanbanColumn({
           </div>
           <div className="flex items-center gap-0.5">
             {columnTotalTime > 0 && (
-              <span className="mr-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="mr-1 flex items-center gap-1 text-caption text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 {formatDurationShort(columnTotalTime)}
               </span>

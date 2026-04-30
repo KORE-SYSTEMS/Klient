@@ -210,7 +210,7 @@ function EditableField({
   if (editing) {
     return (
       <div className="space-y-1">
-        <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">{label}</Label>
+        <Label className="text-caption text-muted-foreground uppercase tracking-wider">{label}</Label>
         <div className="flex gap-1.5">
           <Input
             type={type}
@@ -232,7 +232,7 @@ function EditableField({
       className="group w-full text-left space-y-1"
       onClick={() => { setDraft(value ?? ""); setEditing(true); }}
     >
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="text-caption text-muted-foreground uppercase tracking-wider">{label}</p>
       <div className="flex items-center gap-2 min-h-[2rem]">
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
         <span className={cn("text-sm", value ? "text-foreground" : "text-muted-foreground/50 italic")}>
@@ -394,14 +394,14 @@ export default function ClientDetailPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {leadInfo && (
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold", leadInfo.color)}>
+              <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-caption font-semibold", leadInfo.color)}>
                 <TrendingUp className="h-3 w-3" />
                 {leadInfo.label}
               </span>
             )}
             {!client.active && <Badge variant="destructive">Deaktiviert</Badge>}
             {tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+              <Badge key={tag} variant="secondary" className="text-meta">{tag}</Badge>
             ))}
           </div>
         </div>
@@ -417,7 +417,7 @@ export default function ClientDetailPage() {
             <div key={label} className="text-center">
               <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-0.5">
                 <Icon className="h-3.5 w-3.5" />
-                <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+                <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
               </div>
               <div className="text-lg font-bold tabular-nums">{value}</div>
             </div>
@@ -466,7 +466,7 @@ export default function ClientDetailPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 {/* Lead status */}
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">Status</Label>
+                  <Label className="text-caption text-muted-foreground uppercase tracking-wider">Status</Label>
                   <Select value={client.leadStatus ?? "__none__"} onValueChange={(v) => patchClient({ leadStatus: v === "__none__" ? null : v })}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="Kein Status" />
@@ -480,7 +480,7 @@ export default function ClientDetailPage() {
 
                 {/* Lead value */}
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">Deal-Wert (€)</Label>
+                  <Label className="text-caption text-muted-foreground uppercase tracking-wider">Deal-Wert (€)</Label>
                   <Input
                     type="number"
                     className="h-8 text-sm"
@@ -492,7 +492,7 @@ export default function ClientDetailPage() {
 
                 {/* Lead source */}
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">Quelle</Label>
+                  <Label className="text-caption text-muted-foreground uppercase tracking-wider">Quelle</Label>
                   <Select value={client.leadSource ?? "__none__"} onValueChange={(v) => patchClient({ leadSource: v === "__none__" ? null : v })}>
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue placeholder="Keine" />
@@ -525,7 +525,7 @@ export default function ClientDetailPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium leading-snug truncate">{act.title}</p>
-                        <p className="text-[11px] text-muted-foreground">{formatDate(act.date)}</p>
+                        <p className="text-caption text-muted-foreground">{formatDate(act.date)}</p>
                       </div>
                     </div>
                   );
@@ -533,7 +533,7 @@ export default function ClientDetailPage() {
               </div>
             )}
             {activities.length > 5 && (
-              <button onClick={() => setTab("activities")} className="text-[12px] text-primary hover:underline">
+              <button onClick={() => setTab("activities")} className="text-xs text-primary hover:underline">
                 Alle {activities.length} anzeigen →
               </button>
             )}
@@ -562,18 +562,18 @@ export default function ClientDetailPage() {
                       <Link href={`/projects/${project.id}/tasks`} className="text-sm font-semibold hover:text-primary transition-colors truncate block">
                         {project.name}
                       </Link>
-                      {project.description && <p className="text-[12px] text-muted-foreground truncate">{project.description}</p>}
+                      {project.description && <p className="text-xs text-muted-foreground truncate">{project.description}</p>}
                       {project.dueDate && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Fällig: {formatDate(project.dueDate)}</p>
+                        <p className="text-caption text-muted-foreground mt-0.5">Fällig: {formatDate(project.dueDate)}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", statusColor)}>{project.status}</span>
+                    <span className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", statusColor)}>{project.status}</span>
                     {invoiceTotal > 0 && (
-                      <span className="text-[12px] text-muted-foreground font-mono">{formatEur(invoiceTotal)}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{formatEur(invoiceTotal)}</span>
                     )}
-                    <span className="text-[11px] text-muted-foreground">{project.invoices.length} Rechnungen</span>
+                    <span className="text-caption text-muted-foreground">{project.invoices.length} Rechnungen</span>
                   </div>
                 </div>
               );
@@ -667,13 +667,13 @@ export default function ClientDetailPage() {
                       <div className="flex-1 rounded-lg border bg-card p-3.5 space-y-1 my-1">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{activityLabel(act.type)}</span>
-                            {act.outcome && <span className={cn("ml-2 text-[11px] font-medium", oc)}>· {OUTCOME_OPTIONS.find((o) => o.value === act.outcome)?.label}</span>}
+                            <span className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">{activityLabel(act.type)}</span>
+                            {act.outcome && <span className={cn("ml-2 text-caption font-medium", oc)}>· {OUTCOME_OPTIONS.find((o) => o.value === act.outcome)?.label}</span>}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[11px] text-muted-foreground">{formatDate(act.date)}</span>
+                            <span className="text-caption text-muted-foreground">{formatDate(act.date)}</span>
                             {act.duration && (
-                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                              <span className="flex items-center gap-0.5 text-caption text-muted-foreground">
                                 <Clock className="h-3 w-3" />{act.duration}min
                               </span>
                             )}
@@ -740,7 +740,7 @@ export default function ClientDetailPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       {note.title && <p className="text-sm font-semibold truncate">{note.title}</p>}
-                      <p className="text-[11px] text-muted-foreground">{formatDate(note.createdAt)}</p>
+                      <p className="text-caption text-muted-foreground">{formatDate(note.createdAt)}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => togglePin(note)} className="text-muted-foreground hover:text-primary transition-colors" title={note.pinned ? "Loslösen" : "Anheften"}>
@@ -779,8 +779,8 @@ export default function ClientDetailPage() {
                   return (
                     <div key={s} className="rounded-xl border bg-card p-3 text-center">
                       <div className={cn("text-lg font-bold", colors[s])}>{count}</div>
-                      <div className="text-[11px] text-muted-foreground uppercase tracking-wider">{labels[s]}</div>
-                      {total > 0 && <div className="text-[12px] text-muted-foreground mt-0.5">{formatEur(total)}</div>}
+                      <div className="text-caption text-muted-foreground uppercase tracking-wider">{labels[s]}</div>
+                      {total > 0 && <div className="text-xs text-muted-foreground mt-0.5">{formatEur(total)}</div>}
                     </div>
                   );
                 })}
@@ -804,7 +804,7 @@ export default function ClientDetailPage() {
                         <span className="text-sm font-medium truncate">{inv.projectName}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", statusColors[inv.status] ?? "bg-muted text-muted-foreground")}>
+                        <span className={cn("rounded-full px-2 py-0.5 text-meta font-semibold", statusColors[inv.status] ?? "bg-muted text-muted-foreground")}>
                           {statusLabels[inv.status] ?? inv.status}
                         </span>
                         <span className="text-sm font-mono font-semibold">{formatEur(total)}</span>

@@ -156,7 +156,7 @@ export function ChecklistSection({
           Checkliste
         </Label>
         {total > 0 && (
-          <span className="text-[11px] tabular-nums text-muted-foreground">
+          <span className="text-caption tabular-nums text-muted-foreground">
             {done}/{total} · {pct}%
           </span>
         )}

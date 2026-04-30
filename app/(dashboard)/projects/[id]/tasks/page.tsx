@@ -822,7 +822,7 @@ export default function TasksPage() {
                   <div className="text-sm font-semibold leading-snug">{activeTask.title}</div>
                   <div className="flex flex-wrap gap-1.5">
                     {activeTask.epic && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
                         <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: activeTask.epic.color }} />
                         {activeTask.epic.title}
                       </span>
@@ -838,7 +838,7 @@ export default function TasksPage() {
         /* ===== LIST VIEW — Asana-style table grouped by status ===== */
         <div className="rounded-lg border">
           {/* Table header */}
-          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-caption font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="flex-1 min-w-0">Task</div>
             <div className="w-[140px] shrink-0 text-left">Zugewiesen</div>
             <div className="w-[100px] shrink-0 text-left">Fällig</div>
@@ -890,13 +890,13 @@ export default function TasksPage() {
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
                             {totalTime > 0 && (
-                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
+                              <span className="flex items-center gap-0.5 text-caption text-muted-foreground shrink-0">
                                 <Clock className="h-3 w-3" />{formatDurationShort(totalTime)}
                               </span>
                             )}
                           </div>
                           {task.epic && (
-                            <span className="text-[10px] text-muted-foreground">{task.epic.title}</span>
+                            <span className="text-meta text-muted-foreground">{task.epic.title}</span>
                           )}
                         </div>
                       </div>
@@ -906,7 +906,7 @@ export default function TasksPage() {
                         {task.assignee ? (
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-[9px] font-semibold">
+                              <AvatarFallback className="text-micro font-semibold">
                                 {getInitials(task.assignee.name || task.assignee.email)}
                               </AvatarFallback>
                             </Avatar>
@@ -940,7 +940,7 @@ export default function TasksPage() {
                       {/* Status */}
                       <div className="w-[110px] shrink-0">
                         <span
-                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-meta font-semibold"
                           style={{
                             backgroundColor: group.status.color + "18",
                             color: group.status.color,
@@ -1038,7 +1038,7 @@ export default function TasksPage() {
             const isDone = current?.category === "DONE";
             return (
               <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 mb-3">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Phase</span>
+                <span className="text-caption font-medium uppercase tracking-wider text-muted-foreground shrink-0">Phase</span>
                 {current && (
                   <span
                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
@@ -1064,7 +1064,7 @@ export default function TasksPage() {
                     <span className="font-medium" style={{ color: next.color }}>{next.name}</span>
                   </Button>
                 ) : (
-                  <span className={cn("inline-flex items-center gap-1 text-[11px]", isDone ? "text-success" : "text-muted-foreground")}>
+                  <span className={cn("inline-flex items-center gap-1 text-caption", isDone ? "text-success" : "text-muted-foreground")}>
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {isDone ? "Abgeschlossen" : "Letzte Phase"}
                   </span>
@@ -1114,7 +1114,7 @@ export default function TasksPage() {
                     <div>
                       <Label className="text-xs text-muted-foreground">Zugewiesen an</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px]">{getInitials(editTask.assignee.name || editTask.assignee.email)}</AvatarFallback></Avatar>
+                        <Avatar className="h-5 w-5"><AvatarFallback className="text-micro">{getInitials(editTask.assignee.name || editTask.assignee.email)}</AvatarFallback></Avatar>
                         <span className="text-sm">{editTask.assignee.name || editTask.assignee.email}</span>
                       </div>
                     </div>
@@ -1126,7 +1126,7 @@ export default function TasksPage() {
               {/* ── Handoff comment (shown to client when task is in approval) ── */}
               {editTask.handoffComment && (
                 <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-warning flex items-center gap-1.5">
+                  <p className="text-caption font-semibold uppercase tracking-wider text-warning flex items-center gap-1.5">
                     <ClipboardCheck className="h-3 w-3" />Übergabe-Nachricht vom Team
                   </p>
                   <p className="text-sm whitespace-pre-wrap">{editTask.handoffComment}</p>
@@ -1177,7 +1177,7 @@ export default function TasksPage() {
                     : "border-destructive/30 bg-destructive/5"
                 )}>
                   <p className={cn(
-                    "text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5",
+                    "text-caption font-semibold uppercase tracking-wider flex items-center gap-1.5",
                     editTask.approvalStatus === "APPROVED" ? "text-success" : "text-destructive"
                   )}>
                     {editTask.approvalStatus === "APPROVED"
@@ -1298,7 +1298,7 @@ export default function TasksPage() {
                           <span className="flex items-center gap-2">
                             {m.name || m.email}
                             {m.role === "CLIENT" && (
-                              <span className="text-[10px] text-muted-foreground">(Kunde)</span>
+                              <span className="text-meta text-muted-foreground">(Kunde)</span>
                             )}
                           </span>
                         </SelectItem>
@@ -1332,19 +1332,19 @@ export default function TasksPage() {
                   editTask.approvalStatus === "APPROVED" && "border-success/30 bg-success/5",
                   editTask.approvalStatus === "REJECTED" && "border-destructive/30 bg-destructive/5"
                 )}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5 text-muted-foreground">
+                  <p className="text-caption font-semibold uppercase tracking-wider flex items-center gap-1.5 text-muted-foreground">
                     <ClipboardCheck className="h-3 w-3" />Abnahme-Status
                   </p>
                   <ApprovalBadge status={editTask.approvalStatus as string} />
                   {editTask.handoffComment && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Übergabe-Nachricht</p>
+                      <p className="text-meta text-muted-foreground mb-0.5">Übergabe-Nachricht</p>
                       <p className="text-xs whitespace-pre-wrap">{editTask.handoffComment}</p>
                     </div>
                   )}
                   {editTask.approvalComment && (
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Kunden-Kommentar</p>
+                      <p className="text-meta text-muted-foreground mb-0.5">Kunden-Kommentar</p>
                       <p className="text-xs whitespace-pre-wrap">{editTask.approvalComment}</p>
                     </div>
                   )}
@@ -1419,7 +1419,7 @@ export default function TasksPage() {
                   <ClipboardCheck className="h-3.5 w-3.5 text-warning" />
                   Abnahme-Spalte
                 </Label>
-                <p className="text-[11px] text-muted-foreground leading-snug">
+                <p className="text-caption text-muted-foreground leading-snug">
                   Tasks müssen vom Kunden genehmigt werden, bevor sie in diese Spalte verschoben werden können.
                 </p>
               </div>
@@ -1457,14 +1457,14 @@ export default function TasksPage() {
                 <Label className="text-xs text-muted-foreground">Zugewiesen an</Label>
                 <div className="flex items-center gap-2 rounded-sm border bg-muted/30 px-3 py-2">
                   <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[9px]">
+                    <AvatarFallback className="text-micro">
                       {getInitials(members.find((m) => m.id === handoffClientId)?.name || members.find((m) => m.id === handoffClientId)?.email || "?")}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm">
                     {members.find((m) => m.id === handoffClientId)?.name || members.find((m) => m.id === handoffClientId)?.email}
                   </span>
-                  <span className="ml-auto text-[10px] text-muted-foreground rounded-full border px-1.5 py-0.5">Kunde</span>
+                  <span className="ml-auto text-meta text-muted-foreground rounded-full border px-1.5 py-0.5">Kunde</span>
                 </div>
               </div>
             ) : (

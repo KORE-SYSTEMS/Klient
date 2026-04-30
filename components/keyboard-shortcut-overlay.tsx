@@ -70,7 +70,7 @@ export function KeyboardShortcutOverlay() {
         <div className="space-y-5 mt-1">
           {categories.map((cat) => (
             <div key={cat}>
-              <p className="mb-2 text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+              <p className="mb-2 text-meta uppercase tracking-wider font-medium text-muted-foreground">
                 {cat}
               </p>
               <div className="space-y-1">
@@ -80,11 +80,11 @@ export function KeyboardShortcutOverlay() {
                     <div className="flex items-center gap-1">
                       {s.keys.map((k, ki) => (
                         <span key={ki} className="flex items-center gap-1">
-                          <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-muted/50 px-1.5 text-[10px] font-mono">
+                          <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-muted/50 px-1.5 text-meta font-mono">
                             {k}
                           </kbd>
                           {ki < s.keys.length - 1 && (
-                            <span className="text-[10px] text-muted-foreground">then</span>
+                            <span className="text-meta text-muted-foreground">then</span>
                           )}
                         </span>
                       ))}
@@ -96,7 +96,7 @@ export function KeyboardShortcutOverlay() {
           ))}
         </div>
 
-        <p className="text-[11px] text-muted-foreground mt-2">
+        <p className="text-caption text-muted-foreground mt-2">
           Shortcuts funktionieren nur wenn kein Eingabefeld fokussiert ist.
         </p>
       </DialogContent>

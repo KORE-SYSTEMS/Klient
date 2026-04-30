@@ -262,7 +262,7 @@ export default function WorkflowSettingsPage() {
                 ))}
               </div>
               <p className="text-sm font-medium">{tpl.name}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{tpl.description}</p>
+              <p className="text-caption text-muted-foreground mt-0.5 leading-relaxed">{tpl.description}</p>
             </button>
           ))}
         </div>
@@ -339,7 +339,7 @@ export default function WorkflowSettingsPage() {
                   })}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground leading-snug">
+              <p className="text-caption text-muted-foreground leading-snug">
                 Tasks in <strong>Erledigt</strong> zählen als abgeschlossen und werden im Board gedämpft dargestellt.
               </p>
             </div>
@@ -369,7 +369,7 @@ export default function WorkflowSettingsPage() {
                   <ClipboardCheck className="h-3.5 w-3.5 text-warning" />
                   Kunden-Abnahme
                 </Label>
-                <p className="text-[11px] text-muted-foreground leading-snug">
+                <p className="text-caption text-muted-foreground leading-snug">
                   Tasks in dieser Phase werden dem Kunden zur Freigabe übergeben.
                 </p>
               </div>
@@ -415,7 +415,7 @@ export default function WorkflowSettingsPage() {
                 {confirmTemplate.statuses.map((s, i) => (
                   <span key={s.slug} className="inline-flex items-center gap-1">
                     <span
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium"
                       style={{ backgroundColor: s.color + "22", color: s.color }}
                     >
                       {s.name}
@@ -427,7 +427,7 @@ export default function WorkflowSettingsPage() {
               </div>
             </div>
           )}
-          <div className="flex items-start gap-2 rounded-md bg-warning/10 p-2.5 text-[11px] text-warning-foreground/80">
+          <div className="flex items-start gap-2 rounded-md bg-warning/10 p-2.5 text-caption text-warning-foreground/80">
             <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
             <span>Diese Aktion kann nicht rückgängig gemacht werden.</span>
           </div>
@@ -487,12 +487,12 @@ function SortableRow({
       <button onClick={onEdit} className="flex-1 text-left">
         <p className="text-sm font-medium">{status.name}</p>
       </button>
-      <span className={cn("inline-flex items-center gap-1 text-[11px]", meta.className)}>
+      <span className={cn("inline-flex items-center gap-1 text-caption", meta.className)}>
         <CategoryIcon className="h-3 w-3" />
         {meta.label}
       </span>
       {status.isApproval && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-meta font-medium text-warning">
           <ClipboardCheck className="h-3 w-3" />Abnahme
         </span>
       )}

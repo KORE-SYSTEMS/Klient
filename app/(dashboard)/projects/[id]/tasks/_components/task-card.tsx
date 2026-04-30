@@ -90,7 +90,7 @@ export function TaskCard({
         <div className="rounded-xl border border-dashed bg-muted/20 px-3 py-3 opacity-40 select-none">
           <div className="flex items-center gap-2">
             <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
-            <span className="text-[12px] text-muted-foreground truncate">{task.title}</span>
+            <span className="text-xs text-muted-foreground truncate">{task.title}</span>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export function TaskCard({
           {/* Tags: epic · priority · approval · clientVisible */}
           <div className="flex flex-wrap gap-1.5">
             {task.epic && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
                 <span
                   className="h-2 w-2 rounded-full shrink-0"
                   style={{ backgroundColor: task.epic.color }}
@@ -151,7 +151,7 @@ export function TaskCard({
             <PriorityPill priority={task.priority} size="md" />
             {task.approvalStatus && <ApprovalBadge status={task.approvalStatus as string} />}
             {task.clientVisible && !isClient && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
                 <Eye className="h-3 w-3" />
               </span>
             )}
@@ -159,7 +159,7 @@ export function TaskCard({
 
           {/* Description (optional) */}
           {task.description && (
-            <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+            <p className="text-caption leading-relaxed text-muted-foreground line-clamp-2">
               {task.description}
             </p>
           )}
@@ -178,7 +178,7 @@ export function TaskCard({
               </div>
               <span
                 className={cn(
-                  "text-[10px] tabular-nums",
+                  "text-meta tabular-nums",
                   checkPct === 100 ? "text-emerald-500" : "text-muted-foreground",
                 )}
               >
@@ -192,7 +192,7 @@ export function TaskCard({
             <div className="flex items-center gap-2 min-w-0">
               {task.assignee ? (
                 <Avatar className="h-6 w-6 shrink-0 border-2 border-background">
-                  <AvatarFallback className="text-[9px] font-semibold">
+                  <AvatarFallback className="text-micro font-semibold">
                     {getInitials(task.assignee.name || task.assignee.email)}
                   </AvatarFallback>
                 </Avatar>
@@ -204,7 +204,7 @@ export function TaskCard({
                 return (
                   <span
                     className={cn(
-                      "flex items-center gap-1 text-[11px] truncate",
+                      "flex items-center gap-1 text-caption truncate",
                       overdue ? "text-red-400 font-medium" : "text-muted-foreground",
                     )}
                   >
@@ -217,19 +217,19 @@ export function TaskCard({
 
             <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
               {task._count?.comments ? (
-                <span className="flex items-center gap-0.5 text-[11px]">
+                <span className="flex items-center gap-0.5 text-caption">
                   <MessageSquare className="h-3 w-3" />
                   {task._count.comments}
                 </span>
               ) : null}
               {task._count?.files ? (
-                <span className="flex items-center gap-0.5 text-[11px]">
+                <span className="flex items-center gap-0.5 text-caption">
                   <Paperclip className="h-3 w-3" />
                   {task._count.files}
                 </span>
               ) : null}
               {totalTime > 0 && (
-                <span className="flex items-center gap-0.5 text-[11px]">
+                <span className="flex items-center gap-0.5 text-caption">
                   <Clock className="h-3 w-3" />
                   {formatDurationShort(totalTime)}
                 </span>

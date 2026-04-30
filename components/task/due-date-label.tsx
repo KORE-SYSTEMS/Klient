@@ -44,7 +44,7 @@ export function DueDateLabel({
     <span
       className={cn(
         "inline-flex items-center gap-1 truncate",
-        variant === "subtle" ? "text-[11px]" : "text-xs",
+        variant === "subtle" ? "text-caption" : "text-xs",
         tone,
         className,
       )}

@@ -155,7 +155,7 @@ function StatusBadge({ status }: { status: string }) {
   const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold", cfg.class)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-semibold", cfg.class)}>
       <Icon className="h-3 w-3" />
       {cfg.label}
     </span>
@@ -173,7 +173,7 @@ function StatCard({
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2 text-muted-foreground mb-1">
         <Icon className={cn("h-3.5 w-3.5", iconClass)} />
-        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
       </div>
       <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
     </div>
@@ -567,7 +567,7 @@ export default function ProposalsPage() {
         ) : (
           <div className="bg-card">
             {/* Table header */}
-            <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1fr_1fr_auto] gap-4 border-b bg-muted/30 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1fr_1fr_1fr_auto] gap-4 border-b bg-muted/30 px-4 py-2.5 text-caption font-semibold uppercase tracking-wider text-muted-foreground">
               <span>Angebot</span>
               <span>Kunde</span>
               <span>Projekt</span>
@@ -592,11 +592,11 @@ export default function ProposalsPage() {
                   {/* Number + title */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] text-muted-foreground shrink-0">#{p.number}</span>
+                      <span className="font-mono text-caption text-muted-foreground shrink-0">#{p.number}</span>
                       <span className="text-sm font-medium truncate">{p.title}</span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-caption text-muted-foreground">
                         {formatDate(p.issuedAt)}
                       </span>
                     </div>
@@ -608,7 +608,7 @@ export default function ProposalsPage() {
                       <>
                         <p className="text-sm font-medium truncate">{client.name || client.email}</p>
                         {client.company && (
-                          <p className="text-[11px] text-muted-foreground truncate">{client.company}</p>
+                          <p className="text-caption text-muted-foreground truncate">{client.company}</p>
                         )}
                       </>
                     ) : (
@@ -676,7 +676,7 @@ export default function ProposalsPage() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <p className="px-2 py-1 text-meta font-semibold uppercase tracking-wider text-muted-foreground">
                         Status ändern
                       </p>
                       {(["DRAFT","SENT","ACCEPTED","DECLINED","EXPIRED"] as const).map((s) => (
@@ -890,7 +890,7 @@ export default function ProposalsPage() {
                 {formItems.map((item, i) => (
                   <div key={i} className="grid grid-cols-[1fr_80px_110px_90px_auto] gap-2 items-end">
                     <div>
-                      {i === 0 && <Label className="text-[11px] text-muted-foreground mb-1 block">Beschreibung</Label>}
+                      {i === 0 && <Label className="text-caption text-muted-foreground mb-1 block">Beschreibung</Label>}
                       <Input
                         value={item.description}
                         onChange={(e) => updateItem(i, "description", e.target.value)}
@@ -899,7 +899,7 @@ export default function ProposalsPage() {
                       />
                     </div>
                     <div>
-                      {i === 0 && <Label className="text-[11px] text-muted-foreground mb-1 block">Menge</Label>}
+                      {i === 0 && <Label className="text-caption text-muted-foreground mb-1 block">Menge</Label>}
                       <Input
                         type="number"
                         min="0"
@@ -910,7 +910,7 @@ export default function ProposalsPage() {
                       />
                     </div>
                     <div>
-                      {i === 0 && <Label className="text-[11px] text-muted-foreground mb-1 block">Einzelpreis</Label>}
+                      {i === 0 && <Label className="text-caption text-muted-foreground mb-1 block">Einzelpreis</Label>}
                       <div className="relative">
                         <Euro className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                         <Input
@@ -924,7 +924,7 @@ export default function ProposalsPage() {
                       </div>
                     </div>
                     <div>
-                      {i === 0 && <Label className="text-[11px] text-muted-foreground mb-1 block">Einheit</Label>}
+                      {i === 0 && <Label className="text-caption text-muted-foreground mb-1 block">Einheit</Label>}
                       <Select value={item.unit} onValueChange={(v) => updateItem(i, "unit", v)}>
                         <SelectTrigger className="h-8 text-sm">
                           <SelectValue />

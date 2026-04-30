@@ -106,7 +106,7 @@ export default function UpdatesPage() {
         <form onSubmit={createUpdate} className="rounded-xl border bg-card p-4 space-y-3">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Bell className="h-3.5 w-3.5" />
-            <span className="text-[11px] uppercase tracking-wider font-medium">Neues Update</span>
+            <span className="text-caption uppercase tracking-wider font-medium">Neues Update</span>
           </div>
           <div className="flex items-center gap-3">
             <Select value={type} onValueChange={setType}>
@@ -174,7 +174,7 @@ export default function UpdatesPage() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2 min-w-0">
                         <Avatar className="h-6 w-6 shrink-0">
-                          <AvatarFallback className="text-[9px] font-semibold">
+                          <AvatarFallback className="text-micro font-semibold">
                             {getInitials(update.author.name || update.author.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -182,7 +182,7 @@ export default function UpdatesPage() {
                           {update.author.name || update.author.email}
                         </span>
                         <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border",
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-semibold border",
                           cfg.bg, cfg.color, cfg.border
                         )}>
                           <TypeIcon className="h-2.5 w-2.5" />
@@ -190,7 +190,7 @@ export default function UpdatesPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-caption text-muted-foreground">
                           {formatDate(update.createdAt)}
                         </span>
                         {!isClient && (

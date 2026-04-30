@@ -1221,7 +1221,7 @@ function FileCard({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
-          <Badge variant="secondary" className="font-mono text-[10px] px-1 h-4">v{ver}</Badge>
+          <Badge variant="secondary" className="font-mono text-meta px-1 h-4">v{ver}</Badge>
           {file.clientVisible && !isClient && (
             <Eye className="h-3 w-3 text-primary flex-shrink-0" />
           )}
@@ -1289,7 +1289,7 @@ function FileRow({
       <span className="text-xs text-muted-foreground hidden lg:block whitespace-nowrap w-28 truncate">
         {uploader}
       </span>
-      <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-5 flex-shrink-0">
+      <Badge variant="secondary" className="font-mono text-meta px-1.5 h-5 flex-shrink-0">
         v{ver}
       </Badge>
       {!isClient && (

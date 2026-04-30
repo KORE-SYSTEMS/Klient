@@ -314,7 +314,7 @@ export function FloatingTimer({
                 rows={3}
                 autoFocus
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Wird als Kommentar beim Task und im Projekt-Chat gepostet.
               </p>
             </div>
@@ -373,7 +373,7 @@ export function TimerButton({
       onClick={(e) => e.stopPropagation()}
     >
       {showTotal && totalTime > 0 && !isActive && (
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1 text-meta text-muted-foreground">
           <Clock className="h-2.5 w-2.5" />
           {formatDurationShort(totalTime)}
         </span>
@@ -390,7 +390,7 @@ export function TimerButton({
           )}
         >
           <Square className={cn(iconSize, "fill-current")} />
-          <span className="font-mono text-[11px] font-semibold tabular-nums">
+          <span className="font-mono text-caption font-semibold tabular-nums">
             {formatDuration(elapsed)}
           </span>
         </button>

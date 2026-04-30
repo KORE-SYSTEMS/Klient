@@ -331,7 +331,7 @@ export function CommandPalette() {
 
           {sections.map((section) => (
             <div key={section.key} className="py-1">
-              <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              <div className="px-3 py-1 text-meta uppercase tracking-wider text-muted-foreground font-medium">
                 {section.label}
               </div>
               {section.items.map((hit) => {
@@ -369,7 +369,7 @@ export function CommandPalette() {
           ))}
         </div>
 
-        <div className="flex items-center justify-between border-t px-3 py-2 text-[11px] text-muted-foreground bg-muted/20">
+        <div className="flex items-center justify-between border-t px-3 py-2 text-caption text-muted-foreground bg-muted/20">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1"><Kbd>↑</Kbd><Kbd>↓</Kbd> Navigieren</span>
             <span className="flex items-center gap-1"><Kbd>↵</Kbd> Öffnen</span>
@@ -386,7 +386,7 @@ export function CommandPalette() {
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded border border-border bg-background px-1 text-[10px] font-mono">
+    <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded border border-border bg-background px-1 text-meta font-mono">
       {children}
     </kbd>
   );
@@ -404,7 +404,7 @@ function HitIcon({ hit }: { hit: Hit }) {
   if (hit.type === "project") {
     return (
       <div
-        className="h-7 w-7 rounded-sm flex items-center justify-center flex-shrink-0 text-white font-semibold text-[11px]"
+        className="h-7 w-7 rounded-sm flex items-center justify-center flex-shrink-0 text-white font-semibold text-caption"
         style={{ backgroundColor: hit.color || "#6366F1" }}
       >
         {hit.title.slice(0, 2).toUpperCase()}
@@ -432,7 +432,7 @@ function HitIcon({ hit }: { hit: Hit }) {
       // eslint-disable-next-line @next/next/no-img-element
       <img src={hit.image} alt="" className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
     ) : (
-      <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-[11px] font-semibold text-muted-foreground">
+      <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-caption font-semibold text-muted-foreground">
         {(hit.title || "?").slice(0, 1).toUpperCase()}
       </div>
     );

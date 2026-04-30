@@ -82,7 +82,7 @@ function BarChart({ data, maxSeconds }: { data: DaySummary[]; maxSeconds: number
           <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${label}: ${fmtDuration(d.seconds)}`}>
             <div className="w-full rounded-t-sm bg-primary/80 transition-all" style={{ height: `${pct}%`, minHeight: pct > 0 ? 4 : 0 }} />
             {data.length <= 14 && (
-              <span className="text-[9px] text-muted-foreground rotate-0 leading-none">{label}</span>
+              <span className="text-micro text-muted-foreground rotate-0 leading-none">{label}</span>
             )}
           </div>
         );
@@ -399,7 +399,7 @@ export default function ReportsPage() {
                           <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5 flex-shrink-0">
                               {entry.user.image && <img src={entry.user.image} alt="" className="h-5 w-5 rounded-full object-cover" />}
-                              <AvatarFallback className="text-[9px]">{getInitials(entry.user.name || entry.user.email)}</AvatarFallback>
+                              <AvatarFallback className="text-micro">{getInitials(entry.user.name || entry.user.email)}</AvatarFallback>
                             </Avatar>
                             <span className="truncate max-w-[120px]">{entry.user.name || entry.user.email}</span>
                           </div>
@@ -413,7 +413,7 @@ export default function ReportsPage() {
                         <td className="px-4 py-2.5 max-w-[200px]">
                           <span className="truncate block text-muted-foreground">{entry.task.title}</span>
                           {entry.description && (
-                            <span className="truncate block text-[10px] text-muted-foreground/70">{entry.description}</span>
+                            <span className="truncate block text-meta text-muted-foreground/70">{entry.description}</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap hidden lg:table-cell">
@@ -438,10 +438,10 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: React.ComponentType
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-2 text-muted-foreground mb-1">
         <Icon className="h-3.5 w-3.5" />
-        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
       </div>
       <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</p>
+      <p className="text-caption text-muted-foreground truncate mt-0.5">{sub}</p>
     </div>
   );
 }

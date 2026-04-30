@@ -531,8 +531,8 @@ export default function MailSettingsPage() {
               <div className="flex flex-wrap gap-2">
                 {activeTemplate.variables.map((v) => (
                   <div key={v.name} className="flex items-center gap-1.5 rounded-md bg-background border px-2.5 py-1">
-                    <code className="text-[11px] font-mono text-primary">{v.name}</code>
-                    <span className="text-[11px] text-muted-foreground">— {v.desc}</span>
+                    <code className="text-caption font-mono text-primary">{v.name}</code>
+                    <span className="text-caption text-muted-foreground">— {v.desc}</span>
                   </div>
                 ))}
               </div>
@@ -632,7 +632,7 @@ export default function MailSettingsPage() {
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Vorschau — {tpl.label}</span>
-                  <Badge variant="secondary" className="text-[10px]">Beispieldaten</Badge>
+                  <Badge variant="secondary" className="text-meta">Beispieldaten</Badge>
                 </div>
                 <button
                   type="button"

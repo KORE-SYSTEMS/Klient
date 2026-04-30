@@ -245,7 +245,7 @@ export default function SettingsPage() {
 
             {/* Name */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+              <Label className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
                 Workspace-Name
               </Label>
               <Input
@@ -258,7 +258,7 @@ export default function SettingsPage() {
 
             {/* Logo */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+              <Label className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
                 Logo
               </Label>
               <div className="flex items-center gap-4">
@@ -305,7 +305,7 @@ export default function SettingsPage() {
                       <X className="mr-1.5 h-3 w-3" />Entfernen
                     </Button>
                   )}
-                  <span className="text-[11px] text-muted-foreground">PNG, SVG oder JPEG · max. 2 MB</span>
+                  <span className="text-caption text-muted-foreground">PNG, SVG oder JPEG · max. 2 MB</span>
                 </div>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function SettingsPage() {
 
             {/* Preset grid */}
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium mb-3">
                 Design-Sets
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -346,7 +346,7 @@ export default function SettingsPage() {
                       />
                       <div className="min-w-0">
                         <div className="text-sm font-semibold truncate">{set.label}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{set.description}</div>
+                        <div className="text-meta text-muted-foreground truncate">{set.description}</div>
                       </div>
                       {selected && (
                         <div className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-foreground">
@@ -363,7 +363,7 @@ export default function SettingsPage() {
 
             {/* Custom color */}
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-3">
+              <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium mb-3">
                 Eigene Farbe
               </p>
               <div className="space-y-3">
@@ -417,12 +417,12 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {version && !version.updateAvailable && version.latest && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-caption font-semibold text-emerald-400">
                     <CheckCircle2 className="h-3 w-3" />Aktuell
                   </span>
                 )}
                 {version?.updateAvailable && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-caption font-semibold text-primary">
                     <AlertCircle className="h-3 w-3" />Update verfügbar · v{version.latest?.version}
                   </span>
                 )}

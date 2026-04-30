@@ -81,7 +81,7 @@ export default async function ClientsPage() {
           <div key={label} className="rounded-xl border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Icon className="h-3.5 w-3.5" />
-              <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+              <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
             </div>
             <div className="text-2xl font-bold tabular-nums">{value}</div>
           </div>
@@ -155,7 +155,7 @@ export default async function ClientsPage() {
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {client.leadStatus && (
-                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", LEAD_STATUS_STYLES[client.leadStatus])}>
+                        <span className={cn("rounded-full px-2 py-0.5 text-meta font-semibold", LEAD_STATUS_STYLES[client.leadStatus])}>
                           {LEAD_STATUS_LABELS[client.leadStatus]}
                         </span>
                       )}
@@ -166,7 +166,7 @@ export default async function ClientsPage() {
                   {/* Contact chips */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {client.phone && (
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1 text-caption text-muted-foreground">
                         <Phone className="h-3 w-3" />{client.phone}
                       </div>
                     )}
@@ -175,20 +175,20 @@ export default async function ClientsPage() {
                   {/* Badges row */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <Badge variant="secondary" className="text-[10px] gap-1">
+                      <Badge variant="secondary" className="text-meta gap-1">
                         <FolderKanban className="h-2.5 w-2.5" />
                         {client.projects.length} Projekte
                       </Badge>
                       {client._count.clientActivities > 0 && (
-                        <Badge variant="secondary" className="text-[10px] gap-1">
+                        <Badge variant="secondary" className="text-meta gap-1">
                           <CalendarClock className="h-2.5 w-2.5" />
                           {client._count.clientActivities} Aktivitäten
                         </Badge>
                       )}
-                      {!client.active && <Badge variant="destructive" className="text-[10px]">Deaktiviert</Badge>}
+                      {!client.active && <Badge variant="destructive" className="text-meta">Deaktiviert</Badge>}
                     </div>
                     {lastActivity && (
-                      <span className="text-[11px] text-muted-foreground shrink-0">
+                      <span className="text-caption text-muted-foreground shrink-0">
                         {formatDate(lastActivity.date)}
                       </span>
                     )}
@@ -197,7 +197,7 @@ export default async function ClientsPage() {
                   {/* Detail link */}
                   <Link
                     href={`/clients/${client.id}`}
-                    className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-primary transition-colors pt-1 border-t"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors pt-1 border-t"
                   >
                     Details öffnen
                     <ArrowRight className="h-3 w-3" />

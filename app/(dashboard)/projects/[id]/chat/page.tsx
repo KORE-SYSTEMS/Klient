@@ -119,7 +119,7 @@ export default function ChatPage() {
               {/* Day separator */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-border" />
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 whitespace-nowrap">
+                <span className="text-meta font-medium uppercase tracking-wider text-muted-foreground/60 whitespace-nowrap">
                   {getDayLabel(group.messages[0].createdAt)}
                 </span>
                 <div className="flex-1 h-px bg-border" />
@@ -135,7 +135,7 @@ export default function ChatPage() {
                     <div className="w-7 shrink-0">
                       {showMeta && (
                         <Avatar className="h-7 w-7">
-                          <AvatarFallback className="text-[9px] font-semibold">
+                          <AvatarFallback className="text-micro font-semibold">
                             {getInitials(msg.author.name || msg.author.email)}
                           </AvatarFallback>
                         </Avatar>
@@ -145,10 +145,10 @@ export default function ChatPage() {
                     <div className={cn("flex flex-col gap-0.5 max-w-[72%]", isOwn && "items-end")}>
                       {showMeta && (
                         <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
-                          <span className="text-[11px] font-semibold">
+                          <span className="text-caption font-semibold">
                             {isOwn ? "Du" : (msg.author.name || msg.author.email)}
                           </span>
-                          <span className="text-[10px] text-muted-foreground/60">
+                          <span className="text-meta text-muted-foreground/60">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
@@ -164,13 +164,13 @@ export default function ChatPage() {
                       {msg.fileName && (
                         <a
                           href={`/api/files/${msg.filePath}`}
-                          className="text-[11px] text-primary underline underline-offset-2 hover:text-primary/80"
+                          className="text-caption text-primary underline underline-offset-2 hover:text-primary/80"
                         >
                           {msg.fileName}
                         </a>
                       )}
                       {!showMeta && (
-                        <span className="text-[10px] text-muted-foreground/40">
+                        <span className="text-meta text-muted-foreground/40">
                           {formatTime(msg.createdAt)}
                         </span>
                       )}

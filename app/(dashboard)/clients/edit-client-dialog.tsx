@@ -153,7 +153,7 @@ export function EditClientDialog({ client }: { client: ClientProps }) {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-sm font-medium truncate">{project.name}</span>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                      <Badge variant="outline" className="text-meta px-1.5 py-0 shrink-0">
                         {project.status}
                       </Badge>
                     </div>

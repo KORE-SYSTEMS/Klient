@@ -123,7 +123,7 @@ export function CommentsSection({ taskId, members }: CommentsSectionProps) {
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-2.5">
               <Avatar className="h-7 w-7 shrink-0 mt-0.5">
-                <AvatarFallback className="text-[9px]">
+                <AvatarFallback className="text-micro">
                   {getInitials(comment.author.name || comment.author.email)}
                 </AvatarFallback>
               </Avatar>
@@ -133,11 +133,11 @@ export function CommentsSection({ taskId, members }: CommentsSectionProps) {
                     {comment.author.name || comment.author.email}
                   </span>
                   {comment.author.role === "CLIENT" && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                    <Badge variant="outline" className="text-micro px-1 py-0 h-4">
                       Kunde
                     </Badge>
                   )}
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-meta text-muted-foreground">
                     {new Date(comment.createdAt).toLocaleDateString("de-DE", {
                       day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
                     })}
@@ -176,7 +176,7 @@ export function CommentsSection({ taskId, members }: CommentsSectionProps) {
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
                   >
                     <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-[9px]">{getInitials(m.name || m.email)}</AvatarFallback>
+                      <AvatarFallback className="text-micro">{getInitials(m.name || m.email)}</AvatarFallback>
                     </Avatar>
                     <span>{m.name || m.email}</span>
                   </button>

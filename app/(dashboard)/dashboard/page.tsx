@@ -208,10 +208,10 @@ export default async function DashboardPage() {
                       {task.title}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-muted-foreground truncate">{task.project.name}</span>
+                      <span className="text-caption text-muted-foreground truncate">{task.project.name}</span>
                       {task.epic && (
                         <span
-                          className="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium"
+                          className="hidden sm:inline-flex items-center gap-1 text-meta font-medium"
                           style={{ color: task.epic.color }}
                         >
                           {task.epic.title}
@@ -224,7 +224,7 @@ export default async function DashboardPage() {
                     {task.dueDate && (() => {
                       const overdue = new Date(task.dueDate) < now;
                       return (
-                        <span className={cn("flex items-center gap-0.5 text-[10px]", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                        <span className={cn("flex items-center gap-0.5 text-meta", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
                           {overdue && <AlertCircle className="h-2.5 w-2.5" />}
                           {formatDate(task.dueDate)}
                         </span>
@@ -265,26 +265,26 @@ export default async function DashboardPage() {
                       "flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-md text-center",
                       overdue ? "bg-destructive/10 text-destructive" : daysLeft <= 2 ? "bg-warning/10 text-warning" : "bg-primary/10 text-primary"
                     )}>
-                      <span className="text-[11px] font-bold leading-none">{dueDate.toLocaleDateString("de-DE", { day: "2-digit" })}</span>
-                      <span className="text-[9px] leading-none mt-0.5">{dueDate.toLocaleDateString("de-DE", { month: "short" })}</span>
+                      <span className="text-caption font-bold leading-none">{dueDate.toLocaleDateString("de-DE", { day: "2-digit" })}</span>
+                      <span className="text-micro leading-none mt-0.5">{dueDate.toLocaleDateString("de-DE", { month: "short" })}</span>
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[11px] text-muted-foreground">{task.project.name}</span>
+                        <span className="text-caption text-muted-foreground">{task.project.name}</span>
                       </div>
                     </div>
 
                     <div className="shrink-0 text-right">
                       <span className={cn(
-                        "text-[10px] font-medium",
+                        "text-meta font-medium",
                         overdue ? "text-destructive" : daysLeft <= 2 ? "text-warning" : "text-muted-foreground"
                       )}>
                         {overdue ? `${Math.abs(daysLeft)}T überfällig` : daysLeft === 0 ? "Heute" : `in ${daysLeft}T`}
                       </span>
                       {task.assignee && (
-                        <div className="mt-0.5 text-[10px] text-muted-foreground">{task.assignee.name || task.assignee.email}</div>
+                        <div className="mt-0.5 text-meta text-muted-foreground">{task.assignee.name || task.assignee.email}</div>
                       )}
                     </div>
                   </Link>
@@ -320,11 +320,11 @@ export default async function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[11px] text-muted-foreground">{task.project.name}</span>
+                        <span className="text-caption text-muted-foreground">{task.project.name}</span>
                       </div>
                     </div>
                     {task.assignee && !isClient && (
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                      <span className="shrink-0 text-caption text-muted-foreground">
                         {task.assignee.name || task.assignee.email}
                       </span>
                     )}
@@ -375,14 +375,14 @@ export default async function DashboardPage() {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                           <ProjectStatusBadge status={project.status} />
-                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1 text-caption text-muted-foreground">
                             <CheckSquare className="h-3 w-3" />{taskCount}
                           </span>
-                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1 text-caption text-muted-foreground">
                             <Users className="h-3 w-3" />{memberCount}
                           </span>
                           {projectDue && (
-                            <span className={cn("flex items-center gap-1 text-[11px]", projectOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                            <span className={cn("flex items-center gap-1 text-caption", projectOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
                               <CalendarDays className="h-3 w-3" />
                               {formatDate(project.dueDate!.toString())}
                             </span>
@@ -424,10 +424,10 @@ function StatCard({
     <div className={cn("rounded-xl border bg-card p-4 transition-colors", href && "hover:bg-accent cursor-pointer")}>
       <div className="flex items-center gap-2 text-muted-foreground mb-1">
         <Icon className={cn("h-3.5 w-3.5", iconClass)} />
-        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
       </div>
       <div className={cn("text-2xl font-bold tabular-nums", valueClass)}>{value}</div>
-      {sublabel && <p className="text-[11px] text-muted-foreground mt-0.5">{sublabel}</p>}
+      {sublabel && <p className="text-caption text-muted-foreground mt-0.5">{sublabel}</p>}
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;

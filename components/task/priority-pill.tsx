@@ -13,7 +13,7 @@ export function PriorityPill({ priority, size = "sm", className }: PriorityPillP
     <span
       className={cn(
         "inline-flex rounded-full font-semibold",
-        size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2 py-0.5 text-[11px]",
+        size === "sm" ? "px-2 py-0.5 text-meta" : "px-2 py-0.5 text-caption",
         getPriorityPillStyle(priority),
         className,
       )}

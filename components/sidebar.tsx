@@ -188,7 +188,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
         {sections.map((section) => (
           <div key={section.section}>
             {!collapsed && (
-              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 select-none">
+              <p className="mb-1 px-4 text-meta font-semibold uppercase tracking-wider text-muted-foreground/60 select-none">
                 {section.section}
               </p>
             )}
@@ -300,7 +300,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
       {/* Footer */}
       {!collapsed ? (
         <div className="flex items-center justify-between border-t px-4 py-3">
-          <span className="text-[10px] text-muted-foreground/50 font-mono">
+          <span className="text-meta text-muted-foreground/50 font-mono">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
           </span>
           <div className="flex items-center gap-0.5">

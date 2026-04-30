@@ -225,7 +225,7 @@ export default function MyTasksPage() {
                 <Filter className="h-3.5 w-3.5" />
                 Priorität
                 {filterPriorities.length > 0 && (
-                  <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-meta font-bold text-primary-foreground">
                     {filterPriorities.length}
                   </span>
                 )}
@@ -267,7 +267,7 @@ export default function MyTasksPage() {
                 type="button"
                 onClick={() => setFilterDue(opt.value)}
                 className={cn(
-                  "rounded px-2 py-0.5 text-[11px] font-medium transition-colors whitespace-nowrap",
+                  "rounded px-2 py-0.5 text-caption font-medium transition-colors whitespace-nowrap",
                   filterDue === opt.value
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -302,7 +302,7 @@ export default function MyTasksPage() {
       ) : (
         <div className="rounded-lg border overflow-hidden">
           {/* Table header */}
-          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-caption font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="flex-1 min-w-0">Task</div>
             {groupBy !== "project"  && <div className="w-[160px] shrink-0 hidden sm:block">Projekt</div>}
             {groupBy !== "priority" && <div className="w-[90px] shrink-0 hidden sm:block">Priorität</div>}
@@ -353,14 +353,14 @@ export default function MyTasksPage() {
                               {task.title}
                             </span>
                             {task.approvalStatus === "PENDING" && (
-                              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning shrink-0">
+                              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-meta font-semibold text-warning shrink-0">
                                 <Hourglass className="h-2.5 w-2.5" />Abnahme
                               </span>
                             )}
                           </div>
                           {task.epic && (
                             <span
-                              className="text-[10px] font-medium"
+                              className="text-meta font-medium"
                               style={{ color: task.epic.color }}
                             >
                               {task.epic.title}
@@ -405,7 +405,7 @@ export default function MyTasksPage() {
                       {/* Status pill */}
                       <div className="w-[80px] shrink-0 hidden sm:block">
                         <span
-                          className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold truncate max-w-full"
+                          className="inline-flex rounded-full px-2 py-0.5 text-meta font-semibold truncate max-w-full"
                           style={{
                             backgroundColor: task.statusColor + "20",
                             color: task.statusColor,

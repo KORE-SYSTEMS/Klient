@@ -36,8 +36,8 @@ export function Topbar({ user }: TopbarProps) {
       >
         <Search className="h-3.5 w-3.5" />
         <span className="flex-1 text-left">Suche…</span>
-        <kbd className="ml-auto hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-muted/50 px-1.5 text-[10px] font-mono">
-          <span className="text-[11px]">⌘</span>K
+        <kbd className="ml-auto hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-muted/50 px-1.5 text-meta font-mono">
+          <span className="text-caption">⌘</span>K
         </kbd>
       </button>
       <button

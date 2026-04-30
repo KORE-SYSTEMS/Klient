@@ -189,7 +189,7 @@ export function TaskFilters({
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Mehr Filter
           {advancedActive && (
-            <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+            <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-meta font-bold text-primary-foreground">
               !
             </span>
           )}
@@ -381,7 +381,7 @@ export function TaskFilters({
                 type="button"
                 onClick={() => setFilters({ due: opt.value })}
                 className={cn(
-                  "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  "rounded px-2 py-0.5 text-caption font-medium transition-colors",
                   filters.due === opt.value
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",

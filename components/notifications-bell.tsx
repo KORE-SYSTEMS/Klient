@@ -95,7 +95,7 @@ export function NotificationsBell() {
       <DropdownMenuTrigger className="relative flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground">
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-meta font-bold text-primary-foreground">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -105,7 +105,7 @@ export function NotificationsBell() {
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Benachrichtigungen</span>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-meta font-semibold text-primary">
                 {unreadCount} neu
               </span>
             )}
@@ -163,7 +163,7 @@ export function NotificationsBell() {
                       {n.message && (
                         <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
                       )}
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">{timeAgo(n.createdAt)}</p>
+                      <p className="mt-0.5 text-meta text-muted-foreground">{timeAgo(n.createdAt)}</p>
                     </div>
                   </button>
                 );

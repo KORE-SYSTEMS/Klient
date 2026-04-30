@@ -130,7 +130,7 @@ export default function ProjectDetailPage() {
           <div key={label} className="rounded-xl border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Icon className="h-3.5 w-3.5" />
-              <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+              <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
             </div>
             <div className="text-2xl font-bold tabular-nums">{value}</div>
           </div>
@@ -138,7 +138,7 @@ export default function ProjectDetailPage() {
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <TrendingUp className="h-3.5 w-3.5" />
-            <span className="text-[11px] uppercase tracking-wider font-medium">Fortschritt</span>
+            <span className="text-caption uppercase tracking-wider font-medium">Fortschritt</span>
           </div>
           <div className="text-2xl font-bold tabular-nums">{progress}%</div>
           <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
@@ -155,7 +155,7 @@ export default function ProjectDetailPage() {
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-3">
             <CheckSquare className="h-3.5 w-3.5" />
-            <span className="text-[11px] uppercase tracking-wider font-medium">
+            <span className="text-caption uppercase tracking-wider font-medium">
               Task-Verteilung
             </span>
           </div>
@@ -187,7 +187,7 @@ export default function ProjectDetailPage() {
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-3">
             <Users className="h-3.5 w-3.5" />
-            <span className="text-[11px] uppercase tracking-wider font-medium">
+            <span className="text-caption uppercase tracking-wider font-medium">
               Mitglieder
             </span>
           </div>
@@ -212,10 +212,10 @@ export default function ProjectDetailPage() {
                   variant="outline"
                   className={
                     m.user.role === "CLIENT"
-                      ? "text-[10px] text-orange-500 border-orange-500/30"
+                      ? "text-meta text-orange-500 border-orange-500/30"
                       : m.user.role === "ADMIN"
-                        ? "text-[10px] text-blue-500 border-blue-500/30"
-                        : "text-[10px] text-green-500 border-green-500/30"
+                        ? "text-meta text-blue-500 border-blue-500/30"
+                        : "text-meta text-green-500 border-green-500/30"
                   }
                 >
                   {m.user.role === "CLIENT" ? "Kunde" : m.user.role === "ADMIN" ? "Admin" : "Mitarbeiter"}

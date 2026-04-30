@@ -74,7 +74,7 @@ export default async function PipelinePage() {
           <div key={label} className="rounded-xl border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Icon className="h-3.5 w-3.5" />
-              <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+              <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
             </div>
             <div className="text-xl font-bold tabular-nums">{value}</div>
           </div>
@@ -94,17 +94,17 @@ export default async function PipelinePage() {
                 <div className="flex items-center gap-2">
                   <div className={cn("h-2 w-2 rounded-full", stage.color)} />
                   <span className="text-[13px] font-semibold">{stage.label}</span>
-                  <span className="text-[12px] text-muted-foreground font-medium">{stageClients.length}</span>
+                  <span className="text-xs text-muted-foreground font-medium">{stageClients.length}</span>
                 </div>
                 {stageValue > 0 && (
-                  <span className="text-[11px] text-muted-foreground font-mono">{formatEur(stageValue)}</span>
+                  <span className="text-caption text-muted-foreground font-mono">{formatEur(stageValue)}</span>
                 )}
               </div>
 
               {/* Cards */}
               <div className="space-y-2">
                 {stageClients.length === 0 ? (
-                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-center text-[12px] text-muted-foreground">
+                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
                     Keine Einträge
                   </div>
                 ) : (
@@ -118,7 +118,7 @@ export default async function PipelinePage() {
                       >
                         <div className="flex items-center gap-2.5 mb-2">
                           <Avatar className="h-7 w-7 shrink-0">
-                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                            <AvatarFallback className="text-meta font-bold bg-primary/10 text-primary">
                               {getInitials(client.name || client.email)}
                             </AvatarFallback>
                           </Avatar>
@@ -127,7 +127,7 @@ export default async function PipelinePage() {
                               {client.name || client.email}
                             </p>
                             {client.company && (
-                              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                              <div className="flex items-center gap-1 text-caption text-muted-foreground">
                                 <Building2 className="h-2.5 w-2.5 shrink-0" />
                                 <span className="truncate">{client.company}</span>
                               </div>
@@ -136,7 +136,7 @@ export default async function PipelinePage() {
                         </div>
 
                         {client.leadValue != null && client.leadValue > 0 && (
-                          <div className="flex items-center gap-1 text-[12px] font-semibold text-foreground mb-2">
+                          <div className="flex items-center gap-1 text-xs font-semibold text-foreground mb-2">
                             <Euro className="h-3 w-3 text-muted-foreground" />
                             {formatEur(client.leadValue)}
                           </div>
@@ -145,18 +145,18 @@ export default async function PipelinePage() {
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {client.leadSource && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              <Badge variant="secondary" className="text-meta px-1.5 py-0">
                                 {client.leadSource}
                               </Badge>
                             )}
                             {client.projects.length > 0 && (
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="text-caption text-muted-foreground">
                                 {client.projects.length} Projekt{client.projects.length !== 1 ? "e" : ""}
                               </span>
                             )}
                           </div>
                           {lastActivity && (
-                            <span className="text-[10px] text-muted-foreground shrink-0">
+                            <span className="text-meta text-muted-foreground shrink-0">
                               {formatDate(lastActivity.date)}
                             </span>
                           )}

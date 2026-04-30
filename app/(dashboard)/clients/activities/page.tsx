@@ -99,11 +99,11 @@ export default async function ActivitiesPage() {
             <div key={day}>
               {/* Day header */}
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {formatDayLabel(day)}
                 </span>
                 <div className="flex-1 h-px bg-border" />
-                <span className="text-[11px] text-muted-foreground">{dayActivities.length} Aktivität{dayActivities.length !== 1 ? "en" : ""}</span>
+                <span className="text-caption text-muted-foreground">{dayActivities.length} Aktivität{dayActivities.length !== 1 ? "en" : ""}</span>
               </div>
 
               {/* Activity cards */}
@@ -124,17 +124,17 @@ export default async function ActivitiesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <span className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
                               {ACTIVITY_LABELS[act.type] ?? act.type}
                             </span>
                             {outcome && OutcomeIcon && (
-                              <span className={cn("flex items-center gap-1 text-[11px] font-medium", outcome.cls)}>
+                              <span className={cn("flex items-center gap-1 text-caption font-medium", outcome.cls)}>
                                 <OutcomeIcon className="h-3 w-3" />
                                 {outcome.label}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-2 text-caption text-muted-foreground shrink-0">
                             {act.duration && (
                               <span className="flex items-center gap-0.5">
                                 <Clock className="h-3 w-3" />{act.duration}min
@@ -146,14 +146,14 @@ export default async function ActivitiesPage() {
 
                         <p className="text-[13px] font-medium mt-0.5">{act.title}</p>
                         {act.description && (
-                          <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{act.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{act.description}</p>
                         )}
                       </div>
 
                       {/* Client chip */}
                       <Link
                         href={`/clients/${act.client.id}`}
-                        className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-[11px] font-medium hover:bg-accent transition-colors shrink-0"
+                        className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-caption font-medium hover:bg-accent transition-colors shrink-0"
                       >
                         <Avatar className="h-4 w-4">
                           <AvatarFallback className="text-[8px]">{getInitials(act.client.name || act.client.email)}</AvatarFallback>

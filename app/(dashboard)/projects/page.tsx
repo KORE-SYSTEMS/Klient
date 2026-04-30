@@ -361,7 +361,7 @@ export default function ProjectsPage() {
                           {project.name}
                         </h3>
                         {project.archived && (
-                          <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
+                          <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-micro font-semibold text-muted-foreground">
                             <Archive className="h-2.5 w-2.5" />Archiv
                           </span>
                         )}
@@ -415,7 +415,7 @@ export default function ProjectsPage() {
                             }}
                           />
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                        <div className="flex items-center justify-between text-meta text-muted-foreground">
                           <span>{done}/{total} erledigt</span>
                           <span>{pct}%</span>
                         </div>
@@ -447,13 +447,13 @@ export default function ProjectsPage() {
                       {project.members.slice(0, 4).map((m) => (
                         <Avatar key={m.user.id} className="h-6 w-6 border-2 border-background">
                           <AvatarImage src={m.user.image || undefined} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback className="text-meta">
                             {getInitials(m.user.name || m.user.email)}
                           </AvatarFallback>
                         </Avatar>
                       ))}
                       {project.members.length > 4 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px]">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-meta">
                           +{project.members.length - 4}
                         </div>
                       )}
