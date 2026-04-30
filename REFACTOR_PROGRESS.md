@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P2 (Design-System) zu großen Teilen abgeschlossen ✅
-**Nächste Phase:** P3 — Daily-Use Power-Features (Tastatur, Bulk-Aktionen, Saved Views, Subtasks)
+**Phase:** P3.1 (Tastatur-Shortcuts) abgeschlossen ✅
+**Nächste Phase:** P3.2 — Bulk-Aktionen / Saved Views / Subtasks
 
 ---
 
@@ -128,6 +128,25 @@ Die App ist aktuell Dark-Only (`<html className="dark">` hartkodiert, nur
 separate Design-Arbeit für die Light-Palette und Component-Audit. Nicht
 blockiert P3 — wird als Standalone-Task später angegangen.
 
+---
+
+## P3 · Daily-Use Power-Features
+
+### P3.1 · Tastatur-Shortcuts — abgeschlossen ✅
+
+Bestehender `useKeyboardShortcuts`-Hook + Overlay erweitert um:
+
+- `g+t` → Meine Tasks (war noch nicht da)
+- `g+i` → Rechnungen
+- `c` → "Neuer Task" via Custom-Event `klient:new-task`
+- `d` → Dichte umschalten (Compact ↔ Comfortable)
+
+Das `c`-Shortcut sendet ein DOM-Event, auf das die Task-Page hört —
+sauber entkoppelt, jede Task-Seite kann sich selbst registrieren.
+Cheatsheet-Overlay (`?`) zeigt alle aktualisiert.
+
+### P3.2 — P3.x · Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations — offen
+
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
 ### P1.8 · `Card`-Komponente konsequent oder gar nicht — offen
@@ -164,6 +183,7 @@ ecb8e7e P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
 fed9101 P2.1+P2.2: Type-Skala + Bulk-Replace text-[Npx]
 e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
 c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
+<HEAD>  P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 ```
 
 ---

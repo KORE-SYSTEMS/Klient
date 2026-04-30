@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { openCommandPalette } from "@/components/command-palette";
+import { useDensity } from "@/components/density-provider";
 
 interface ShortcutEntry {
   keys: string[];
@@ -22,38 +23,52 @@ interface ShortcutEntry {
 
 const SHORTCUT_DOCS: ShortcutEntry[] = [
   // Navigation
-  { keys: ["G", "D"], description: "Dashboard", category: "Navigation" },
-  { keys: ["G", "P"], description: "Projekte", category: "Navigation" },
-  { keys: ["G", "C"], description: "Kunden", category: "Navigation" },
-  { keys: ["G", "S"], description: "Einstellungen", category: "Navigation" },
+  { keys: ["G", "D"], description: "Dashboard",      category: "Navigation" },
+  { keys: ["G", "P"], description: "Projekte",       category: "Navigation" },
+  { keys: ["G", "T"], description: "Meine Tasks",    category: "Navigation" },
+  { keys: ["G", "I"], description: "Rechnungen",     category: "Navigation" },
+  { keys: ["G", "C"], description: "Kunden",         category: "Navigation" },
+  { keys: ["G", "R"], description: "Reports",        category: "Navigation" },
+  { keys: ["G", "S"], description: "Einstellungen",  category: "Navigation" },
   // Search
   { keys: ["⌘", "K"], description: "Suche / Command Palette öffnen", category: "Suche" },
-  { keys: ["/"], description: "Suche öffnen", category: "Suche" },
+  { keys: ["/"],      description: "Suche öffnen", category: "Suche" },
+  // Actions
+  { keys: ["C"],      description: "Neuer Task (auf Task-Seiten)", category: "Aktionen" },
+  { keys: ["D"],      description: "Dichte umschalten", category: "Aktionen" },
   // General
-  { keys: ["?"], description: "Shortcuts anzeigen", category: "Allgemein" },
-  { keys: ["Esc"], description: "Dialog schließen", category: "Allgemein" },
+  { keys: ["?"],   description: "Shortcuts anzeigen", category: "Allgemein" },
+  { keys: ["Esc"], description: "Dialog schließen",   category: "Allgemein" },
 ];
+
+/** Custom event broadcasters — pages listen for these to open the right dialog. */
+const NEW_TASK_EVENT = "klient:new-task";
+export function emitNewTask() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(NEW_TASK_EVENT));
+  }
+}
+export const NEW_TASK_EVENT_NAME = NEW_TASK_EVENT;
 
 export function KeyboardShortcutOverlay() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const { toggle: toggleDensity } = useDensity();
 
   useKeyboardShortcuts({
-    "?": () => setOpen((v) => !v),
-    "g+d": () => router.push("/dashboard"),
-    "g+p": () => router.push("/projects"),
-    "g+c": () => {
-      if (role !== "CLIENT") router.push("/clients");
-    },
-    "g+s": () => {
-      if (role === "ADMIN") router.push("/settings");
-    },
-    "g+r": () => {
-      if (role !== "CLIENT") router.push("/reports");
-    },
-    "meta+k": () => openCommandPalette(),
+    "?":     () => setOpen((v) => !v),
+    "g+d":   () => router.push("/dashboard"),
+    "g+p":   () => router.push("/projects"),
+    "g+t":   () => router.push("/tasks"),
+    "g+i":   () => router.push("/invoices"),
+    "g+c":   () => { if (role !== "CLIENT") router.push("/clients"); },
+    "g+r":   () => { if (role !== "CLIENT") router.push("/reports"); },
+    "g+s":   () => { if (role === "ADMIN") router.push("/settings"); },
+    "c":     () => emitNewTask(),
+    "d":     () => toggleDensity(),
+    "meta+k":() => openCommandPalette(),
   });
 
   const categories = Array.from(new Set(SHORTCUT_DOCS.map((s) => s.category)));

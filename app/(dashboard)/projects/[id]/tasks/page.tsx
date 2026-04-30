@@ -108,6 +108,7 @@ import { CommentsSection } from "./_components/comments-section";
 import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
 import { TaskFilters, type TaskFilterState } from "./_components/task-filters";
+import { NEW_TASK_EVENT_NAME } from "@/components/keyboard-shortcut-overlay";
 // --- Main Page ---
 
 export default function TasksPage() {
@@ -229,6 +230,25 @@ export default function TasksPage() {
     setOnChange(() => fetchTasks);
     return () => setOnChange(null);
   }, [setOnChange, fetchTasks]);
+
+  // Global "c" shortcut → open the new-task dialog from anywhere on this page.
+  useEffect(() => {
+    if (isClient) return;
+    function handler() {
+      setEditTask(null);
+      setFormTitle("");
+      setFormDescription("");
+      setFormStatus(statuses[0]?.id || "BACKLOG");
+      setFormPriority("MEDIUM");
+      setFormDueDate("");
+      setFormAssigneeId("none");
+      setFormClientVisible(false);
+      setFormEpicId("none");
+      setTaskDialogOpen(true);
+    }
+    window.addEventListener(NEW_TASK_EVENT_NAME, handler);
+    return () => window.removeEventListener(NEW_TASK_EVENT_NAME, handler);
+  }, [isClient, statuses]);
 
   const { optimisticUpdate, optimisticDelete, optimisticCreate, optimisticReorder } =
     useOptimisticTasks({
