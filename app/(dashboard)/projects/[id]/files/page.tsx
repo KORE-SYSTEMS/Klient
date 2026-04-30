@@ -1010,7 +1010,7 @@ function FolderCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity -mr-1 -mt-1"
+                  className="h-7 w-7 hover-action -mr-1 -mt-1"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -1099,7 +1099,7 @@ function FolderRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              className="h-7 w-7 hover-action flex-shrink-0"
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -1202,7 +1202,7 @@ function FileCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity -mr-1"
+                  className="h-6 w-6 flex-shrink-0 hover-action -mr-1"
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
@@ -1302,7 +1302,7 @@ function FileRow({
         >
           {file.clientVisible
             ? <Eye className="h-3.5 w-3.5 text-primary" />
-            : <EyeOff className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            : <EyeOff className="h-3.5 w-3.5 text-muted-foreground hover-action" />
           }
         </Button>
       )}
@@ -1311,7 +1311,7 @@ function FileRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-7 w-7 flex-shrink-0 hover-action"
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>

@@ -223,7 +223,7 @@ export function ChecklistSection({
                 <button
                   type="button"
                   onClick={() => removeItem(item)}
-                  className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                  className="hover-action rounded p-0.5 text-muted-foreground hover:text-destructive"
                   aria-label="Element löschen"
                 >
                   <X className="h-3.5 w-3.5" />

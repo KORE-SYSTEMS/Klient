@@ -125,13 +125,13 @@ function TimeEntryRow({
           <>
             <button
               type="button" onClick={() => setEditing(true)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all"
+              className="hover-action text-muted-foreground hover:text-foreground transition-all"
             >
               <Pencil className="h-3 w-3" />
             </button>
             <button
               type="button" onClick={() => onDelete(entry.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+              className="hover-action text-muted-foreground hover:text-destructive transition-all"
             >
               <X className="h-3 w-3" />
             </button>

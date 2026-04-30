@@ -503,7 +503,7 @@ function SortableRow({
         size="sm"
         variant="ghost"
         onClick={onDelete}
-        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition"
+        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover-action"
         aria-label="Löschen"
       >
         <Trash2 className="h-3.5 w-3.5" />

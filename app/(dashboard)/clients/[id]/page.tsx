@@ -238,7 +238,7 @@ function EditableField({
         <span className={cn("text-sm", value ? "text-foreground" : "text-muted-foreground/50 italic")}>
           {value || placeholder || "—"}
         </span>
-        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+        <Edit2 className="h-3 w-3 text-muted-foreground hover-action ml-auto" />
       </div>
     </button>
   );
@@ -679,7 +679,7 @@ export default function ClientDetailPage() {
                             )}
                             <button
                               onClick={() => deleteActivity(act.id)}
-                              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                              className="hover-action text-muted-foreground hover:text-destructive transition-all"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -742,7 +742,7 @@ export default function ClientDetailPage() {
                       {note.title && <p className="text-sm font-semibold truncate">{note.title}</p>}
                       <p className="text-caption text-muted-foreground">{formatDate(note.createdAt)}</p>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 shrink-0 hover-action">
                       <button onClick={() => togglePin(note)} className="text-muted-foreground hover:text-primary transition-colors" title={note.pinned ? "Loslösen" : "Anheften"}>
                         {note.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                       </button>

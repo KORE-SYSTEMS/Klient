@@ -103,6 +103,20 @@
     transition: none;
   }
 
+  /*
+   * Hover-revealed action button. Use on a child of a `.group` parent — invisible
+   * by default, fades in when the parent is hovered or focused-within.
+   * Replaces 10+ different hand-rolled `opacity-0 group-hover:opacity-100 …` combos.
+   */
+  .hover-action {
+    opacity: 0;
+    transition: opacity 100ms ease, color 100ms ease, background-color 100ms ease;
+  }
+  .group:hover .hover-action,
+  .group:focus-within .hover-action {
+    opacity: 1;
+  }
+
   /* Animated gradient skeleton */
   .skeleton-shimmer {
     background: linear-gradient(

@@ -374,7 +374,7 @@ export default function ProjectsPage() {
                             <DropdownMenuTrigger asChild>
                               <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 hover:bg-accent"
+                                className="hover-action rounded p-0.5 hover:bg-accent"
                               >
                                 <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                               </button>
