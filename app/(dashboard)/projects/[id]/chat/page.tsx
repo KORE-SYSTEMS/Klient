@@ -54,8 +54,17 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
+    // Refetch when the tab regains focus instead of polling — saves background
+    // requests when nobody is looking. Real-time will move to SSE in P5.
+    function onVisible() {
+      if (document.visibilityState === "visible") fetchMessages();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", fetchMessages);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", fetchMessages);
+    };
   }, [fetchMessages]);
 
   useEffect(() => {

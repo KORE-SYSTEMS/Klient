@@ -329,10 +329,20 @@ function TaskCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
   };
 
   const totalTime = task.totalTime || 0;
+
+  // While this card is being dragged, render a dashed placeholder of the same
+  // approximate height so the drop slot is obvious. The actual moving card is
+  // shown via DragOverlay.
+  if (isDragging && !task._isPreview) {
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+        <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 h-[88px]" />
+      </div>
+    );
+  }
 
   // Preview card — shown to clients for tasks they can't see details of
   if (task._isPreview) {
@@ -557,7 +567,7 @@ function KanbanColumn({
       ref={setNodeRef}
       className={cn(
         "flex min-w-[280px] max-w-[320px] flex-col rounded-lg transition-colors",
-        isOver ? "bg-muted/60" : "bg-transparent"
+        isOver ? "bg-primary/5 ring-2 ring-primary/30 ring-inset" : "bg-transparent"
       )}
     >
       {/* Column header with color bar */}
@@ -2536,8 +2546,9 @@ export default function TasksPage() {
       {/* Kanban View */}
       {view === "kanban" ? (
         <DndContext sensors={isClient ? [] : sensors} collisionDetection={kanbanCollision}
-          onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
+          autoScroll={{ threshold: { x: 0.15, y: 0.2 }, acceleration: 14 }}>
+          <div className="flex gap-4 overflow-x-auto pb-4 kanban-scroll">
             {statuses.map((status) => {
               const colTasks = filteredTasks.filter((t) => t.status === status.id);
               return (

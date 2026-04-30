@@ -94,23 +94,16 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
-
-  // Poll for live updates every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  // Also refetch when tab becomes visible
-  useEffect(() => {
+    // Refetch on tab focus instead of polling. SSE in P5 replaces this.
     function handleVisibility() {
-      if (document.visibilityState === "visible") {
-        fetchData();
-      }
+      if (document.visibilityState === "visible") fetchData();
     }
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", fetchData);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", fetchData);
+    };
   }, [fetchData]);
 
   if (loading || !project) {
