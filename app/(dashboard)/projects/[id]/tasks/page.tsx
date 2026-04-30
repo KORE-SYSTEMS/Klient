@@ -75,13 +75,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Lock,
-  Filter,
-  Search,
-  Users,
-  SlidersHorizontal,
-  User as UserIcon,
-  UserX,
-  Flag,
 } from "lucide-react";
 import { cn, formatDate, getInitials, getPriorityColor } from "@/lib/utils";
 import {
@@ -114,6 +107,7 @@ import { ChecklistSection } from "./_components/checklist-section";
 import { CommentsSection } from "./_components/comments-section";
 import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
+import { TaskFilters, type TaskFilterState } from "./_components/task-filters";
 // --- Main Page ---
 
 export default function TasksPage() {
@@ -185,13 +179,24 @@ export default function TasksPage() {
   // List view: collapsed status groups
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  // --- Filter bar ---
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filterSearch, setFilterSearch] = useState("");
-  const [filterAssignees, setFilterAssignees] = useState<string[]>([]);
-  const [filterPriorities, setFilterPriorities] = useState<string[]>([]);
-  const [filterEpicId, setFilterEpicId] = useState<string>("");
-  const [filterDue, setFilterDue] = useState<"" | "overdue" | "today" | "week" | "none">("");
+  // --- Filters (consolidated) ---
+  const [filters, setFiltersState] = useState<TaskFilterState>({
+    search: "",
+    assignees: [],
+    priorities: [],
+    epicId: "",
+    due: "",
+  });
+  const setFilters = (next: Partial<TaskFilterState>) =>
+    setFiltersState((prev) => ({ ...prev, ...next }));
+  const clearFilters = () =>
+    setFiltersState({ search: "", assignees: [], priorities: [], epicId: "", due: "" });
+  // Compatibility aliases — internal usages that read the old names still work.
+  const filterSearch     = filters.search;
+  const filterAssignees  = filters.assignees;
+  const filterPriorities = filters.priorities;
+  const filterEpicId     = filters.epicId;
+  const filterDue        = filters.due;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -581,33 +586,13 @@ export default function TasksPage() {
 
   const activeTask = tasks.find((t) => t.id === activeId);
 
-  // --- Filter helpers ---
+  // --- Filter summary (badge + result count) ---
   const activeFilterCount =
     (filterSearch ? 1 : 0) +
     filterAssignees.length +
     filterPriorities.length +
     (filterEpicId ? 1 : 0) +
     (filterDue ? 1 : 0);
-
-  function clearFilters() {
-    setFilterSearch("");
-    setFilterAssignees([]);
-    setFilterPriorities([]);
-    setFilterEpicId("");
-    setFilterDue("");
-  }
-
-  function toggleAssigneeFilter(id: string) {
-    setFilterAssignees((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  }
-
-  function togglePriorityFilter(p: string) {
-    setFilterPriorities((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
-    );
-  }
 
   // --- Filtered tasks (client-side) ---
   const filteredTasks = useMemo(() => {
@@ -777,23 +762,6 @@ export default function TasksPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Filter toggle */}
-          <Button
-            variant={filterOpen || activeFilterCount > 0 ? "secondary" : "ghost"}
-            size="sm"
-            className="h-8 gap-1.5 text-muted-foreground data-[active=true]:text-foreground"
-            data-active={filterOpen || activeFilterCount > 0}
-            onClick={() => setFilterOpen((v) => !v)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filter
-            {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
-
           {!isClient && (
             <>
               {view === "kanban" && (
@@ -810,292 +778,20 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* ===== Quick-Filter Chips ===== */}
-      {/*
-        Lightweight presets that write into the same filterAssignees / filterDue /
-        filterPriorities state used by the full filter bar — so chip state and
-        filter bar stay in sync automatically.
-      */}
-      {(() => {
-        const myActive =
-          filterAssignees.length === 1 && filterAssignees[0] === currentUserId;
-        const unassignedActive =
-          filterAssignees.length === 1 && filterAssignees[0] === "";
-        const overdueActive = filterDue === "overdue";
-        const highPrioActive =
-          filterPriorities.length > 0 &&
-          filterPriorities.every((p) => p === "HIGH" || p === "URGENT") &&
-          (filterPriorities.includes("HIGH") || filterPriorities.includes("URGENT"));
-
-        const chipCls = (active: boolean) =>
-          cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-            active
-              ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
-              : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
-          );
-
-        return (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              className={chipCls(myActive)}
-              onClick={() =>
-                setFilterAssignees(myActive ? [] : [currentUserId])
-              }
-            >
-              <UserIcon className="h-3 w-3" />
-              Mir zugewiesen
-            </button>
-            {!isClient && (
-              <button
-                type="button"
-                className={chipCls(unassignedActive)}
-                onClick={() =>
-                  setFilterAssignees(unassignedActive ? [] : [""])
-                }
-              >
-                <UserX className="h-3 w-3" />
-                Ohne Assignee
-              </button>
-            )}
-            <button
-              type="button"
-              className={chipCls(overdueActive)}
-              onClick={() => setFilterDue(overdueActive ? "" : "overdue")}
-            >
-              <AlertCircle className="h-3 w-3" />
-              Überfällig
-            </button>
-            <button
-              type="button"
-              className={chipCls(highPrioActive)}
-              onClick={() =>
-                setFilterPriorities(highPrioActive ? [] : ["HIGH", "URGENT"])
-              }
-            >
-              <Flag className="h-3 w-3" />
-              Hoch-Prio
-            </button>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-                Zurücksetzen
-              </button>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ===== Filter Bar ===== */}
-      {filterOpen && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-          {/* Search */}
-          <div className="relative shrink-0">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Suchen..."
-              value={filterSearch}
-              onChange={(e) => setFilterSearch(e.target.value)}
-              className="h-7 pl-8 w-44 text-xs"
-            />
-            {filterSearch && (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => setFilterSearch("")}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-
-          {/* Assignee multi-select */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={filterAssignees.length > 0 ? "secondary" : "outline"}
-                size="sm"
-                className="h-7 gap-1.5 text-xs"
-              >
-                <Users className="h-3.5 w-3.5" />
-                {filterAssignees.length > 0
-                  ? filterAssignees.length === 1
-                    ? (members.find((m) => m.id === filterAssignees[0])?.name || "1 Person")
-                    : `${filterAssignees.length} Personen`
-                  : "Zugewiesen"}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              {members.map((m) => (
-                <DropdownMenuItem
-                  key={m.id}
-                  className="flex items-center gap-2"
-                  onClick={() => toggleAssigneeFilter(m.id)}
-                >
-                  <div className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                    filterAssignees.includes(m.id) ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
-                  )}>
-                    {filterAssignees.includes(m.id) && <CheckCircle2 className="h-3 w-3" />}
-                  </div>
-                  <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[8px]">{getInitials(m.name || m.email)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{m.name || m.email}</span>
-                </DropdownMenuItem>
-              ))}
-              {filterAssignees.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setFilterAssignees([])}>
-                    <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Priority multi-select */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={filterPriorities.length > 0 ? "secondary" : "outline"}
-                size="sm"
-                className="h-7 gap-1.5 text-xs"
-              >
-                <Filter className="h-3.5 w-3.5" />
-                {filterPriorities.length > 0
-                  ? filterPriorities.length === 1
-                    ? PRIORITY_LABELS[filterPriorities[0]]
-                    : `${filterPriorities.length} Prioritäten`
-                  : "Priorität"}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
-              {PRIORITIES.map((p) => (
-                <DropdownMenuItem
-                  key={p}
-                  className="flex items-center gap-2"
-                  onClick={() => togglePriorityFilter(p)}
-                >
-                  <div className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                    filterPriorities.includes(p) ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
-                  )}>
-                    {filterPriorities.includes(p) && <CheckCircle2 className="h-3 w-3" />}
-                  </div>
-                  <span className={cn("text-xs font-medium", getPriorityColor(p))}>
-                    {PRIORITY_LABELS[p]}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-              {filterPriorities.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setFilterPriorities([])}>
-                    <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Epic filter */}
-          {epics.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant={filterEpicId ? "secondary" : "outline"}
-                  size="sm"
-                  className="h-7 gap-1.5 text-xs"
-                >
-                  <Layers className="h-3.5 w-3.5" />
-                  {filterEpicId
-                    ? (epics.find((e) => e.id === filterEpicId)?.title || "Epic")
-                    : "Epic"}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                {epics.map((epic) => (
-                  <DropdownMenuItem
-                    key={epic.id}
-                    className="flex items-center gap-2"
-                    onClick={() => setFilterEpicId(filterEpicId === epic.id ? "" : epic.id)}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: epic.color }}
-                    />
-                    <span className="truncate">{epic.title}</span>
-                    {filterEpicId === epic.id && <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-primary" />}
-                  </DropdownMenuItem>
-                ))}
-                {filterEpicId && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setFilterEpicId("")}>
-                      <X className="mr-2 h-3.5 w-3.5" />Zurücksetzen
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Due date quick filters */}
-          <div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
-            {([
-              { value: "", label: "Alle" },
-              { value: "overdue", label: "Überfällig" },
-              { value: "today", label: "Heute" },
-              { value: "week", label: "Diese Woche" },
-              { value: "none", label: "Kein Datum" },
-            ] as const).map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setFilterDue(opt.value)}
-                className={cn(
-                  "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
-                  filterDue === opt.value
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Clear all — shown when any filter is active */}
-          {activeFilterCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs text-muted-foreground ml-auto"
-              onClick={clearFilters}
-            >
-              <X className="mr-1 h-3 w-3" />
-              Alle zurücksetzen
-            </Button>
-          )}
-
-          {/* Active count */}
-          {activeFilterCount > 0 && (
-            <span className="text-xs text-muted-foreground shrink-0">
-              {filteredTasks.length} von {tasks.length} Tasks
-            </span>
-          )}
-        </div>
-      )}
+      <TaskFilters
+        filters={filters}
+        setFilters={setFilters}
+        clear={clearFilters}
+        members={members}
+        epics={epics}
+        isClient={isClient}
+        currentUserId={currentUserId}
+        resultSummary={
+          activeFilterCount > 0
+            ? `${filteredTasks.length} von ${tasks.length} Tasks`
+            : undefined
+        }
+      />
 
       {/* Kanban View */}
       {view === "kanban" ? (

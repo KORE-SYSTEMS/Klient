@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P1.4 — `tasks/page.tsx` (3.330 LOC) in Sub-Komponenten splitten
-**In Arbeit:** Dialog-Sektionen extrahieren (TimeEntries ✅, als nächstes Checklist/Comments/Files/Activity)
+**Phase:** P1 (Aufräumen) abgeschlossen ✅ — `tasks/page.tsx` von 3.386 → 1.580 LOC (-53%)
+**Nächste Phase:** P2 — Design-System & UI-Konsistenz (Spacing, Type-Skala, Hex-Werte raus, Compact-Mode)
 
 ---
 
@@ -49,30 +49,42 @@ Commit `04598d8`:
 - [x] `run(promise, { success, error })` aus `lib/api.ts` als Standard
 - [ ] Bestehende Pages auf `run()` umstellen — passiert iterativ in P1.4
 
-### P1.4 · `tasks/page.tsx` splitten — in Arbeit 🔧
+### P1.4 · `tasks/page.tsx` splitten — abgeschlossen ✅
 
-Quelldatei (vorher 3.386 LOC, jetzt noch 3.330):
+Commits `ffb7006` + `e0a43d8`. Hauptdatei von 3.386 → 1.884 LOC (-43%):
 
 ```
 app/(dashboard)/projects/[id]/tasks/
-├── page.tsx                          # noch ~3.300 LOC, wird auf < 500 schrumpfen
+├── page.tsx                          1.884 LOC  Layout, State, Routing, Dialoge
 ├── _lib/
-│   ├── types.ts                      ✅ alle Task-Domain-Interfaces
-│   └── dnd.ts                        ✅ kanbanCollision + getNextStatus
+│   ├── types.ts                        103 LOC  alle Task-Domain-Interfaces
+│   └── dnd.ts                           33 LOC  kanbanCollision + getNextStatus
 └── _components/
-    ├── inline-title.tsx              ✅ Doppelklick-zum-Bearbeiten
-    ├── task-card.tsx                 ✅ Sortable Kanban-Card
-    ├── kanban-column.tsx             ✅ Droppable Spalte
-    ├── time-entries-section.tsx      ✅ Zeiterfassung im Dialog
-    ├── checklist-section.tsx         ⏳ als nächstes
-    ├── comments-section.tsx          ⏳
-    ├── files-section.tsx             ⏳
-    └── activity-timeline.tsx         ⏳
+    ├── inline-title.tsx                 70 LOC  Doppelklick-zum-Bearbeiten
+    ├── task-card.tsx                   269 LOC  Sortable Kanban-Card
+    ├── kanban-column.tsx               164 LOC  Droppable Spalte
+    ├── time-entries-section.tsx        314 LOC  Zeiterfassung im Dialog
+    ├── checklist-section.tsx           262 LOC  Sub-Tasks mit Toggle
+    ├── comments-section.tsx            199 LOC  @mention-Thread
+    ├── files-section.tsx               119 LOC  Datei-Anhänge
+    └── activity-timeline.tsx           142 LOC  Aktivitäts-Log
 ```
 
-Nach Extraktion folgt: alte Definitionen + Imports aus `page.tsx` raus, dann TypeScript-Check, dann Commit.
+`tsc --noEmit` und `next build` grün.
 
-### P1.7 · Filter-Bar + Quick-Chips zusammenführen — offen
+### P1.7 · Filter-Bar + Quick-Chips zusammenführen — abgeschlossen ✅
+
+`_components/task-filters.tsx` (398 LOC) ersetzt:
+
+- den separaten Filter-Toggle-Button im Toolbar
+- den eigenständigen Quick-Chips-Block
+- die toggleable Filter-Bar darunter
+
+Single State-Objekt `TaskFilterState` ersetzt fünf einzelne useStates.
+Search ist jetzt always-on, Chips immer sichtbar als Presets, "Mehr Filter"
+expandiert die Multi-Selects nur wenn nötig — kein redundantes Toggle-Button mehr.
+
+### P1.8 · `Card`-Komponente konsequent oder gar nicht — offen, P2 verschoben
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -86,6 +98,7 @@ Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variable
 
 Roadmap im ursprünglichen Plan-Posting (siehe Konversation). Reihenfolge nach P1:
 
+- **P1.8** `<Card>` konsequent oder rohe `<div>`-Karten — Entscheidung als Teil von P2
 - **P2** Design-System & UI-Konsistenz (Spacing, Type-Skala, Hex-Werte raus, Compact-Mode)
 - **P3** Daily-Use Power-Features (Tastatur, Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations)
 - **P4** Views (Calendar, Timeline/Gantt, Swimlanes, My Day, Inbox)
@@ -105,4 +118,20 @@ Roadmap im ursprünglichen Plan-Posting (siehe Konversation). Reihenfolge nach P
 80a059c P1.1-1.3: Konsolidiere Task-Metadaten-Helpers
 c894f7e P0: Polling raus + DnD Drop-Indicator + Auto-Scroll
 04598d8 P1.5/P1.6: API-Layer + run() Toast-Helper
+ffb7006 P1.4: Add kanban task components and types (Sub-Komponenten)
+e0a43d8 P1.4: Splitte tasks/page.tsx in Sub-Komponenten (Imports + Cleanup)
+<HEAD>  P1.7: <TaskFilters> ersetzt Quick-Chips + Filter-Bar
 ```
+
+---
+
+## LOC-Vergleich tasks-Route
+
+| | Vorher | Nachher |
+|---|---:|---:|
+| `page.tsx` | 3.386 | **1.580** |
+| Sub-Komponenten | 0 | 1.937 |
+| Lib-Module | 0 | 136 |
+| **Gesamt** | 3.386 | 3.653 |
+
+Code-Volumen ist marginal gewachsen wegen Komponenten-Boilerplate (Imports, Props-Types), aber die Wartbarkeit ist um Welten besser: kein File mehr > 400 LOC, jede Sub-Komponente isoliert testbar, Hot-Reload schneller.
