@@ -9,24 +9,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+/**
+ * Project-status pill. Optional editable mode opens a popover for switching
+ * between PLANNING / ACTIVE / REVIEW / COMPLETED / ON_HOLD.
+ *
+ * Task statuses are NOT handled here — those come from the per-project
+ * `TaskStatus` table and are rendered via `<PriorityPill>` / inline color
+ * pills in the kanban/list views.
+ */
 const PROJECT_STATUSES = [
-  { value: "PLANNING", label: "Planung", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-  { value: "ACTIVE", label: "Aktiv", color: "bg-green-500/15 text-green-400 border-green-500/30" },
-  { value: "REVIEW", label: "Review", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  { value: "PLANNING",  label: "Planung",       color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  { value: "ACTIVE",    label: "Aktiv",         color: "bg-green-500/15 text-green-400 border-green-500/30" },
+  { value: "REVIEW",    label: "Review",        color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
   { value: "COMPLETED", label: "Abgeschlossen", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  { value: "ON_HOLD", label: "Pausiert", color: "bg-gray-500/15 text-gray-400 border-gray-500/30" },
-] as const;
-
-const TASK_STATUSES = [
-  { value: "BACKLOG", label: "Backlog", color: "bg-gray-500/15 text-gray-400 border-gray-500/30" },
-  { value: "TODO", label: "To Do", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-  { value: "IN_PROGRESS", label: "In Arbeit", color: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
-  { value: "IN_REVIEW", label: "Review", color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
-  { value: "DONE", label: "Erledigt", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+  { value: "ON_HOLD",   label: "Pausiert",      color: "bg-gray-500/15 text-gray-400 border-gray-500/30" },
 ] as const;
 
 interface StatusPillProps {
   value: string;
+  /** Kept for backwards-compat with existing callers. Only "project" is supported. */
   type?: "project" | "task";
   editable?: boolean;
   onChange?: (value: string) => void;
@@ -34,27 +35,15 @@ interface StatusPillProps {
   className?: string;
 }
 
-export function getStatusLabel(value: string, type: "project" | "task" = "project"): string {
-  const list = type === "task" ? TASK_STATUSES : PROJECT_STATUSES;
-  return list.find((s) => s.value === value)?.label || value;
-}
-
-export function getStatusPillColor(value: string): string {
-  const all = [...PROJECT_STATUSES, ...TASK_STATUSES];
-  return all.find((s) => s.value === value)?.color || "bg-gray-500/15 text-gray-400 border-gray-500/30";
-}
-
 export function StatusPill({
   value,
-  type = "project",
   editable = false,
   onChange,
   size = "default",
   className,
 }: StatusPillProps) {
   const [open, setOpen] = useState(false);
-  const statuses = type === "task" ? TASK_STATUSES : PROJECT_STATUSES;
-  const current = statuses.find((s) => s.value === value);
+  const current = PROJECT_STATUSES.find((s) => s.value === value);
   const colorClass = current?.color || "bg-gray-500/15 text-gray-400 border-gray-500/30";
   const label = current?.label || value;
 
@@ -79,7 +68,7 @@ export function StatusPill({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{pill}</PopoverTrigger>
       <PopoverContent className="w-44 p-1" align="start">
-        {statuses.map((s) => (
+        {PROJECT_STATUSES.map((s) => (
           <button
             key={s.value}
             onClick={() => {

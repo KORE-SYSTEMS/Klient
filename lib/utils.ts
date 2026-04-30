@@ -30,22 +30,6 @@ export function getInitials(name: string) {
     .slice(0, 2);
 }
 
-export function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PLANNING: "bg-blue-500/20 text-blue-400",
-    ACTIVE: "bg-green-500/20 text-green-400",
-    REVIEW: "bg-yellow-500/20 text-yellow-400",
-    COMPLETED: "bg-emerald-500/20 text-emerald-400",
-    ON_HOLD: "bg-gray-500/20 text-gray-400",
-    BACKLOG: "bg-gray-500/20 text-gray-400",
-    TODO: "bg-blue-500/20 text-blue-400",
-    IN_PROGRESS: "bg-orange-500/20 text-orange-400",
-    IN_REVIEW: "bg-yellow-500/20 text-yellow-400",
-    DONE: "bg-emerald-500/20 text-emerald-400",
-  };
-  return colors[status] || "bg-gray-500/20 text-gray-400";
-}
-
 export function getPriorityColor(priority: string) {
   const colors: Record<string, string> = {
     LOW: "text-gray-400",

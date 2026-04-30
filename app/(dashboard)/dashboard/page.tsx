@@ -17,43 +17,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
+import { PriorityPill } from "@/components/task/priority-pill";
+import { ProjectStatusBadge } from "@/components/task/project-status-badge";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
-
-function getPriorityPillStyle(priority: string) {
-  switch (priority) {
-    case "URGENT": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-    case "HIGH":   return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-    case "MEDIUM": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-    case "LOW":    return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-    default:       return "bg-muted text-muted-foreground";
-  }
-}
-
-const PRIORITY_LABELS: Record<string, string> = {
-  LOW: "Niedrig", MEDIUM: "Mittel", HIGH: "Hoch", URGENT: "Dringend",
-};
-
-const PROJECT_STATUS_LABELS: Record<string, string> = {
-  PLANNING:    "Planung",
-  IN_PROGRESS: "In Arbeit",
-  ON_HOLD:     "Pausiert",
-  DONE:        "Abgeschlossen",
-};
-
-function ProjectStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    PLANNING:    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    IN_PROGRESS: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    ON_HOLD:     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    DONE:        "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400",
-  };
-  return (
-    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold", styles[status] || "bg-muted text-muted-foreground")}>
-      {PROJECT_STATUS_LABELS[status] || status}
-    </span>
-  );
-}
 
 function greet(name: string | null | undefined) {
   const h = new Date().getHours();
@@ -253,9 +220,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold", getPriorityPillStyle(task.priority))}>
-                      {PRIORITY_LABELS[task.priority] || task.priority}
-                    </span>
+                    <PriorityPill priority={task.priority} />
                     {task.dueDate && (() => {
                       const overdue = new Date(task.dueDate) < now;
                       return (

@@ -18,7 +18,6 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type CollisionDetection,
-  type Modifier,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -26,7 +25,7 @@ import {
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS, getEventCoordinates } from "@dnd-kit/utilities";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,7 +86,6 @@ import {
   ClipboardCheck,
   ThumbsUp,
   ThumbsDown,
-  Hourglass,
   Lock,
   Filter,
   Search,
@@ -98,6 +96,14 @@ import {
   Flag,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
+import {
+  PRIORITIES,
+  PRIORITY_LABELS,
+  LINK_TYPES,
+  ACTIVITY_LABELS,
+} from "@/lib/task-meta";
+import { PriorityPill } from "@/components/task/priority-pill";
+import { ApprovalBadge } from "@/components/task/approval-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -213,64 +219,6 @@ interface Task {
   _isPreview?: boolean;
   _count?: { comments?: number; files?: number; checklistItems?: number; checklistDone?: number };
   [key: string]: unknown;
-}
-
-const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
-const PRIORITY_LABELS: Record<string, string> = {
-  LOW: "Niedrig",
-  MEDIUM: "Mittel",
-  HIGH: "Hoch",
-  URGENT: "Dringend",
-};
-const LINK_TYPES = [
-  { value: "RELATED", label: "Verwandt" },
-  { value: "BLOCKS", label: "Blockiert" },
-  { value: "BLOCKED_BY", label: "Blockiert von" },
-  { value: "DEPENDS_ON", label: "Abhängig von" },
-];
-
-const ACTIVITY_LABELS: Record<string, string> = {
-  CREATED: "hat den Task erstellt",
-  STATUS_CHANGE: "hat den Status geändert",
-  PRIORITY_CHANGE: "hat die Priorität geändert",
-  ASSIGNMENT: "hat die Zuweisung geändert",
-  COMMENT: "hat kommentiert",
-  FILE_UPLOAD: "hat eine Datei hochgeladen",
-  TIME_ENTRY: "hat Zeit erfasst",
-  APPROVAL_APPROVED: "hat den Task genehmigt",
-  APPROVAL_REJECTED: "hat den Task abgelehnt",
-};
-
-// --- Priority colors for table pills ---
-function getPriorityPillStyle(priority: string) {
-  switch (priority) {
-    case "URGENT": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-    case "HIGH": return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-    case "MEDIUM": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-    case "LOW": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-    default: return "bg-muted text-muted-foreground";
-  }
-}
-
-// --- Approval status badge ---
-function ApprovalBadge({ status }: { status: string | null | undefined }) {
-  if (!status) return null;
-  if (status === "PENDING") return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning">
-      <Hourglass className="h-2.5 w-2.5" />Abnahme ausstehend
-    </span>
-  );
-  if (status === "APPROVED") return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-      <ThumbsUp className="h-2.5 w-2.5" />Abgenommen
-    </span>
-  );
-  if (status === "REJECTED") return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-      <ThumbsDown className="h-2.5 w-2.5" />Abgelehnt
-    </span>
-  );
-  return null;
 }
 
 // --- Inline title editor (double-click to edit) ---
@@ -452,12 +400,7 @@ function TaskCard({
                 {task.epic.title}
               </span>
             )}
-            <span className={cn(
-              "inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold",
-              getPriorityPillStyle(task.priority)
-            )}>
-              {PRIORITY_LABELS[task.priority] || task.priority}
-            </span>
+            <PriorityPill priority={task.priority} size="md" />
             {task.approvalStatus && (
               <ApprovalBadge status={task.approvalStatus as string} />
             )}
@@ -1594,22 +1537,6 @@ function ActivityTimeline({ taskId, statuses, members }: {
 
 // --- DnD helpers ---
 
-/** Snaps the drag overlay's top-left corner ~12px below/right of the cursor */
-const snapToCursor: Modifier = ({ activatorEvent, draggingNodeRect, transform }) => {
-  if (draggingNodeRect && activatorEvent) {
-    const coords = getEventCoordinates(activatorEvent as MouseEvent | TouchEvent);
-    if (!coords) return transform;
-    const offsetX = coords.x - draggingNodeRect.left;
-    const offsetY = coords.y - draggingNodeRect.top;
-    return {
-      ...transform,
-      x: transform.x - offsetX + 12,
-      y: transform.y - offsetY + 12,
-    };
-  }
-  return transform;
-};
-
 /**
  * Prefer pointer-within (exact hit-test) so hovering over a column or card
  * registers immediately; fall back to closest-center when the pointer is
@@ -1638,6 +1565,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeWidth, setActiveWidth] = useState<number | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ id: string; name: string; email: string; role?: string }[]>([]);
 
@@ -1925,7 +1853,12 @@ export default function TasksPage() {
   }
 
   // --- Drag & Drop ---
-  function handleDragStart(event: DragStartEvent) { if (isClient) return; setActiveId(event.active.id as string); }
+  function handleDragStart(event: DragStartEvent) {
+    if (isClient) return;
+    setActiveId(event.active.id as string);
+    const rect = event.active.rect.current.initial;
+    setActiveWidth(rect ? rect.width : null);
+  }
   function handleDragOver(event: DragOverEvent) {
     if (isClient) return;
     if (!event.over) { setOverId(null); return; }
@@ -1937,7 +1870,7 @@ export default function TasksPage() {
 
   async function handleDragEnd(event: DragEndEvent) {
     if (isClient) return;
-    setActiveId(null); setOverId(null);
+    setActiveId(null); setOverId(null); setActiveWidth(null);
     const { active, over } = event;
     if (!over) return;
     const taskId = active.id as string;
@@ -2618,9 +2551,12 @@ export default function TasksPage() {
               );
             })}
           </div>
-          <DragOverlay modifiers={[snapToCursor]} dropAnimation={null}>
+          <DragOverlay dropAnimation={null}>
             {activeTask && (
-              <div className="w-[280px] rotate-1 rounded-xl border bg-card p-3.5 shadow-2xl opacity-95">
+              <div
+                className="rounded-xl border bg-card p-3.5 shadow-2xl cursor-grabbing"
+                style={{ width: activeWidth ?? undefined }}
+              >
                 <div className="space-y-2.5">
                   <div className="text-sm font-semibold leading-snug">{activeTask.title}</div>
                   <div className="flex flex-wrap gap-1.5">
@@ -2630,9 +2566,7 @@ export default function TasksPage() {
                         {activeTask.epic.title}
                       </span>
                     )}
-                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", getPriorityPillStyle(activeTask.priority))}>
-                      {PRIORITY_LABELS[activeTask.priority] || activeTask.priority}
-                    </span>
+                    <PriorityPill priority={activeTask.priority} size="md" />
                   </div>
                 </div>
               </div>
@@ -2739,12 +2673,7 @@ export default function TasksPage() {
 
                       {/* Priority */}
                       <div className="w-[90px] shrink-0">
-                        <span className={cn(
-                          "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          getPriorityPillStyle(task.priority)
-                        )}>
-                          {PRIORITY_LABELS[task.priority] || task.priority}
-                        </span>
+                        <PriorityPill priority={task.priority} />
                       </div>
 
                       {/* Status */}
@@ -2911,9 +2840,7 @@ export default function TasksPage() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Priorität</Label>
                     <div className="mt-1">
-                      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-xs font-semibold", getPriorityPillStyle(editTask.priority))}>
-                        {PRIORITY_LABELS[editTask.priority] || editTask.priority}
-                      </span>
+                      <PriorityPill priority={editTask.priority} size="md" />
                     </div>
                   </div>
                   {editTask.dueDate && (
@@ -3080,9 +3007,7 @@ export default function TasksPage() {
                     <SelectContent>
                       {PRIORITIES.map((p) => (
                         <SelectItem key={p} value={p}>
-                          <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold", getPriorityPillStyle(p))}>
-                            {PRIORITY_LABELS[p] || p}
-                          </span>
+                          <PriorityPill priority={p} />
                         </SelectItem>
                       ))}
                     </SelectContent>

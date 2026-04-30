@@ -17,6 +17,8 @@ import {
   Hourglass,
 } from "lucide-react";
 import { cn, formatDate, getPriorityColor, getInitials } from "@/lib/utils";
+import { PRIORITY_LABELS, getPriorityHex } from "@/lib/task-meta";
+import { PriorityPill } from "@/components/task/priority-pill";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -44,24 +46,6 @@ interface Task {
   project: { id: string; name: string; color: string | null };
   assignee?: { id: string; name: string | null; email: string } | null;
   epic?:    { id: string; title: string; color: string } | null;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-
-const PRIORITY_LABELS: Record<string, string> = {
-  LOW: "Niedrig", MEDIUM: "Mittel", HIGH: "Hoch", URGENT: "Dringend",
-};
-
-function getPriorityPillStyle(priority: string) {
-  switch (priority) {
-    case "URGENT": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-    case "HIGH":   return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-    case "MEDIUM": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-    case "LOW":    return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-    default:       return "bg-muted text-muted-foreground";
-  }
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -123,7 +107,7 @@ export default function MyTasksPage() {
         .map((p) => ({
           key:   p,
           label: PRIORITY_LABELS[p] || p,
-          color: p === "URGENT" ? "#ef4444" : p === "HIGH" ? "#f97316" : p === "MEDIUM" ? "#eab308" : "#22c55e",
+          color: getPriorityHex(p),
           tasks: filteredTasks.filter((t) => t.priority === p),
         }))
         .filter((g) => g.tasks.length > 0);
@@ -395,9 +379,7 @@ export default function MyTasksPage() {
                       {/* Priority (when not grouping by priority) */}
                       {groupBy !== "priority" && (
                         <div className="w-[90px] shrink-0 hidden sm:block">
-                          <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold", getPriorityPillStyle(task.priority))}>
-                            {PRIORITY_LABELS[task.priority] || task.priority}
-                          </span>
+                          <PriorityPill priority={task.priority} />
                         </div>
                       )}
 
