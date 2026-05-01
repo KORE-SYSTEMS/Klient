@@ -15,6 +15,7 @@ export interface TaskCreatePayload {
   assigneeId?: string | null;
   epicId?: string | null;
   clientVisible?: boolean;
+  parentId?: string | null;
 }
 
 export interface TaskUpdatePayload {

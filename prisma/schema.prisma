@@ -208,6 +208,13 @@ model Task {
   activities      TaskActivity[]
   files           File[]
   checklistItems  TaskChecklistItem[]
+  // Subtasks — self-relation. Subtasks have status/assignee/etc. just like
+  // a normal task; they're filtered out of board/list top-level rendering
+  // and only shown nested under their parent. Cascade ensures deleting a
+  // parent removes all its subtasks.
+  parent          Task?           @relation("subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId        String?
+  subtasks        Task[]          @relation("subtasks")
   // Approval workflow
   approvalStatus  String?   // null | "PENDING" | "APPROVED" | "REJECTED"
   handoffComment  String?   // comment from team to client when requesting approval

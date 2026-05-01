@@ -9,6 +9,10 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId");
+  // ?parentId=<id>      → list subtasks of that parent
+  // ?parentId=null      → explicit "top-level only" (default)
+  // (omitted)           → top-level only
+  const parentIdParam = searchParams.get("parentId");
 
   if (!projectId) {
     return NextResponse.json({ error: "projectId is required" }, { status: 400 });
@@ -26,8 +30,13 @@ export async function GET(request: NextRequest) {
 
   const isClient = role === "CLIENT";
 
+  const parentFilter =
+    parentIdParam && parentIdParam !== "null"
+      ? { parentId: parentIdParam }
+      : { parentId: null };
+
   const tasks = await prisma.task.findMany({
-    where: { projectId },
+    where: { projectId, ...parentFilter },
     include: {
       assignee: { select: { id: true, name: true, email: true, image: true } },
       epic: { select: { id: true, title: true, color: true } },
@@ -53,12 +62,26 @@ export async function GET(request: NextRequest) {
           comments: true,
           files: isClient ? { where: { clientVisible: true } } : true,
           checklistItems: true,
+          subtasks: true,
         },
       },
       checklistItems: { select: { done: true } },
+      // Surface subtask done-count without paying for the full payload.
+      subtasks: { select: { id: true, status: true } },
     },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
   });
+
+  // Resolve which status IDs in this project map to category=DONE so we can
+  // count subtasks-done without round-tripping per task.
+  const doneStatusIds = new Set(
+    (
+      await prisma.taskStatus.findMany({
+        where: { projectId, category: "DONE" },
+        select: { id: true },
+      })
+    ).map((s) => s.id),
+  );
 
   // Add totalTime and activeTimer to each task
   const tasksWithTime = tasks.map((task) => {
@@ -88,15 +111,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Strip raw checklistItems; expose derived counts only (callers who need
-    // the full list hit /api/tasks/[id]/checklist).
-    const { checklistItems: _omit, ...rest } = task;
+    // Strip raw checklistItems and subtasks; expose derived counts only
+    // (callers who need the full lists hit /api/tasks/[id]/checklist or
+    //  /api/tasks?parentId=<id>).
+    const subtasksDone = task.subtasks.filter((s) => doneStatusIds.has(s.status)).length;
+    const { checklistItems: _omitC, subtasks: _omitS, ...rest } = task;
     return {
       ...rest,
       totalTime,
       activeEntry,
       _isPreview: false,
-      _count: { ...task._count, checklistDone },
+      _count: { ...task._count, checklistDone, subtasksDone },
     };
   });
 
@@ -109,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId } = body;
+    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId, parentId } = body;
 
     if (!title || !projectId) {
       return NextResponse.json({ error: "Title and projectId are required" }, { status: 400 });
@@ -138,6 +163,21 @@ export async function POST(request: NextRequest) {
       resolvedStatus = first?.id ?? "BACKLOG";
     }
 
+    // If creating a subtask, validate the parent belongs to the same project
+    // (prevents cross-project parenting).
+    if (parentId) {
+      const parent = await prisma.task.findUnique({
+        where: { id: parentId },
+        select: { projectId: true, parentId: true },
+      });
+      if (!parent || parent.projectId !== projectId) {
+        return NextResponse.json({ error: "Invalid parent task" }, { status: 400 });
+      }
+      if (parent.parentId) {
+        return NextResponse.json({ error: "Subtasks cannot have subtasks" }, { status: 400 });
+      }
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
@@ -150,6 +190,7 @@ export async function POST(request: NextRequest) {
         assigneeId: assigneeId || null,
         order: order ?? 0,
         epicId: epicId || null,
+        parentId: parentId || null,
       },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },

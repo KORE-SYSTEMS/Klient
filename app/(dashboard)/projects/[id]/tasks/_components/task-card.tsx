@@ -6,6 +6,7 @@ import {
   AlertCircle,
   ArrowRight,
   Calendar,
+  CheckCircle2,
   Clock,
   Eye,
   Lock,
@@ -237,6 +238,15 @@ export function TaskCard({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+              {task._count?.subtasks ? (
+                <span
+                  className="flex items-center gap-0.5 text-caption tabular-nums"
+                  title={`${task._count.subtasksDone ?? 0} von ${task._count.subtasks} Subtasks erledigt`}
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  {task._count.subtasksDone ?? 0}/{task._count.subtasks}
+                </span>
+              ) : null}
               {task._count?.comments ? (
                 <span className="flex items-center gap-0.5 text-caption">
                   <MessageSquare className="h-3 w-3" />

@@ -90,8 +90,16 @@ export interface Task {
   approvalComment?: string | null;
   approvedAt?: string | null;
   approvedById?: string | null;
+  parentId?: string | null;
   _isPreview?: boolean;
-  _count?: { comments?: number; files?: number; checklistItems?: number; checklistDone?: number };
+  _count?: {
+    comments?: number;
+    files?: number;
+    checklistItems?: number;
+    checklistDone?: number;
+    subtasks?: number;
+    subtasksDone?: number;
+  };
   [key: string]: unknown;
 }
 

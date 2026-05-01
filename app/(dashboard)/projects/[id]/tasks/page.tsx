@@ -104,6 +104,7 @@ import { TaskCard } from "./_components/task-card";
 import { KanbanColumn } from "./_components/kanban-column";
 import { TimeEntriesSection } from "./_components/time-entries-section";
 import { ChecklistSection } from "./_components/checklist-section";
+import { SubtasksSection } from "./_components/subtasks-section";
 import { CommentsSection } from "./_components/comments-section";
 import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
@@ -1337,6 +1338,31 @@ export default function TasksPage() {
                             }
                           : t
                       )
+                    );
+                  }}
+                />
+              )}
+              {/* Subtasks — only for top-level tasks (subtasks can't have subtasks) */}
+              {editTask && !editTask.parentId && !isClient && (
+                <SubtasksSection
+                  parentTask={editTask}
+                  projectId={projectId}
+                  statuses={statuses}
+                  onOpenSubtask={(sub) => openTaskDialog(sub)}
+                  onCountsChange={(total, done) => {
+                    setTasks((prev) =>
+                      prev.map((t) =>
+                        t.id === editTask.id
+                          ? {
+                              ...t,
+                              _count: {
+                                ...(t._count || {}),
+                                subtasks: total,
+                                subtasksDone: done,
+                              },
+                            }
+                          : t,
+                      ),
                     );
                   }}
                 />

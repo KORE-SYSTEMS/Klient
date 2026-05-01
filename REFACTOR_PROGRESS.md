@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.4 (Saved Views) abgeschlossen ✅
-**Nächste Phase:** P3.5 — Echte Subtasks (Task.parentId) oder weiter mit Recurring/Templates
+**Phase:** P3.5 (Subtasks) abgeschlossen ✅
+**Nächste Phase:** P3.6 — Recurring Tasks oder P3.7 — Task-Templates
 
 ---
 
@@ -194,7 +194,30 @@ sobald Teams das outgrown haben, neues Prisma-Modell + API-Sync.
 Eine View speichert: Filter-State (search/assignees/priorities/epicId/due)
 + View-Modus (kanban/list). Beim Laden werden beide wiederhergestellt.
 
-### P3.5 — P3.x · Subtasks, Recurring, Templates, Automations — offen
+### P3.5 · Echte Subtasks — abgeschlossen ✅
+
+Schema: `Task.parentId` als Self-Relation mit `onDelete: Cascade`. Migration
+`prisma/migrations/0003_subtasks` (SQLite-Rebuild-Pattern).
+
+API:
+- `POST /api/tasks` akzeptiert `parentId`, validiert dass Parent zum gleichen
+  Projekt gehört und nicht selbst Subtask ist (max. 1 Hierarchie-Level)
+- `GET  /api/tasks?projectId=...` liefert standardmäßig nur Top-Level-Tasks
+  (`parentId: null`); `?parentId=<id>` listet Subtasks
+- Top-Level Tasks bekommen `_count.subtasks` und `_count.subtasksDone`
+  (DONE-Category-Statuses) für Card-Counter ohne Round-Trip
+
+UI:
+- `_components/subtasks-section.tsx`: Subtask-Liste im Task-Dialog
+  (Toggle done, Klick → Subtask im selben Dialog öffnen, Löschen,
+  Inline-Add). Nur sichtbar bei Top-Level Tasks (`!parentId`).
+- TaskCard zeigt `CheckCircle2 X/Y` Counter, wenn Subtasks vorhanden.
+
+Subtasks haben volle Task-Eigenschaften (Status, Assignee, Priority,
+Time-Tracking, Comments, Files, Approval). Sie werden im Board und in
+der List nicht als Top-Level angezeigt — nur unter ihrem Parent.
+
+### P3.6 — P3.x · Recurring, Templates, Automations — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -235,7 +258,8 @@ c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
 c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 30b2b04 P3.2: Filter-State in URL (useUrlFilters)
 a8ac333 P3.3: Multi-Select + Bulk-Toolbar
-<HEAD>  P3.4: Saved Views (per Projekt in localStorage)
+25b1958 P3.4: Saved Views (per Projekt in localStorage)
+<HEAD>  P3.5: Echte Subtasks (Task.parentId + UI)
 ```
 
 ---
