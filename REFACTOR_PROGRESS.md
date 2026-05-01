@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.3 (Multi-Select + Bulk-Toolbar) abgeschlossen ✅
-**Nächste Phase:** P3.4 — Saved Views (benannte Filter pro Projekt)
+**Phase:** P3.4 (Saved Views) abgeschlossen ✅
+**Nächste Phase:** P3.5 — Echte Subtasks (Task.parentId) oder weiter mit Recurring/Templates
 
 ---
 
@@ -180,7 +180,21 @@ Interaktion auf der Card:
 Bulk-PATCH läuft parallel via `Promise.all` mit optimistic State-Update,
 roll-back via `fetchTasks()` bei Fehler.
 
-### P3.4 — P3.x · Saved Views, Subtasks, Recurring, Templates, Automations — offen
+### P3.4 · Saved Views — abgeschlossen ✅
+
+`_lib/use-saved-views.ts`: localStorage-backed View-Speicher pro Projekt
+(Schlüssel `klient.savedViews.{projectId}`). MVP ohne DB-Persistenz —
+sobald Teams das outgrown haben, neues Prisma-Modell + API-Sync.
+
+`_components/saved-views-menu.tsx`: Dropdown im Toolbar für:
+- Aktuelle Ansicht speichern (Name + Ansicht-Modus + Filter snapshot)
+- View laden (Filter + view-mode werden gleichzeitig gesetzt)
+- Umbenennen / Löschen via hover-action
+
+Eine View speichert: Filter-State (search/assignees/priorities/epicId/due)
++ View-Modus (kanban/list). Beim Laden werden beide wiederhergestellt.
+
+### P3.5 — P3.x · Subtasks, Recurring, Templates, Automations — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -220,7 +234,8 @@ e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
 c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
 c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 30b2b04 P3.2: Filter-State in URL (useUrlFilters)
-<HEAD>  P3.3: Multi-Select + Bulk-Toolbar
+a8ac333 P3.3: Multi-Select + Bulk-Toolbar
+<HEAD>  P3.4: Saved Views (per Projekt in localStorage)
 ```
 
 ---

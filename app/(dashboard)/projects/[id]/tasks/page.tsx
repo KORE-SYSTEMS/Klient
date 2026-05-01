@@ -109,8 +109,10 @@ import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
 import { TaskFilters } from "./_components/task-filters";
 import { BulkToolbar } from "./_components/bulk-toolbar";
+import { SavedViewsMenu } from "./_components/saved-views-menu";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
+import { useSavedViews } from "./_lib/use-saved-views";
 import { NEW_TASK_EVENT_NAME } from "@/components/keyboard-shortcut-overlay";
 import { api } from "@/lib/api";
 // --- Main Page ---
@@ -186,6 +188,9 @@ export default function TasksPage() {
 
   // --- Filters (consolidated, two-way synced with URL search params) ---
   const { filters, setFilters, clearFilters } = useUrlFilters();
+
+  // Saved views (localStorage-backed, scoped per project)
+  const savedViews = useSavedViews(projectId);
   // Compatibility aliases — internal usages that read the old names still work.
   const filterSearch     = filters.search;
   const filterAssignees  = filters.assignees;
@@ -833,6 +838,20 @@ export default function TasksPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
+          <SavedViewsMenu
+            views={savedViews.views}
+            currentView={view}
+            currentFilters={filters}
+            hasActiveFilters={activeFilterCount > 0}
+            onApply={(v) => {
+              setView(v.view);
+              setFilters(v.filters);
+            }}
+            onSave={(name) => savedViews.saveView(name, view, filters)}
+            onRename={savedViews.renameView}
+            onDelete={savedViews.deleteView}
+          />
         </div>
 
         <div className="flex items-center gap-2">
