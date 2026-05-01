@@ -108,8 +108,11 @@ import { CommentsSection } from "./_components/comments-section";
 import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
 import { TaskFilters } from "./_components/task-filters";
+import { BulkToolbar } from "./_components/bulk-toolbar";
 import { useUrlFilters } from "./_lib/use-url-filters";
+import { useSelection } from "./_lib/use-selection";
 import { NEW_TASK_EVENT_NAME } from "@/components/keyboard-shortcut-overlay";
+import { api } from "@/lib/api";
 // --- Main Page ---
 
 export default function TasksPage() {
@@ -638,6 +641,66 @@ export default function TasksPage() {
     });
   }, [tasks, filterSearch, filterAssignees, filterPriorities, filterEpicId, filterDue]);
 
+  // --- Multi-select for bulk actions ---
+  const selection = useSelection();
+  const orderedTaskIds = useMemo(() => filteredTasks.map((t) => t.id), [filteredTasks]);
+  const handleSelect = useCallback(
+    (taskId: string, mode: "toggle" | "range") => {
+      if (mode === "range") selection.toggleRange(taskId, orderedTaskIds);
+      else selection.toggle(taskId);
+    },
+    [orderedTaskIds, selection],
+  );
+
+  // Esc clears selection (only when no input focused)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape" || selection.selectedCount === 0) return;
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable) return;
+      selection.clear();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selection]);
+
+  // --- Bulk actions ---
+  async function bulkPatch(patch: Record<string, unknown>) {
+    const ids = selection.selectedIds;
+    if (ids.length === 0) return;
+    // Optimistic: update each in local state immediately
+    setTasks((prev) => prev.map((t) => (ids.includes(t.id) ? { ...t, ...patch } : t)));
+    try {
+      await Promise.all(
+        ids.map((id) => api(`/api/tasks/${id}`, { method: "PATCH", body: patch })),
+      );
+      toast({
+        title: `${ids.length} ${ids.length === 1 ? "Task" : "Tasks"} aktualisiert`,
+        variant: "success",
+      });
+    } catch {
+      toast({ title: "Bulk-Aktion fehlgeschlagen", variant: "destructive" });
+      fetchTasks(); // re-sync truth
+    }
+  }
+
+  async function bulkDelete() {
+    const ids = selection.selectedIds;
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length} ${ids.length === 1 ? "Task" : "Tasks"} wirklich löschen?`)) return;
+    const idSet = new Set(ids);
+    setTasks((prev) => prev.filter((t) => !idSet.has(t.id)));
+    selection.clear();
+    try {
+      await Promise.all(ids.map((id) => api(`/api/tasks/${id}`, { method: "DELETE" })));
+      toast({ title: `${ids.length} gelöscht`, variant: "success" });
+    } catch {
+      toast({ title: "Löschen fehlgeschlagen", variant: "destructive" });
+      fetchTasks();
+    }
+  }
+
   // --- Grouped data for list view (by status like Asana) ---
   const statusGroups = useMemo(() => {
     return statuses.map((status) => ({
@@ -819,7 +882,10 @@ export default function TasksPage() {
                   isOver={overId === status.id} activeTimerTaskId={activeTimer?.taskId || null} timerElapsed={elapsed}
                   onTimerStart={handleTimerStart} onTimerStop={handleTimerStop} currentUserId={currentUserId}
                   onUpdateTitle={isClient ? undefined : handleUpdateTitle}
-                  onNextPhase={isClient ? undefined : handleNextPhase} />
+                  onNextPhase={isClient ? undefined : handleNextPhase}
+                  isSelected={selection.isSelected}
+                  onSelect={isClient ? undefined : handleSelect}
+                  selectionActive={selection.selectedCount > 0} />
               );
             })}
           </div>
@@ -1586,6 +1652,20 @@ export default function TasksPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Floating bulk-action toolbar — appears when tasks are selected */}
+      {!isClient && (
+        <BulkToolbar
+          count={selection.selectedCount}
+          statuses={statuses}
+          members={members}
+          onSetStatus={(s) => bulkPatch({ status: s })}
+          onSetPriority={(p) => bulkPatch({ priority: p })}
+          onSetAssignee={(a) => bulkPatch({ assigneeId: a })}
+          onDelete={bulkDelete}
+          onClear={selection.clear}
+        />
+      )}
     </div>
   );
 }

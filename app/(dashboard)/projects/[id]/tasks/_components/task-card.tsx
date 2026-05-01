@@ -33,6 +33,12 @@ interface TaskCardProps {
   currentUserId?: string;
   onUpdateTitle?: (id: string, title: string) => void;
   onNextPhase?: (task: Task) => void;
+  /** When true, card shows a selected ring + tinted background. */
+  selected?: boolean;
+  /** Cmd/Ctrl-click toggles selection; shift-click extends range. */
+  onSelect?: (taskId: string, mode: "toggle" | "range") => void;
+  /** Whether multi-select mode is active (changes plain-click behavior?). */
+  selectionActive?: boolean;
 }
 
 /**
@@ -52,6 +58,9 @@ export function TaskCard({
   currentUserId,
   onUpdateTitle,
   onNextPhase,
+  selected,
+  onSelect,
+  selectionActive,
 }: TaskCardProps) {
   const isAssignedToClient = isClient && task.assigneeId === currentUserId;
   const isGreyedOut = isClient && !isAssignedToClient;
@@ -114,10 +123,22 @@ export function TaskCard({
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
           isTimerActive && "ring-2 ring-primary/30",
+          selected && "ring-2 ring-primary border-primary bg-primary/5",
           isGreyedOut && "opacity-50",
         )}
         onClick={(e) => {
-          if (!(e.target as HTMLElement).closest("[data-no-click]")) onClick();
+          if ((e.target as HTMLElement).closest("[data-no-click]")) return;
+          // Modifier-click → multi-select instead of opening dialog
+          if (!isClient && onSelect) {
+            const meta = e.metaKey || e.ctrlKey;
+            const shift = e.shiftKey;
+            if (meta) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
+            if (shift) { e.preventDefault(); onSelect(task.id, "range"); return; }
+            // While selection is active, plain click also toggles — opening
+            // the dialog would lose the ongoing bulk operation.
+            if (selectionActive) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
+          }
+          onClick();
         }}
       >
         <div className="p-3.5 space-y-3">

@@ -40,6 +40,10 @@ interface KanbanColumnProps {
   currentUserId?: string;
   onUpdateTitle?: (id: string, title: string) => void;
   onNextPhase?: (task: Task) => void;
+  /** Selection — passed straight through to TaskCard. */
+  isSelected?: (taskId: string) => boolean;
+  onSelect?: (taskId: string, mode: "toggle" | "range") => void;
+  selectionActive?: boolean;
 }
 
 /** Single droppable column on the kanban board. */
@@ -60,6 +64,9 @@ export function KanbanColumn({
   currentUserId,
   onUpdateTitle,
   onNextPhase,
+  isSelected,
+  onSelect,
+  selectionActive,
 }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id: status.id });
   const columnTotalTime = tasks.reduce((sum, t) => sum + (t.totalTime || 0), 0);
@@ -143,6 +150,9 @@ export function KanbanColumn({
                 currentUserId={currentUserId}
                 onUpdateTitle={onUpdateTitle}
                 onNextPhase={onNextPhase}
+                selected={isSelected?.(task.id)}
+                onSelect={onSelect}
+                selectionActive={selectionActive}
               />
             ))}
           </div>

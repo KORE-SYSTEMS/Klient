@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.2 (Filter-State in URL) abgeschlossen ✅
-**Nächste Phase:** P3.3 — Bulk-Aktionen (Multi-Select + Bulk-Toolbar)
+**Phase:** P3.3 (Multi-Select + Bulk-Toolbar) abgeschlossen ✅
+**Nächste Phase:** P3.4 — Saved Views (benannte Filter pro Projekt)
 
 ---
 
@@ -157,7 +157,30 @@ Cheatsheet-Overlay (`?`) zeigt alle aktualisiert.
 
 Views sind jetzt shareable: Link kopieren, Kollege öffnet — exakt derselbe gefilterte State.
 
-### P3.3 — P3.x · Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations — offen
+### P3.3 · Multi-Select + Bulk-Toolbar — abgeschlossen ✅
+
+`_lib/use-selection.ts`: kleine Selection-State-Hook mit shift+klick Range-Select.
+
+`_components/bulk-toolbar.tsx`: floating Toolbar unten zentriert, slidet ein
+sobald ≥1 Task ausgewählt ist. Aktionen:
+
+- **Status setzen** (Dropdown aus den Workflow-Statuses des Projekts)
+- **Priorität setzen** (LOW/MEDIUM/HIGH/URGENT)
+- **Assignee setzen** (alle Members + "Niemand zuweisen")
+- **Löschen** (mit Confirm-Dialog)
+
+Interaktion auf der Card:
+- **Cmd/Ctrl+Click** → Selection toggle (Dialog öffnet *nicht*)
+- **Shift+Click** → Range zwischen Anchor und Klick
+- **Plain Click bei aktiver Selection** → toggle (verhindert versehentliches
+  Verlieren der Bulk-Operation)
+- **Plain Click ohne Selection** → öffnet Detail-Dialog wie gehabt
+- **Esc** → Selection aufheben
+
+Bulk-PATCH läuft parallel via `Promise.all` mit optimistic State-Update,
+roll-back via `fetchTasks()` bei Fehler.
+
+### P3.4 — P3.x · Saved Views, Subtasks, Recurring, Templates, Automations — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -196,7 +219,8 @@ fed9101 P2.1+P2.2: Type-Skala + Bulk-Replace text-[Npx]
 e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
 c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
 c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
-<HEAD>  P3.2: Filter-State in URL (useUrlFilters)
+30b2b04 P3.2: Filter-State in URL (useUrlFilters)
+<HEAD>  P3.3: Multi-Select + Bulk-Toolbar
 ```
 
 ---
