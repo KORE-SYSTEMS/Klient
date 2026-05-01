@@ -107,7 +107,8 @@ import { ChecklistSection } from "./_components/checklist-section";
 import { CommentsSection } from "./_components/comments-section";
 import { FilesSection } from "./_components/files-section";
 import { ActivityTimeline } from "./_components/activity-timeline";
-import { TaskFilters, type TaskFilterState } from "./_components/task-filters";
+import { TaskFilters } from "./_components/task-filters";
+import { useUrlFilters } from "./_lib/use-url-filters";
 import { NEW_TASK_EVENT_NAME } from "@/components/keyboard-shortcut-overlay";
 // --- Main Page ---
 
@@ -180,18 +181,8 @@ export default function TasksPage() {
   // List view: collapsed status groups
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  // --- Filters (consolidated) ---
-  const [filters, setFiltersState] = useState<TaskFilterState>({
-    search: "",
-    assignees: [],
-    priorities: [],
-    epicId: "",
-    due: "",
-  });
-  const setFilters = (next: Partial<TaskFilterState>) =>
-    setFiltersState((prev) => ({ ...prev, ...next }));
-  const clearFilters = () =>
-    setFiltersState({ search: "", assignees: [], priorities: [], epicId: "", due: "" });
+  // --- Filters (consolidated, two-way synced with URL search params) ---
+  const { filters, setFilters, clearFilters } = useUrlFilters();
   // Compatibility aliases — internal usages that read the old names still work.
   const filterSearch     = filters.search;
   const filterAssignees  = filters.assignees;

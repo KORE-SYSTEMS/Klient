@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.1 (Tastatur-Shortcuts) abgeschlossen ✅
-**Nächste Phase:** P3.2 — Bulk-Aktionen / Saved Views / Subtasks
+**Phase:** P3.2 (Filter-State in URL) abgeschlossen ✅
+**Nächste Phase:** P3.3 — Bulk-Aktionen (Multi-Select + Bulk-Toolbar)
 
 ---
 
@@ -145,7 +145,19 @@ Das `c`-Shortcut sendet ein DOM-Event, auf das die Task-Page hört —
 sauber entkoppelt, jede Task-Seite kann sich selbst registrieren.
 Cheatsheet-Overlay (`?`) zeigt alle aktualisiert.
 
-### P3.2 — P3.x · Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations — offen
+### P3.2 · Filter-State in URL — abgeschlossen ✅
+
+`_lib/use-url-filters.ts`: Two-way sync zwischen `TaskFilterState` und Query-String.
+
+- URL-Format: `?q=...&assignee=u1,u2&priority=HIGH,URGENT&epic=...&due=overdue`
+- Browser back/forward navigiert durch Filter-History
+- Hard-Refresh behält die View
+- Search ist 300ms debounced, Chips/Selects schreiben sofort
+- `router.replace` (kein History-Eintrag pro Klick)
+
+Views sind jetzt shareable: Link kopieren, Kollege öffnet — exakt derselbe gefilterte State.
+
+### P3.3 — P3.x · Bulk-Aktionen, Saved Views, Subtasks, Recurring, Templates, Automations — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -184,6 +196,7 @@ fed9101 P2.1+P2.2: Type-Skala + Bulk-Replace text-[Npx]
 e8b3b89 P2.3+P2.4: EmptyState polished + .hover-action utility
 c0fc99a P2.5: Compact-Mode (Density-Provider + Topbar-Toggle)
 c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
+<HEAD>  P3.2: Filter-State in URL (useUrlFilters)
 ```
 
 ---
