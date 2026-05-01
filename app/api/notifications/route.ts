@@ -9,21 +9,34 @@ export async function GET(request: NextRequest) {
   const userId = session.user.id;
   const { searchParams } = new URL(request.url);
   const unreadOnly = searchParams.get("unreadOnly") === "true";
-  const limit = Math.min(parseInt(searchParams.get("limit") || "30"), 100);
+  // Filter by one or more notification types (comma-separated). Used by the
+  // Inbox page to narrow to e.g. "MENTION,TASK_COMMENT".
+  const types = searchParams.get("types")?.split(",").filter(Boolean) ?? [];
+  const limit = Math.min(parseInt(searchParams.get("limit") || "30"), 200);
 
-  const where: any = { userId };
+  const where: Record<string, unknown> = { userId };
   if (unreadOnly) where.read = false;
+  if (types.length > 0) where.type = { in: types };
 
-  const [notifications, unreadCount] = await Promise.all([
+  // Counts by type — small overhead, lets the inbox show filter badges.
+  const [notifications, unreadCount, typeCountsRaw] = await Promise.all([
     prisma.notification.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: limit,
     }),
     prisma.notification.count({ where: { userId, read: false } }),
+    prisma.notification.groupBy({
+      by: ["type"],
+      where: { userId, read: false },
+      _count: { _all: true },
+    }),
   ]);
 
-  return NextResponse.json({ notifications, unreadCount });
+  const typeCounts: Record<string, number> = {};
+  for (const row of typeCountsRaw) typeCounts[row.type] = row._count._all;
+
+  return NextResponse.json({ notifications, unreadCount, typeCounts });
 }
 
 // Mark all as read
