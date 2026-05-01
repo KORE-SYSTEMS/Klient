@@ -259,7 +259,7 @@ c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 30b2b04 P3.2: Filter-State in URL (useUrlFilters)
 a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 25b1958 P3.4: Saved Views (per Projekt in localStorage)
-<HEAD>  P3.5: Echte Subtasks (Task.parentId + UI)
+021d72d P3.5: Echte Subtasks (Task.parentId + UI)
 ```
 
 ---
