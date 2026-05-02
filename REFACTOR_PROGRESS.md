@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.5 (Subtasks) abgeschlossen ✅
-**Nächste Phase:** P3.6 — Recurring Tasks oder P3.7 — Task-Templates
+**Phase:** P3.6 (Bulk-Aktionen im List-View), P3.7 (Templates) und P4.5 (Inbox) abgeschlossen ✅
+**Nächste Phase:** P3.8 — Recurring Tasks · P3.9 — Automations · P4.1 — Calendar-View
 
 ---
 
@@ -217,7 +217,62 @@ Subtasks haben volle Task-Eigenschaften (Status, Assignee, Priority,
 Time-Tracking, Comments, Files, Approval). Sie werden im Board und in
 der List nicht als Top-Level angezeigt — nur unter ihrem Parent.
 
-### P3.6 — P3.x · Recurring, Templates, Automations — offen
+### P3.6 · Bulk-Aktionen im List-View — abgeschlossen ✅
+
+Die Multi-Select-Funktion aus P3.3 funktioniert jetzt auch in der Listenansicht:
+
+- Hover-Checkbox am Anfang jeder Zeile (vorher: nur Circle-Icon)
+- Cmd/Ctrl-Click toggelt, Shift-Click range-selektiert
+- Plain-Click bei aktiver Selection toggelt (statt Dialog zu öffnen)
+- Selektierte Zeile mit Primary-Tint + ring-inset hervorgehoben
+- BulkToolbar (P3.3) wirkt automatisch auch hier — keine doppelte UI nötig
+
+### P3.7 · Task-Templates — abgeschlossen ✅
+
+Schema: `TaskTemplate`-Tabelle mit name/title/description/priority + optional
+statusId/epicId. Subtasks als JSON-Array (`subtaskTitles`) — separate Tabelle
+wäre bei der erwarteten Größe Overkill. Migration `0004_task_templates`.
+
+API:
+- `GET    /api/projects/[id]/task-templates`
+- `POST   /api/projects/[id]/task-templates`
+- `PATCH  /api/projects/[id]/task-templates/[templateId]`
+- `DELETE /api/projects/[id]/task-templates/[templateId]`
+
+UI:
+- `_components/templates-menu.tsx` ersetzt den "Task hinzufügen"-Button mit
+  einem Dropdown (`Plus + ChevronDown`):
+  - "Leerer Task" (mit C-Shortcut-Hint)
+  - Alle Vorlagen — Click legt Parent-Task + Subtasks an
+  - "Neue Vorlage…" öffnet Editor-Dialog
+- Editor-Dialog: Name, Titel, Beschreibung, Priorität, Status/Epic optional,
+  inline Subtask-Liste mit add/remove
+- `lib/api/projects.ts` erweitert um `taskTemplates` / `createTaskTemplate` /
+  `updateTaskTemplate` / `removeTaskTemplate`
+
+### P3.8 — P3.x · Recurring, Automations — offen
+
+---
+
+## P4 · Views
+
+### P4.5 · Inbox-Page (`/inbox`) — abgeschlossen ✅
+
+Eigene Daily-Use-Page für Notifications statt nur dem Bell-Dropdown.
+
+API: `GET /api/notifications` erweitert um `types=` Filter und `typeCounts`
+für Filter-Badges.
+
+UI (`app/(dashboard)/inbox/page.tsx`):
+- Preset-Chips: Alle / Ungelesen + 5 Type-Gruppen mit Live-Badges
+- Multi-Select per hover-Checkbox + Bulk-Mark-as-Read + "Alle"-Button
+- Hover-Delete pro Zeile, Header-Buttons "Alle gelesen" + "Gelesene löschen"
+- Click → `markRead` (optimistic) + Navigation zum verlinkten Task
+- Refetch nur bei `visibilitychange` / `focus` (kein Polling)
+
+Sidebar: `Inbox` als oberster Eintrag in admin/member/client Nav.
+
+### P4.1 — P4.4 · Calendar / Timeline / Swimlanes / My Day — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -260,6 +315,9 @@ c79053a P3.1: Tastatur-Shortcuts erweitert (g+t, g+i, c, d)
 a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 25b1958 P3.4: Saved Views (per Projekt in localStorage)
 021d72d P3.5: Echte Subtasks (Task.parentId + UI)
+1fee6df P4.5: Inbox-Page (/inbox)
+8cf34c8 P3.7: Task-Templates pro Projekt
+<HEAD>  P3.6: Bulk-Aktionen im List-View
 ```
 
 ---

@@ -974,19 +974,50 @@ export default function TasksPage() {
                   const isGreyedOut = isClient && task.assigneeId !== currentUserId;
                   const totalTime = task.totalTime || 0;
 
+                  const isRowSelected = selection.isSelected(task.id);
+                  const selectionActive = selection.selectedCount > 0;
                   return (
                     <div
                       key={task.id}
                       className={cn(
-                        "flex items-center border-b px-4 py-2.5 transition-colors hover:bg-accent/30 cursor-pointer group",
+                        "flex items-center border-b px-4 py-2.5 transition-colors cursor-pointer group",
                         isTimerActive && "bg-primary/5",
-                        isGreyedOut && "opacity-50"
+                        isGreyedOut && "opacity-50",
+                        isRowSelected
+                          ? "bg-primary/10 ring-1 ring-primary/40 ring-inset"
+                          : "hover:bg-accent/30",
                       )}
-                      onClick={() => openTaskDialog(task)}
+                      onClick={(e) => {
+                        if (isClient) { openTaskDialog(task); return; }
+                        const meta = e.metaKey || e.ctrlKey;
+                        const shift = e.shiftKey;
+                        if (meta) { e.preventDefault(); handleSelect(task.id, "toggle"); return; }
+                        if (shift) { e.preventDefault(); handleSelect(task.id, "range"); return; }
+                        if (selectionActive) { e.preventDefault(); handleSelect(task.id, "toggle"); return; }
+                        openTaskDialog(task);
+                      }}
                     >
-                      {/* Task name */}
+                      {/* Selection checkbox / leading icon */}
                       <div className="flex-1 min-w-0 flex items-center gap-2.5">
-                        <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                        {isClient ? (
+                          <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                        ) : (
+                          <button
+                            type="button"
+                            data-no-click
+                            onClick={(e) => { e.stopPropagation(); handleSelect(task.id, "toggle"); }}
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-opacity",
+                              selectionActive || isRowSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                              isRowSelected
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-muted-foreground/40 hover:border-foreground",
+                            )}
+                            aria-label={isRowSelected ? "Abwählen" : "Auswählen"}
+                          >
+                            {isRowSelected && <CheckCircle2 className="h-3 w-3" />}
+                          </button>
+                        )}
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
