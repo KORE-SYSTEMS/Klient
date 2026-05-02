@@ -342,7 +342,7 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 1fee6df P4.5: Inbox-Page (/inbox)
 8cf34c8 P3.7: Task-Templates pro Projekt
 31a46c8 P3.6: Bulk-Aktionen im List-View
-<HEAD>  P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
+06f0456 P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
 ```
 
 ---
