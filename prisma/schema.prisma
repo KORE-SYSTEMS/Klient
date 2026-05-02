@@ -139,6 +139,7 @@ model Project {
   messages    Message[]
   invoices    Invoice[]
   proposals   Proposal[]
+  taskTemplates TaskTemplate[]
 }
 
 model ProjectMember {
@@ -174,6 +175,28 @@ model Epic {
   tasks       Task[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// Task-Vorlagen pro Projekt — Schnell-Anlegen häufig wiederholter Tasks.
+/// Nicht zu verwechseln mit `Recurrence` (kommt später) — Templates erzeugen
+/// einen Task on-demand, Recurrence erzeugt ihn automatisch nach Plan.
+model TaskTemplate {
+  id          String   @id @default(cuid())
+  name        String   // Kurzer Anzeigename ("Bug-Report", "Onboarding-Call")
+  title       String   // Wird beim Anlegen als Task.title verwendet
+  description String?
+  priority    String   @default("MEDIUM")
+  statusId    String?  // Optional: konkreter TaskStatus.id, sonst erste Spalte
+  epicId      String?  // Optional: vorbelegtes Epic
+  // Subtasks als JSON (Array of { title, priority? }) damit wir nicht eine
+  // weitere Tabelle brauchen — Templates sind selten genug, dass das reicht.
+  subtaskTitles String @default("[]")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
 }
 
 model TaskLink {

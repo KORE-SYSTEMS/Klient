@@ -111,6 +111,7 @@ import { ActivityTimeline } from "./_components/activity-timeline";
 import { TaskFilters } from "./_components/task-filters";
 import { BulkToolbar } from "./_components/bulk-toolbar";
 import { SavedViewsMenu } from "./_components/saved-views-menu";
+import { TemplatesMenu } from "./_components/templates-menu";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
@@ -863,10 +864,13 @@ export default function TasksPage() {
                   <Plus className="mr-1.5 h-4 w-4" />Spalte
                 </Button>
               )}
-              <Button size="sm" className="h-8 gap-1.5" onClick={() => openTaskDialog(null)}>
-                <Plus className="h-4 w-4" />
-                Task hinzufügen
-              </Button>
+              <TemplatesMenu
+                projectId={projectId}
+                statuses={statuses}
+                epics={epics}
+                onApplied={fetchTasks}
+                onCreateBlankTask={() => openTaskDialog(null)}
+              />
             </>
           )}
         </div>

@@ -109,3 +109,18 @@ export interface ProjectMember {
   email: string;
   role?: string;
 }
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  statusId: string | null;
+  epicId: string | null;
+  /** JSON-encoded array of strings — parse before use. */
+  subtaskTitles: string;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
