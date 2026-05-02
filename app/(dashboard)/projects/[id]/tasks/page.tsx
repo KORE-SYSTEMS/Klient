@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   DndContext,
@@ -112,6 +112,7 @@ import { TaskFilters } from "./_components/task-filters";
 import { BulkToolbar } from "./_components/bulk-toolbar";
 import { SavedViewsMenu } from "./_components/saved-views-menu";
 import { TemplatesMenu } from "./_components/templates-menu";
+import { ImportExportMenu } from "./_components/import-export-menu";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
@@ -122,6 +123,10 @@ import { api } from "@/lib/api";
 export default function TasksPage() {
   const params = useParams();
   const projectId = params.id as string;
+  const search = useSearchParams();
+  // `?import=true` kommt vom Projekt-Erstellen-Flow → öffnet direkt den
+  // File-Picker des Import/Export-Menüs.
+  const autoOpenImport = search.get("import") === "true";
   const { data: session } = useSession();
   const isClient = session?.user?.role === "CLIENT";
   const currentUserId = session?.user?.id || "";
@@ -864,6 +869,12 @@ export default function TasksPage() {
                   <Plus className="mr-1.5 h-4 w-4" />Spalte
                 </Button>
               )}
+              <ImportExportMenu
+                projectId={projectId}
+                onImported={fetchTasks}
+                compact
+                autoOpen={autoOpenImport}
+              />
               <TemplatesMenu
                 projectId={projectId}
                 statuses={statuses}

@@ -8,7 +8,7 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.6 (Bulk-Aktionen im List-View), P3.7 (Templates) und P4.5 (Inbox) abgeschlossen ✅
+**Phase:** P3.6 + P3.7 + P3.7b + P4.5 abgeschlossen ✅
 **Nächste Phase:** P3.8 — Recurring Tasks · P3.9 — Automations · P4.1 — Calendar-View
 
 ---
@@ -250,6 +250,30 @@ UI:
 - `lib/api/projects.ts` erweitert um `taskTemplates` / `createTaskTemplate` /
   `updateTaskTemplate` / `removeTaskTemplate`
 
+### P3.7b · Tasks Import / Export — abgeschlossen ✅
+
+CSV als Standard (Excel/Numbers/Sheets-friendly), JSON als Power-Format.
+
+- `lib/csv.ts`: minimaler RFC-4180-light Encoder/Decoder ohne npm-Dep
+- `GET /api/projects/[id]/tasks/export?format=csv|json[&sample=true]`
+  - CSV liefert UTF-8 mit BOM (Excel erkennt Encoding korrekt)
+  - `sample=true` lädt eine fest verdrahtete Beispiel-Vorlage
+- `POST /api/projects/[id]/tasks/import?dryRun=true&createMissingEpics=true`
+  - Akzeptiert sowohl `text/csv` als auch `application/json`
+  - **Two-Pass**: erst Top-Level (parentTitle leer), dann Subtasks per
+    title→id Map auflösen
+  - Status / Epic per case-insensitive Name-Match, Assignee per E-Mail
+  - Mit `createMissingEpics=true` werden unbekannte Epics on-the-fly angelegt
+  - `dryRun` validiert ohne zu schreiben — UI zeigt Vorschau mit Warnings/Skipped
+- UI: `_components/import-export-menu.tsx` als Icon-Button rechts vom
+  Spalten-Button. Dropdown:
+  - Export: CSV / JSON (echte Daten)
+  - Vorlage: Beispiel-CSV laden (zum Befüllen)
+  - Import: Datei-Upload mit Vorschau + Direct-Import
+- `Projekte` → Neues Projekt → "Erstellen & Tasks importieren" navigiert
+  direkt zu `/projects/[id]/tasks?import=true` und öffnet den File-Picker
+  automatisch
+
 ### P3.8 — P3.x · Recurring, Automations — offen
 
 ---
@@ -318,6 +342,7 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 1fee6df P4.5: Inbox-Page (/inbox)
 8cf34c8 P3.7: Task-Templates pro Projekt
 31a46c8 P3.6: Bulk-Aktionen im List-View
+<HEAD>  P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
 ```
 
 ---

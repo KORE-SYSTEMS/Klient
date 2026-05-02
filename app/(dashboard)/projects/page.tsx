@@ -125,7 +125,11 @@ export default function ProjectsPage() {
     if (res.ok) fetchProjects();
   }
 
-  async function handleCreate() {
+  /**
+   * Erstellt das Projekt. Mit `gotoImport=true` wird direkt zur Tasks-Seite
+   * mit `?import=true` navigiert, wo der Import-Dialog automatisch öffnet.
+   */
+  async function handleCreate(gotoImport = false) {
     if (!newName.trim()) return;
     setCreating(true);
     try {
@@ -141,13 +145,18 @@ export default function ProjectsPage() {
         }),
       });
       if (res.ok) {
+        const created = await res.json().catch(() => null);
         setDialogOpen(false);
         setNewName("");
         setNewDescription("");
         setNewStatus("PLANNING");
         setNewColor("#E8520A");
         setNewDueDate("");
-        fetchProjects();
+        if (gotoImport && created?.id) {
+          router.push(`/projects/${created.id}/tasks?import=true`);
+        } else {
+          fetchProjects();
+        }
       }
     } finally {
       setCreating(false);
@@ -296,14 +305,28 @@ export default function ProjectsPage() {
                     onChange={(e) => setNewDueDate(e.target.value)}
                   />
                 </div>
-                <Button
-                  onClick={handleCreate}
-                  disabled={creating || !newName.trim()}
-                  className="w-full"
-                >
-                  {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Projekt erstellen
-                </Button>
+                <div className="flex flex-col gap-2 pt-1">
+                  <Button
+                    onClick={() => handleCreate(false)}
+                    disabled={creating || !newName.trim()}
+                    className="w-full"
+                  >
+                    {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Projekt erstellen
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleCreate(true)}
+                    disabled={creating || !newName.trim()}
+                    className="w-full gap-2"
+                  >
+                    Erstellen & Tasks importieren
+                  </Button>
+                  <p className="text-meta text-muted-foreground text-center leading-snug">
+                    Nach Erstellung kannst du eine vorbereitete CSV/JSON hochladen.
+                  </p>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
