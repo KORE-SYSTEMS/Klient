@@ -317,7 +317,7 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 021d72d P3.5: Echte Subtasks (Task.parentId + UI)
 1fee6df P4.5: Inbox-Page (/inbox)
 8cf34c8 P3.7: Task-Templates pro Projekt
-<HEAD>  P3.6: Bulk-Aktionen im List-View
+31a46c8 P3.6: Bulk-Aktionen im List-View
 ```
 
 ---
