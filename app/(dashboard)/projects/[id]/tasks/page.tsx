@@ -50,6 +50,7 @@ import {
   Calendar,
   List,
   LayoutGrid,
+  CalendarDays,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -113,6 +114,7 @@ import { BulkToolbar } from "./_components/bulk-toolbar";
 import { SavedViewsMenu } from "./_components/saved-views-menu";
 import { TemplatesMenu } from "./_components/templates-menu";
 import { ImportExportMenu } from "./_components/import-export-menu";
+import { CalendarView } from "./_components/calendar-view";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
@@ -135,7 +137,7 @@ export default function TasksPage() {
   const [statuses, setStatuses] = useState<TaskStatus[]>([]);
   const [epics, setEpics] = useState<Epic[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "calendar">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeWidth, setActiveWidth] = useState<number | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -820,6 +822,16 @@ export default function TasksPage() {
               <List className="h-4 w-4" />
               Liste
             </button>
+            <button
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                view === "calendar" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setView("calendar")}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Kalender
+            </button>
           </div>
 
           {!isClient && (
@@ -902,8 +914,32 @@ export default function TasksPage() {
         }
       />
 
-      {/* Kanban View */}
-      {view === "kanban" ? (
+      {/* Calendar View — separater DnD-Context, eigene DueDate-Drag-Logik */}
+      {view === "calendar" ? (
+        <CalendarView
+          tasks={filteredTasks}
+          isClient={isClient}
+          onTaskClick={(t) => openTaskDialog(t)}
+          onDueDateChange={async (taskId, newDate) => {
+            // Optimistic update — Server-PATCH kommt direkt hinterher
+            setTasks((prev) =>
+              prev.map((t) =>
+                t.id === taskId
+                  ? { ...t, dueDate: newDate ? new Date(newDate + "T12:00:00").toISOString() : null }
+                  : t,
+              ),
+            );
+            try {
+              await api(`/api/tasks/${taskId}`, {
+                method: "PATCH",
+                body: { dueDate: newDate ? new Date(newDate + "T12:00:00").toISOString() : null },
+              });
+            } catch {
+              fetchTasks();
+            }
+          }}
+        />
+      ) : view === "kanban" ? (
         <DndContext sensors={isClient ? [] : sensors} collisionDetection={kanbanCollision}
           onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
           autoScroll={{ threshold: { x: 0.15, y: 0.2 }, acceleration: 14 }}>

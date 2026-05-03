@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P3.6 + P3.7 + P3.7b + P4.5 abgeschlossen ✅
-**Nächste Phase:** P3.8 — Recurring Tasks · P3.9 — Automations · P4.1 — Calendar-View
+**Phase:** P4.1 (Calendar-View) abgeschlossen ✅
+**Nächste Phase:** P4.4 — My Day / Focus · P3.8 — Recurring Tasks · P3.9 — Automations
 
 ---
 
@@ -296,7 +296,29 @@ UI (`app/(dashboard)/inbox/page.tsx`):
 
 Sidebar: `Inbox` als oberster Eintrag in admin/member/client Nav.
 
-### P4.1 — P4.4 · Calendar / Timeline / Swimlanes / My Day — offen
+### P4.1 · Calendar-View — abgeschlossen ✅
+
+`_components/calendar-view.tsx`: Monatsraster (7×6 Grid) mit Tasks per dueDate.
+
+- Header: Vorheriger / Heute / Nächster + Monats-Label + "N ohne Datum"
+- Wochenstart Montag (`date-fns` mit `de` Locale)
+- Tag-Cell: Datum oben rechts (heute = primary-Pill), Task-Chips drunter,
+  "+N weitere" wenn > 4
+- Task-Chip: Priority-Dot · Titel · Avatar
+- Drag-and-Drop:
+  - Task auf Tag droppen → `dueDate` = Tag
+  - Task in "Ohne Datum"-Zone droppen → `dueDate` = null
+  - Drag von "Ohne Datum" auf Tag setzt das Datum
+- Eigener `DndContext` (separat vom Kanban — andere Drag-Semantik)
+- Click auf Task → öffnet Detail-Dialog (re-uses parent dialog)
+- Optimistic Update direkt im State, PATCH async hinterher
+
+View-Toggle erweitert: **Board / Liste / Kalender**. SavedViews unterstützen
+den neuen View-Mode mit angepasstem Label.
+
+Subtasks erscheinen nicht im Kalender — nur Top-Level-Tasks (parentId leer).
+
+### P4.2 — P4.4 · Timeline / Swimlanes / My Day — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -343,6 +365,8 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 8cf34c8 P3.7: Task-Templates pro Projekt
 31a46c8 P3.6: Bulk-Aktionen im List-View
 06f0456 P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
+721eb8d Semantische Tailwind-Farben → Theme-Tokens
+<HEAD>  P4.1: Calendar-View (Monatsraster, DnD für DueDate)
 ```
 
 ---

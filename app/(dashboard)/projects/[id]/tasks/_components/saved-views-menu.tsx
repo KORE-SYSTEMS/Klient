@@ -106,7 +106,7 @@ export function SavedViewsMenu({
                     <Bookmark className="h-3 w-3 shrink-0 text-muted-foreground" />
                     <span className="truncate">{v.name}</span>
                     <span className="ml-auto text-meta text-muted-foreground/60">
-                      {v.view === "kanban" ? "Board" : "Liste"}
+                      {v.view === "kanban" ? "Board" : v.view === "list" ? "Liste" : "Kalender"}
                     </span>
                   </button>
                   <button
