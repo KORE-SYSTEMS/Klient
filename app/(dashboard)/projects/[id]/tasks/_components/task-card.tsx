@@ -193,7 +193,7 @@ export function TaskCard({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    checkPct === 100 ? "bg-emerald-500" : "bg-primary",
+                    checkPct === 100 ? "bg-success" : "bg-primary",
                   )}
                   style={{ width: `${checkPct}%` }}
                 />
@@ -201,7 +201,7 @@ export function TaskCard({
               <span
                 className={cn(
                   "text-meta tabular-nums",
-                  checkPct === 100 ? "text-emerald-500" : "text-muted-foreground",
+                  checkPct === 100 ? "text-success" : "text-muted-foreground",
                 )}
               >
                 {checkDone}/{checkTotal}
@@ -227,7 +227,7 @@ export function TaskCard({
                   <span
                     className={cn(
                       "flex items-center gap-1 text-caption truncate",
-                      overdue ? "text-red-400 font-medium" : "text-muted-foreground",
+                      overdue ? "text-destructive font-medium" : "text-muted-foreground",
                     )}
                   >
                     {overdue ? <AlertCircle className="h-3 w-3 shrink-0" /> : <Calendar className="h-3 w-3 shrink-0" />}

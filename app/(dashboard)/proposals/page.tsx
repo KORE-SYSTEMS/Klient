@@ -111,11 +111,11 @@ interface Project {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.FC<{ className?: string }> }> = {
-  DRAFT:    { label: "Entwurf",    class: "bg-gray-500/10 text-gray-400",         icon: FileText },
-  SENT:     { label: "Versendet",  class: "bg-blue-500/10 text-blue-400",          icon: Send },
-  ACCEPTED: { label: "Akzeptiert", class: "bg-emerald-500/10 text-emerald-400",    icon: CheckCircle2 },
-  DECLINED: { label: "Abgelehnt",  class: "bg-red-500/10 text-red-400",            icon: X },
-  EXPIRED:  { label: "Abgelaufen", class: "bg-orange-500/10 text-orange-400",      icon: AlertCircle },
+  DRAFT:    { label: "Entwurf",    class: "bg-muted text-muted-foreground",     icon: FileText },
+  SENT:     { label: "Versendet",  class: "bg-info/10 text-info",               icon: Send },
+  ACCEPTED: { label: "Akzeptiert", class: "bg-success/10 text-success",         icon: CheckCircle2 },
+  DECLINED: { label: "Abgelehnt",  class: "bg-destructive/10 text-destructive", icon: X },
+  EXPIRED:  { label: "Abgelaufen", class: "bg-warning/10 text-warning",         icon: AlertCircle },
 };
 
 const ALL_STATUSES = ["DRAFT", "SENT", "ACCEPTED", "DECLINED", "EXPIRED"];
@@ -507,9 +507,9 @@ export default function ProposalsPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Versendet"              value={String(stats.totalSent)}       icon={Send}         iconClass="text-muted-foreground" />
-        <StatCard label="Akzeptiert"             value={String(stats.accepted)}        icon={CheckCircle2} iconClass={stats.accepted > 0 ? "text-emerald-400" : "text-muted-foreground"} accent={stats.accepted > 0 ? "text-emerald-400" : undefined} />
-        <StatCard label="Abgelehnt / Abgelaufen" value={String(stats.declined)}        icon={AlertCircle}  iconClass={stats.declined > 0 ? "text-red-400" : "text-muted-foreground"} accent={stats.declined > 0 ? "text-red-400" : undefined} />
-        <StatCard label="Annahmequote"           value={`${stats.acceptanceRate} %`}   icon={TrendingUp}   iconClass={stats.acceptanceRate >= 50 ? "text-emerald-400" : "text-muted-foreground"} accent={stats.acceptanceRate >= 50 ? "text-emerald-400" : undefined} />
+        <StatCard label="Akzeptiert"             value={String(stats.accepted)}        icon={CheckCircle2} iconClass={stats.accepted > 0 ? "text-success" : "text-muted-foreground"} accent={stats.accepted > 0 ? "text-success" : undefined} />
+        <StatCard label="Abgelehnt / Abgelaufen" value={String(stats.declined)}        icon={AlertCircle}  iconClass={stats.declined > 0 ? "text-destructive" : "text-muted-foreground"} accent={stats.declined > 0 ? "text-destructive" : undefined} />
+        <StatCard label="Annahmequote"           value={`${stats.acceptanceRate} %`}   icon={TrendingUp}   iconClass={stats.acceptanceRate >= 50 ? "text-success" : "text-muted-foreground"} accent={stats.acceptanceRate >= 50 ? "text-success" : undefined} />
       </div>
 
       {/* Filter + List */}
@@ -632,7 +632,7 @@ export default function ProposalsPage() {
                   {/* Valid until */}
                   <span className={cn(
                     "text-sm",
-                    expired ? "text-orange-400 font-medium" : "text-muted-foreground"
+                    expired ? "text-warning font-medium" : "text-muted-foreground"
                   )}>
                     {p.validUntil ? formatDate(p.validUntil) : "—"}
                   </span>

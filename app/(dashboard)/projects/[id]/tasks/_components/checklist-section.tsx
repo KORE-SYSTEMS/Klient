@@ -167,7 +167,7 @@ export function ChecklistSection({
           <div
             className={cn(
               "h-full transition-all",
-              pct === 100 ? "bg-emerald-500" : "bg-primary",
+              pct === 100 ? "bg-success" : "bg-primary",
             )}
             style={{ width: `${pct}%` }}
           />

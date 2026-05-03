@@ -14,8 +14,8 @@ const STAGES = [
   { value: "PROSPECT",  label: "Prospect",        color: "bg-blue-500",    light: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
   { value: "QUALIFIED", label: "Qualifiziert",    color: "bg-violet-500",  light: "bg-violet-500/10 border-violet-500/20 text-violet-400" },
   { value: "PROPOSAL",  label: "Angebot gestellt", color: "bg-amber-500",  light: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
-  { value: "WON",       label: "Gewonnen",        color: "bg-emerald-500", light: "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" },
-  { value: "LOST",      label: "Verloren",        color: "bg-red-500",     light: "bg-red-500/10 border-red-500/20 text-red-400" },
+  { value: "WON",       label: "Gewonnen",        color: "bg-success",     light: "bg-success/10 border-success/20 text-success" },
+  { value: "LOST",      label: "Verloren",        color: "bg-destructive", light: "bg-destructive/10 border-destructive/20 text-destructive" },
 ];
 
 function formatEur(n: number) {

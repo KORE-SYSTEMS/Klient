@@ -104,13 +104,13 @@ interface Breadcrumb {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const FOLDER_COLORS = [
-  "text-blue-400",
+  "text-info",
   "text-violet-400",
-  "text-amber-400",
-  "text-emerald-400",
+  "text-warning",
+  "text-success",
   "text-rose-400",
   "text-cyan-400",
-  "text-orange-400",
+  "text-warning",
   "text-pink-400",
 ];
 
@@ -175,7 +175,7 @@ function InlineRename({
         className="h-6 w-6"
         onClick={() => name.trim() && onConfirm(name.trim())}
       >
-        <Check className="h-3.5 w-3.5 text-emerald-500" />
+        <Check className="h-3.5 w-3.5 text-success" />
       </Button>
       <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onCancel}>
         <X className="h-3.5 w-3.5 text-destructive" />

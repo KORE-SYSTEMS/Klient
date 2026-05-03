@@ -1065,7 +1065,7 @@ export default function TasksPage() {
                         {task.dueDate ? (() => {
                           const overdue = new Date(task.dueDate) < new Date();
                           return (
-                            <span className={cn("text-xs flex items-center gap-1", overdue ? "text-red-400 font-medium" : "text-muted-foreground")}>
+                            <span className={cn("text-xs flex items-center gap-1", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
                               {overdue && <AlertCircle className="h-3 w-3 shrink-0" />}
                               {formatDate(task.dueDate)}
                             </span>

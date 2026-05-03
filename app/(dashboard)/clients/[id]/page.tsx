@@ -110,28 +110,28 @@ const ACTIVITY_TYPES = [
 ];
 
 const OUTCOME_OPTIONS = [
-  { value: "POSITIVE", label: "Positiv",  color: "text-emerald-500" },
+  { value: "POSITIVE", label: "Positiv",  color: "text-success" },
   { value: "NEUTRAL",  label: "Neutral",  color: "text-muted-foreground" },
-  { value: "NEGATIVE", label: "Negativ",  color: "text-red-500" },
+  { value: "NEGATIVE", label: "Negativ",  color: "text-destructive" },
 ];
 
 const LEAD_STATUSES = [
   { value: "LEAD",      label: "Lead",       color: "bg-slate-500/15 text-slate-400" },
-  { value: "PROSPECT",  label: "Prospect",   color: "bg-blue-500/15 text-blue-400" },
+  { value: "PROSPECT",  label: "Prospect",   color: "bg-info/15 text-info" },
   { value: "QUALIFIED", label: "Qualifiziert", color: "bg-violet-500/15 text-violet-400" },
-  { value: "PROPOSAL",  label: "Angebot",    color: "bg-amber-500/15 text-amber-400" },
-  { value: "WON",       label: "Gewonnen",   color: "bg-emerald-500/15 text-emerald-500" },
-  { value: "LOST",      label: "Verloren",   color: "bg-red-500/15 text-red-400" },
+  { value: "PROPOSAL",  label: "Angebot",    color: "bg-warning/15 text-warning" },
+  { value: "WON",       label: "Gewonnen",   color: "bg-success/15 text-success" },
+  { value: "LOST",      label: "Verloren",   color: "bg-destructive/15 text-destructive" },
 ];
 
 const PROJECT_STATUS_COLORS: Record<string, string> = {
   PLANNING:    "bg-slate-500/15 text-slate-400",
-  ACTIVE:      "bg-blue-500/15 text-blue-400",
+  ACTIVE:      "bg-info/15 text-info",
   IN_PROGRESS: "bg-violet-500/15 text-violet-400",
-  REVIEW:      "bg-amber-500/15 text-amber-400",
-  DONE:        "bg-emerald-500/15 text-emerald-500",
-  ON_HOLD:     "bg-orange-500/15 text-orange-400",
-  CANCELLED:   "bg-red-500/15 text-red-400",
+  REVIEW:      "bg-warning/15 text-warning",
+  DONE:        "bg-success/15 text-success",
+  ON_HOLD:     "bg-warning/15 text-warning",
+  CANCELLED:   "bg-destructive/15 text-destructive",
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -775,7 +775,7 @@ export default function ClientDetailPage() {
                   const count = allInvoices.filter((i) => i.status === s).length;
                   const total = allInvoices.filter((i) => i.status === s).flatMap((i) => i.items).reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
                   const labels: Record<string, string> = { DRAFT: "Entwurf", SENT: "Gesendet", PAID: "Bezahlt", CANCELLED: "Storniert" };
-                  const colors: Record<string, string> = { DRAFT: "text-muted-foreground", SENT: "text-blue-400", PAID: "text-emerald-500", CANCELLED: "text-red-400" };
+                  const colors: Record<string, string> = { DRAFT: "text-muted-foreground", SENT: "text-info", PAID: "text-success", CANCELLED: "text-destructive" };
                   return (
                     <div key={s} className="rounded-xl border bg-card p-3 text-center">
                       <div className={cn("text-lg font-bold", colors[s])}>{count}</div>
@@ -792,15 +792,15 @@ export default function ClientDetailPage() {
                   const total = inv.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
                   const statusColors: Record<string, string> = {
                     DRAFT: "bg-muted text-muted-foreground",
-                    SENT: "bg-blue-500/15 text-blue-400",
-                    PAID: "bg-emerald-500/15 text-emerald-500",
-                    CANCELLED: "bg-red-500/15 text-red-400",
+                    SENT: "bg-info/15 text-info",
+                    PAID: "bg-success/15 text-success",
+                    CANCELLED: "bg-destructive/15 text-destructive",
                   };
                   const statusLabels: Record<string, string> = { DRAFT: "Entwurf", SENT: "Gesendet", PAID: "Bezahlt", CANCELLED: "Storniert" };
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-4 py-3 gap-4">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {inv.status === "PAID" ? <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" /> : <Receipt className="h-4 w-4 text-muted-foreground shrink-0" />}
+                        {inv.status === "PAID" ? <CheckCircle2 className="h-4 w-4 text-success shrink-0" /> : <Receipt className="h-4 w-4 text-muted-foreground shrink-0" />}
                         <span className="text-sm font-medium truncate">{inv.projectName}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">

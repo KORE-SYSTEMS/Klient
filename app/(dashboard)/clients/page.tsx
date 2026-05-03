@@ -23,11 +23,11 @@ import {
 
 const LEAD_STATUS_STYLES: Record<string, string> = {
   LEAD:      "bg-slate-500/15 text-slate-400",
-  PROSPECT:  "bg-blue-500/15 text-blue-400",
+  PROSPECT:  "bg-info/15 text-info",
   QUALIFIED: "bg-violet-500/15 text-violet-400",
-  PROPOSAL:  "bg-amber-500/15 text-amber-400",
-  WON:       "bg-emerald-500/15 text-emerald-500",
-  LOST:      "bg-red-500/15 text-red-400",
+  PROPOSAL:  "bg-warning/15 text-warning",
+  WON:       "bg-success/15 text-success",
+  LOST:      "bg-destructive/15 text-destructive",
 };
 
 const LEAD_STATUS_LABELS: Record<string, string> = {
@@ -104,7 +104,7 @@ export default async function ClientsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-yellow-400">Ausstehend</Badge>
+                  <Badge variant="outline" className="text-warning">Ausstehend</Badge>
                   <DeleteInvitationButton id={inv.id} />
                 </div>
               </div>

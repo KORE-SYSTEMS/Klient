@@ -297,8 +297,8 @@ function SocketModeBody({
   if (stage === "idle") {
     return (
       <div className="space-y-3 text-sm">
-        <div className="flex items-start gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-3">
-          <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-2 rounded-sm border border-warning/30 bg-warning/5 p-3">
+          <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
           <div>
             <p className="font-medium text-foreground">Backup empfohlen</p>
             <p className="text-muted-foreground text-xs mt-1">
@@ -330,8 +330,8 @@ function SocketModeBody({
 
   if (stage === "done") {
     return (
-      <div className="rounded-sm border border-green-500/30 bg-green-500/5 p-4 text-sm">
-        <div className="flex items-center gap-2 font-medium text-green-500">
+      <div className="rounded-sm border border-success/30 bg-success/5 p-4 text-sm">
+        <div className="flex items-center gap-2 font-medium text-success">
           <Check className="h-4 w-4" />
           Update erfolgreich
         </div>
@@ -416,8 +416,8 @@ function ManualModeBody({
 
   return (
     <div className="space-y-3 text-sm">
-      <div className="flex items-start gap-2 rounded-sm border border-blue-500/30 bg-blue-500/5 p-3">
-        <Terminal className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+      <div className="flex items-start gap-2 rounded-sm border border-info/30 bg-info/5 p-3">
+        <Terminal className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
         <div>
           <p className="font-medium text-foreground">Ein-Klick-Update nicht verfügbar</p>
           <p className="text-muted-foreground text-xs mt-1">

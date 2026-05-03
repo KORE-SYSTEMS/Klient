@@ -212,10 +212,10 @@ export default function ProjectDetailPage() {
                   variant="outline"
                   className={
                     m.user.role === "CLIENT"
-                      ? "text-meta text-orange-500 border-orange-500/30"
+                      ? "text-meta text-warning border-warning/30"
                       : m.user.role === "ADMIN"
-                        ? "text-meta text-blue-500 border-blue-500/30"
-                        : "text-meta text-green-500 border-green-500/30"
+                        ? "text-meta text-info border-info/30"
+                        : "text-meta text-success border-success/30"
                   }
                 >
                   {m.user.role === "CLIENT" ? "Kunde" : m.user.role === "ADMIN" ? "Admin" : "Mitarbeiter"}

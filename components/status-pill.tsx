@@ -18,11 +18,11 @@ import {
  * pills in the kanban/list views.
  */
 const PROJECT_STATUSES = [
-  { value: "PLANNING",  label: "Planung",       color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-  { value: "ACTIVE",    label: "Aktiv",         color: "bg-green-500/15 text-green-400 border-green-500/30" },
-  { value: "REVIEW",    label: "Review",        color: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
-  { value: "COMPLETED", label: "Abgeschlossen", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-  { value: "ON_HOLD",   label: "Pausiert",      color: "bg-gray-500/15 text-gray-400 border-gray-500/30" },
+  { value: "PLANNING",  label: "Planung",       color: "bg-info/15 text-info border-info/30" },
+  { value: "ACTIVE",    label: "Aktiv",         color: "bg-success/15 text-success border-success/30" },
+  { value: "REVIEW",    label: "Review",        color: "bg-warning/15 text-warning border-warning/30" },
+  { value: "COMPLETED", label: "Abgeschlossen", color: "bg-success/15 text-success border-success/30" },
+  { value: "ON_HOLD",   label: "Pausiert",      color: "bg-muted text-muted-foreground border-border" },
 ] as const;
 
 interface StatusPillProps {

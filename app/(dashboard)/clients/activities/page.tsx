@@ -33,9 +33,9 @@ const ACTIVITY_LABELS: Record<string, string> = {
 };
 
 const OUTCOME_CONFIG = {
-  POSITIVE: { label: "Positiv",  icon: ThumbsUp,   cls: "text-emerald-500" },
+  POSITIVE: { label: "Positiv",  icon: ThumbsUp,   cls: "text-success" },
   NEUTRAL:  { label: "Neutral",  icon: Minus,       cls: "text-muted-foreground" },
-  NEGATIVE: { label: "Negativ",  icon: ThumbsDown,  cls: "text-red-400" },
+  NEGATIVE: { label: "Negativ",  icon: ThumbsDown,  cls: "text-destructive" },
 };
 
 function groupByDay(activities: { date: string | Date; [k: string]: unknown }[]) {

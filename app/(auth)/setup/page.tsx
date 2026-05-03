@@ -69,7 +69,7 @@ export default function SetupPage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-8 pb-8 space-y-4">
-            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
+            <CheckCircle2 className="mx-auto h-16 w-16 text-success" />
             <h2 className="text-xl font-bold">Setup abgeschlossen!</h2>
             <p className="text-muted-foreground">Du wirst zum Login weitergeleitet...</p>
           </CardContent>

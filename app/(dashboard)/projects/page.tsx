@@ -373,7 +373,7 @@ export default function ProjectsPage() {
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className={cn(
                   "group cursor-pointer relative",
-                  isOverdue    && "border-red-500/40",
+                  isOverdue    && "border-destructive/40",
                   project.archived && "opacity-60"
                 )}>
                   <CardContent className="p-4 space-y-3">
@@ -405,7 +405,7 @@ export default function ProjectsPage() {
                             <DropdownMenuContent align="end" className="w-40">
                               {project.archived ? (
                                 <DropdownMenuItem onClick={(e) => toggleArchive(project, e)}>
-                                  <ArchiveRestore className="mr-2 h-3.5 w-3.5 text-emerald-500" />
+                                  <ArchiveRestore className="mr-2 h-3.5 w-3.5 text-success" />
                                   Wiederherstellen
                                 </DropdownMenuItem>
                               ) : (
@@ -454,7 +454,7 @@ export default function ProjectsPage() {
                       {project.dueDate && (
                         <span className={cn(
                           "flex items-center gap-1",
-                          isOverdue && "text-red-400 font-medium"
+                          isOverdue && "text-destructive font-medium"
                         )}>
                           {isOverdue
                             ? <AlertCircle className="h-3 w-3" />

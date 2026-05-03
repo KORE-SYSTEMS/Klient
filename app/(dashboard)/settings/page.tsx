@@ -424,7 +424,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {version && !version.updateAvailable && version.latest && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-caption font-semibold text-emerald-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-caption font-semibold text-success">
                     <CheckCircle2 className="h-3 w-3" />Aktuell
                   </span>
                 )}

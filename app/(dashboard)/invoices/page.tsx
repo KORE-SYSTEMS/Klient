@@ -115,9 +115,9 @@ interface Project {
 
 const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.FC<{ className?: string }> }> = {
   DRAFT:     { label: "Entwurf",   class: "bg-gray-500/10 text-gray-400",                           icon: FileText },
-  SENT:      { label: "Versendet", class: "bg-blue-500/10 text-blue-400",                           icon: Send },
-  PAID:      { label: "Bezahlt",   class: "bg-emerald-500/10 text-emerald-400",                     icon: CheckCircle2 },
-  OVERDUE:   { label: "Überfällig",class: "bg-red-500/10 text-red-400",                             icon: AlertCircle },
+  SENT:      { label: "Versendet", class: "bg-info/10 text-info",                           icon: Send },
+  PAID:      { label: "Bezahlt",   class: "bg-success/10 text-success",                     icon: CheckCircle2 },
+  OVERDUE:   { label: "Überfällig",class: "bg-destructive/10 text-destructive",                             icon: AlertCircle },
   CANCELLED: { label: "Storniert", class: "bg-gray-500/10 text-gray-500 line-through",              icon: X },
 };
 
@@ -484,9 +484,9 @@ export default function GlobalInvoicesPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Gesamt fakturiert"   value={formatCurrency(stats.totalBilled)}  icon={Euro}         iconClass="text-muted-foreground" />
-        <StatCard label="Offen"               value={formatCurrency(stats.outstanding)}   icon={Clock}        iconClass={stats.outstanding > 0 ? "text-blue-400" : "text-muted-foreground"}    accent={stats.outstanding > 0 ? "text-blue-400" : undefined} />
-        <StatCard label="Überfällig"          value={formatCurrency(stats.overdueTotal)}  icon={AlertCircle}  iconClass={stats.overdueTotal > 0 ? "text-red-400" : "text-muted-foreground"}    accent={stats.overdueTotal > 0 ? "text-red-400" : undefined} />
-        <StatCard label="Eingegangen (Monat)" value={formatCurrency(stats.paidThisMonth)} icon={TrendingUp}   iconClass="text-emerald-400" accent="text-emerald-400" />
+        <StatCard label="Offen"               value={formatCurrency(stats.outstanding)}   icon={Clock}        iconClass={stats.outstanding > 0 ? "text-info" : "text-muted-foreground"}    accent={stats.outstanding > 0 ? "text-info" : undefined} />
+        <StatCard label="Überfällig"          value={formatCurrency(stats.overdueTotal)}  icon={AlertCircle}  iconClass={stats.overdueTotal > 0 ? "text-destructive" : "text-muted-foreground"}    accent={stats.overdueTotal > 0 ? "text-destructive" : undefined} />
+        <StatCard label="Eingegangen (Monat)" value={formatCurrency(stats.paidThisMonth)} icon={TrendingUp}   iconClass="text-success" accent="text-success" />
       </div>
 
       {/* Filter + List */}
@@ -580,7 +580,7 @@ export default function GlobalInvoicesPage() {
                       {inv.dueDate && (
                         <span className={cn(
                           "text-caption",
-                          over ? "text-red-400 font-medium" : "text-muted-foreground"
+                          over ? "text-destructive font-medium" : "text-muted-foreground"
                         )}>
                           · fällig {formatDate(inv.dueDate)}
                         </span>

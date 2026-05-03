@@ -82,7 +82,7 @@ export function ClientActions() {
         {inviteLink ? (
           <div className="space-y-4">
             {emailSent ? (
-              <div className="flex items-center gap-2 rounded-sm bg-green-500/10 px-3 py-2 text-sm text-green-400">
+              <div className="flex items-center gap-2 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
                 <Check className="h-4 w-4 shrink-0" />
                 Einladungs-E-Mail wurde automatisch versendet.
               </div>
@@ -94,7 +94,7 @@ export function ClientActions() {
             <div className="flex items-center gap-2">
               <Input value={inviteLink} readOnly className="text-xs" />
               <Button variant="outline" size="icon" onClick={copyLink}>
-                {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
             <DialogFooter>

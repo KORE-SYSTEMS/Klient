@@ -83,10 +83,10 @@ interface Invoice {
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.FC<{ className?: string }> }> = {
-  DRAFT:     { label: "Entwurf",      class: "bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400",           icon: FileText },
-  SENT:      { label: "Versendet",    class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",           icon: Send },
-  PAID:      { label: "Bezahlt",      class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: CheckCircle2 },
-  CANCELLED: { label: "Storniert",    class: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",               icon: X },
+  DRAFT:     { label: "Entwurf",   class: "bg-muted text-muted-foreground",     icon: FileText },
+  SENT:      { label: "Versendet", class: "bg-info/15 text-info",               icon: Send },
+  PAID:      { label: "Bezahlt",   class: "bg-success/15 text-success",         icon: CheckCircle2 },
+  CANCELLED: { label: "Storniert", class: "bg-destructive/15 text-destructive", icon: X },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -361,8 +361,8 @@ export default function InvoicesPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             { label: "Entwürfe",   amount: totalDraft, cls: "text-muted-foreground" },
-            { label: "Versendet",  amount: totalSent,  cls: "text-blue-600 dark:text-blue-400" },
-            { label: "Bezahlt",    amount: totalPaid,  cls: "text-emerald-600 dark:text-emerald-400" },
+            { label: "Versendet",  amount: totalSent,  cls: "text-info" },
+            { label: "Bezahlt",    amount: totalPaid,  cls: "text-success" },
           ].map((card) => (
             <div key={card.label} className="rounded-lg border bg-card px-4 py-3">
               <div className="text-caption font-medium text-muted-foreground">{card.label}</div>
@@ -464,12 +464,12 @@ export default function InvoicesPage() {
                       <DropdownMenuSeparator />
                       {invoice.status === "DRAFT" && (
                         <DropdownMenuItem onClick={() => updateStatus(invoice.id, "SENT")}>
-                          <Send className="mr-2 h-3.5 w-3.5 text-blue-500" />Als versendet
+                          <Send className="mr-2 h-3.5 w-3.5 text-info" />Als versendet
                         </DropdownMenuItem>
                       )}
                       {invoice.status === "SENT" && (
                         <DropdownMenuItem onClick={() => updateStatus(invoice.id, "PAID")}>
-                          <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-500" />Als bezahlt
+                          <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-success" />Als bezahlt
                         </DropdownMenuItem>
                       )}
                       {(invoice.status === "DRAFT" || invoice.status === "SENT") && (

@@ -49,7 +49,7 @@ const TYPE_META: Record<
   TASK_COMMENT:        { icon: MessageSquare,  label: "Kommentar",  tone: "text-yellow-400 bg-yellow-500/10" },
   TASK_FILE_UPLOADED:  { icon: Paperclip,      label: "Datei",      tone: "text-purple-400 bg-purple-500/10" },
   CHAT_MESSAGE:        { icon: MessageCircle,  label: "Chat",       tone: "text-cyan-400 bg-cyan-500/10" },
-  TASK_DUE_SOON:       { icon: Clock,          label: "Fällig",     tone: "text-red-400 bg-red-500/10" },
+  TASK_DUE_SOON:       { icon: Clock,          label: "Fällig",     tone: "text-destructive bg-destructive/10" },
 };
 
 type FilterKey = "all" | "unread" | string;

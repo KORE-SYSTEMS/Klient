@@ -200,9 +200,9 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
   }
 
   function getRoleColor(role: string) {
-    if (role === "CLIENT") return "text-orange-500 border-orange-500/30 bg-orange-500/10";
-    if (role === "ADMIN") return "text-blue-500 border-blue-500/30 bg-blue-500/10";
-    return "text-green-500 border-green-500/30 bg-green-500/10";
+    if (role === "CLIENT") return "text-warning border-warning/30 bg-warning/10";
+    if (role === "ADMIN") return "text-info border-info/30 bg-info/10";
+    return "text-success border-success/30 bg-success/10";
   }
 
   return (
@@ -239,7 +239,7 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
                   className={cn(
                     "h-full rounded-full transition-all",
                     pct === 100
-                      ? "bg-emerald-500"
+                      ? "bg-success"
                       : pct >= 66
                       ? "bg-primary"
                       : pct >= 33
