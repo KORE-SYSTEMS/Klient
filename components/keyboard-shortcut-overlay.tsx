@@ -25,6 +25,7 @@ const SHORTCUT_DOCS: ShortcutEntry[] = [
   // Navigation
   { keys: ["G", "D"], description: "Dashboard",      category: "Navigation" },
   { keys: ["G", "P"], description: "Projekte",       category: "Navigation" },
+  { keys: ["G", "M"], description: "Mein Tag",       category: "Navigation" },
   { keys: ["G", "T"], description: "Meine Tasks",    category: "Navigation" },
   { keys: ["G", "I"], description: "Rechnungen",     category: "Navigation" },
   { keys: ["G", "C"], description: "Kunden",         category: "Navigation" },
@@ -61,6 +62,7 @@ export function KeyboardShortcutOverlay() {
     "?":     () => setOpen((v) => !v),
     "g+d":   () => router.push("/dashboard"),
     "g+p":   () => router.push("/projects"),
+    "g+m":   () => router.push("/my-day"),
     "g+t":   () => router.push("/tasks"),
     "g+i":   () => router.push("/invoices"),
     "g+c":   () => { if (role !== "CLIENT") router.push("/clients"); },

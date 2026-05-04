@@ -24,6 +24,7 @@ import {
   Mail,
   CreditCard,
   Inbox,
+  Sun,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ const adminNav: NavSection[] = [
     section: "Navigation",
     items: [
       { label: "Inbox",       href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
       { label: "Meine Tasks",  href: "/tasks",      icon: CheckSquare },
@@ -84,6 +86,7 @@ const memberNav: NavSection[] = [
     section: "Navigation",
     items: [
       { label: "Inbox",       href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
       { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
@@ -98,6 +101,7 @@ const clientNav: NavSection[] = [
     section: "Navigation",
     items: [
       { label: "Inbox",       href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
       { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
       { label: "Projekte",    href: "/projects",  icon: FolderKanban },
       { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },

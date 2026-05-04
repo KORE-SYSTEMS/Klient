@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P4.1 (Calendar-View) abgeschlossen ✅
-**Nächste Phase:** P4.4 — My Day / Focus · P3.8 — Recurring Tasks · P3.9 — Automations
+**Phase:** P4.1 + P4.4 abgeschlossen ✅
+**Nächste Phase:** P3.8 — Recurring Tasks · P3.9 — Automations · P5.1 — SSE
 
 ---
 
@@ -318,7 +318,26 @@ den neuen View-Mode mit angepasstem Label.
 
 Subtasks erscheinen nicht im Kalender — nur Top-Level-Tasks (parentId leer).
 
-### P4.2 — P4.4 · Timeline / Swimlanes / My Day — offen
+### P4.4 · My Day / Focus-Mode — abgeschlossen ✅
+
+`/my-day` Page als Daily-Briefing für die mir zugewiesenen Tasks:
+
+- Greeting nach Tageszeit (Morgen/Mittag/Abend) mit passendem Icon
+- 4-Stat-Cards: Heute · Überfällig · Diese Woche · Erledigt jetzt
+- Buckets gestapelt (nur sichtbar wenn nicht leer):
+  - **Überfällig** (destructive) — vor allem oben sichtbar
+  - **Heute** (primary, der Tagesfokus)
+  - **Diese Woche** (info, vorausschauend)
+  - **Später** (muted)
+  - **Ohne Datum** (muted)
+- Quick-Mark-Done per Hover-Click direkt in der Liste — Task verschwindet
+  optimistisch, "Erledigt jetzt"-Counter zählt hoch (Pomodoro-Feeling)
+- Task-Row: Priority-Pill, Due-Date mit Tone, Status-Badge, Project + Epic
+- Click → öffnet Task in Project-Tasks-Page mit `?task=<id>`
+- Sidebar-Eintrag "Mein Tag" + Tastatur-Shortcut `g+m`
+- Refetch nur bei `visibilitychange` / `focus` (kein Polling)
+
+### P4.2 + P4.3 · Timeline / Swimlanes — offen
 
 Bar (Toggle) und Chips (immer sichtbar) lesen/schreiben dieselben State-Variablen. Eine `<TaskFilters>`-Komponente, die beides kann.
 
@@ -366,7 +385,8 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 31a46c8 P3.6: Bulk-Aktionen im List-View
 06f0456 P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
 721eb8d Semantische Tailwind-Farben → Theme-Tokens
-<HEAD>  P4.1: Calendar-View (Monatsraster, DnD für DueDate)
+97e9fed P4.1: Calendar-View (Monatsraster, DnD für DueDate)
+<HEAD>  P4.4: My Day / Focus-Mode (eigene Daily-Briefing-Page)
 ```
 
 ---
