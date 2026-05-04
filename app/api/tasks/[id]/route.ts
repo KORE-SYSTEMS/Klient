@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember, requireProjectAccess } from "@/lib/auth-guard";
 import { notify } from "@/lib/notifications";
+import { nextOccurrence, parseRecurrence } from "@/lib/recurrence";
 
 export async function PATCH(
   request: NextRequest,
@@ -51,6 +52,19 @@ export async function PATCH(
       if (body.assigneeId !== undefined) updateData.assigneeId = body.assigneeId || null;
       if (body.order !== undefined) updateData.order = body.order;
       if (body.epicId !== undefined) updateData.epicId = body.epicId || null;
+      if (body.recurrenceRule !== undefined) {
+        // Akzeptiert null/leeren String zum Entfernen, sonst parsen + zurück
+        // serialisieren (defensives Re-Encoding sperrt Müll-Strings).
+        if (body.recurrenceRule === null || body.recurrenceRule === "") {
+          updateData.recurrenceRule = null;
+        } else if (typeof body.recurrenceRule === "string") {
+          const parsed = parseRecurrence(body.recurrenceRule);
+          updateData.recurrenceRule = parsed ? JSON.stringify(parsed) : null;
+        } else if (typeof body.recurrenceRule === "object") {
+          const parsed = parseRecurrence(JSON.stringify(body.recurrenceRule));
+          updateData.recurrenceRule = parsed ? JSON.stringify(parsed) : null;
+        }
+      }
       // Approval workflow fields (set by staff during handoff)
       if (body.approvalStatus !== undefined) updateData.approvalStatus = body.approvalStatus;
       if (body.handoffComment !== undefined) updateData.handoffComment = body.handoffComment;
@@ -131,6 +145,64 @@ export async function PATCH(
         link,
         actorId: userId,
       });
+    }
+
+    // ── Recurring tasks: bei Wechsel in DONE-Category Folge-Instanz erzeugen ─
+    // Nur einmal pro Erledigungs-Event (Status-Wechsel war kein DONE und ist
+    // jetzt DONE). Sonst würde jedes weitere PATCH eine neue Instanz triggern.
+    if (
+      body.status !== undefined &&
+      body.status !== task.status &&
+      updated.recurrenceRule
+    ) {
+      const oldStatusRow = await prisma.taskStatus.findUnique({
+        where: { id: task.status },
+        select: { category: true },
+      });
+      const newStatusRow = await prisma.taskStatus.findUnique({
+        where: { id: body.status },
+        select: { category: true, projectId: true },
+      });
+      const wasDone = oldStatusRow?.category === "DONE";
+      const isNowDone = newStatusRow?.category === "DONE";
+
+      if (!wasDone && isNowDone) {
+        const rule = parseRecurrence(updated.recurrenceRule);
+        if (rule) {
+          // Basis: aktuelles dueDate, sonst heute
+          const base = updated.dueDate ? new Date(updated.dueDate) : new Date();
+          const nextDue = nextOccurrence(rule, base);
+          // Ersten non-DONE Status des Projekts als Default-Status der Kopie
+          const firstOpen = await prisma.taskStatus.findFirst({
+            where: {
+              projectId: updated.projectId,
+              NOT: { category: "DONE" },
+            },
+            orderBy: { order: "asc" },
+            select: { id: true },
+          });
+          await prisma.task.create({
+            data: {
+              title: updated.title,
+              description: updated.description,
+              status: firstOpen?.id ?? updated.status,
+              priority: updated.priority,
+              clientVisible: updated.clientVisible,
+              dueDate: nextDue,
+              projectId: updated.projectId,
+              assigneeId: updated.assigneeId,
+              epicId: updated.epicId,
+              recurrenceRule: updated.recurrenceRule,
+            },
+          });
+          // Original verliert die Recurrence-Rule (sie wandert auf die Kopie),
+          // damit beim Re-Open + Erneut-Erledigen nicht doppelt ausgelöst wird.
+          await prisma.task.update({
+            where: { id: updated.id },
+            data: { recurrenceRule: null },
+          });
+        }
+      }
     }
 
     // Status change → notify assignee (if not actor)

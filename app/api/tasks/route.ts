@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdminOrMember, requireProjectAccess } from "@/lib/auth-guard";
 import { notify } from "@/lib/notifications";
+import { parseRecurrence } from "@/lib/recurrence";
 
 export async function GET(request: NextRequest) {
   const session = await requireAuth();
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId, parentId } = body;
+    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId, parentId, recurrenceRule } = body;
 
     if (!title || !projectId) {
       return NextResponse.json({ error: "Title and projectId are required" }, { status: 400 });
@@ -178,6 +179,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Recurrence-Rule defensiv normalisieren
+    let normalizedRecurrence: string | null = null;
+    if (recurrenceRule) {
+      const raw = typeof recurrenceRule === "string" ? recurrenceRule : JSON.stringify(recurrenceRule);
+      const parsed = parseRecurrence(raw);
+      if (parsed) normalizedRecurrence = JSON.stringify(parsed);
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
@@ -191,6 +200,7 @@ export async function POST(request: NextRequest) {
         order: order ?? 0,
         epicId: epicId || null,
         parentId: parentId || null,
+        recurrenceRule: normalizedRecurrence,
       },
       include: {
         assignee: { select: { id: true, name: true, email: true, image: true } },

@@ -91,6 +91,8 @@ export interface Task {
   approvedAt?: string | null;
   approvedById?: string | null;
   parentId?: string | null;
+  /** JSON-String mit der Wiederholungsregel (siehe lib/recurrence.ts). */
+  recurrenceRule?: string | null;
   _isPreview?: boolean;
   _count?: {
     comments?: number;

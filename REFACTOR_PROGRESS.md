@@ -8,8 +8,8 @@
 
 ## Aktueller Stand
 
-**Phase:** P4.1 + P4.4 abgeschlossen ✅
-**Nächste Phase:** P3.8 — Recurring Tasks · P3.9 — Automations · P5.1 — SSE
+**Phase:** P3.8 (Recurring Tasks) abgeschlossen ✅
+**Nächste Phase:** P3.9 — Automations · P5.1 — SSE · P4.2 — Timeline/Gantt
 
 ---
 
@@ -274,7 +274,33 @@ CSV als Standard (Excel/Numbers/Sheets-friendly), JSON als Power-Format.
   direkt zu `/projects/[id]/tasks?import=true` und öffnet den File-Picker
   automatisch
 
-### P3.8 — P3.x · Recurring, Automations — offen
+### P3.8 · Recurring Tasks — abgeschlossen ✅
+
+**Pragmatischer Ansatz ohne Background-Job:** Folge-Instanz wird beim
+Erledigen automatisch erzeugt — kein Cron, keine Worker, keine Race-
+Conditions. Schema-Migration `0005_recurring_tasks` fügt `recurrenceRule`
+als JSON-String hinzu.
+
+`lib/recurrence.ts`: typed `RecurrenceRule` (daily/weekly/monthly), Parser
+mit defensivem Re-Encoding, `nextOccurrence()` für die Datumsberechnung
+(DST-safe via 12:00-Normalisierung), `describeRecurrence()` für UI-Labels.
+
+API:
+- `POST /api/tasks` und `PATCH /api/tasks/[id]` akzeptieren `recurrenceRule`
+  (JSON-String oder Objekt, defensiv normalisiert)
+- Beim PATCH: wenn der Status von einem **nicht-DONE** in einen **DONE**-
+  Category-Status wechselt UND `recurrenceRule` gesetzt ist, legt der
+  Server eine Folge-Instanz mit neu berechnetem dueDate an. Original
+  verliert dabei die Rule (verhindert Doppel-Trigger bei Re-Open + Done).
+
+UI:
+- `_components/recurrence-picker.tsx`: Pill "Wiederholen…" im Task-Dialog
+  unter dem DueDate. Klick öffnet Mini-Editor mit Rhythmus (täglich /
+  wöchentl. / monatl.), `everyN`-Spinner und passenden Sub-Inputs:
+  Wochentage-Toggle bei wöchentlich, Tag-im-Monat bei monatlich
+- TaskCard zeigt einen Repeat-Icon-Indicator (Tooltip = beschreibender Text)
+- Card-Indicator nutzt info-Token für visuelle Konsistenz mit anderen
+  Status-Pills
 
 ---
 
@@ -386,7 +412,8 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 06f0456 P3.7b: Tasks Import/Export (CSV+JSON) + Sample-Vorlage
 721eb8d Semantische Tailwind-Farben → Theme-Tokens
 97e9fed P4.1: Calendar-View (Monatsraster, DnD für DueDate)
-<HEAD>  P4.4: My Day / Focus-Mode (eigene Daily-Briefing-Page)
+f3b075c P4.4: My Day / Focus-Mode (eigene Daily-Briefing-Page)
+<HEAD>  P3.8: Recurring Tasks (recurrenceRule + auto-create on Done)
 ```
 
 ---

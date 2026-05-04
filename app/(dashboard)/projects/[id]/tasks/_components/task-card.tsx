@@ -12,7 +12,9 @@ import {
   Lock,
   MessageSquare,
   Paperclip,
+  Repeat,
 } from "lucide-react";
+import { describeRecurrence, parseRecurrence } from "@/lib/recurrence";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PriorityPill } from "@/components/task/priority-pill";
@@ -172,6 +174,17 @@ export function TaskCard({
             )}
             <PriorityPill priority={task.priority} size="md" />
             {task.approvalStatus && <ApprovalBadge status={task.approvalStatus as string} />}
+            {task.recurrenceRule && (() => {
+              const rule = parseRecurrence(task.recurrenceRule);
+              return rule ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-caption font-medium text-info"
+                  title={describeRecurrence(rule)}
+                >
+                  <Repeat className="h-3 w-3" />
+                </span>
+              ) : null;
+            })()}
             {task.clientVisible && !isClient && (
               <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
                 <Eye className="h-3 w-3" />

@@ -115,6 +115,7 @@ import { SavedViewsMenu } from "./_components/saved-views-menu";
 import { TemplatesMenu } from "./_components/templates-menu";
 import { ImportExportMenu } from "./_components/import-export-menu";
 import { CalendarView } from "./_components/calendar-view";
+import { RecurrencePicker } from "./_components/recurrence-picker";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
@@ -156,6 +157,7 @@ export default function TasksPage() {
   const [formAssigneeId, setFormAssigneeId] = useState("none");
   const [formClientVisible, setFormClientVisible] = useState(false);
   const [formEpicId, setFormEpicId] = useState("none");
+  const [formRecurrence, setFormRecurrence] = useState<string | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [detailTab, setDetailTab] = useState<"details" | "comments" | "files" | "activity">("details");
 
@@ -252,6 +254,7 @@ export default function TasksPage() {
       setFormAssigneeId("none");
       setFormClientVisible(false);
       setFormEpicId("none");
+      setFormRecurrence(null);
       setTaskDialogOpen(true);
     }
     window.addEventListener(NEW_TASK_EVENT_NAME, handler);
@@ -287,6 +290,7 @@ export default function TasksPage() {
     setFormAssigneeId(task?.assigneeId || "none");
     setFormClientVisible(task?.clientVisible || false);
     setFormEpicId(task?.epicId || "none");
+    setFormRecurrence(task?.recurrenceRule ?? null);
     setDetailTab(isClient && task ? "comments" : "details");
     setTaskDialogOpen(true);
   }
@@ -299,6 +303,7 @@ export default function TasksPage() {
       clientVisible: formClientVisible, dueDate: formDueDate || null,
       assigneeId: formAssigneeId === "none" ? null : formAssigneeId,
       epicId: formEpicId === "none" ? null : formEpicId,
+      recurrenceRule: formRecurrence,
     };
     const newAssigneeId = formAssigneeId === "none" ? null : formAssigneeId;
     const selectedAssignee = members.find((m) => m.id === newAssigneeId);
@@ -1483,6 +1488,9 @@ export default function TasksPage() {
                 <div className="space-y-2">
                   <Label>Fällig am</Label>
                   <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
+                  <div className="pt-1">
+                    <RecurrencePicker value={formRecurrence} onChange={setFormRecurrence} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Zugewiesen an</Label>

@@ -16,6 +16,7 @@ export interface TaskCreatePayload {
   epicId?: string | null;
   clientVisible?: boolean;
   parentId?: string | null;
+  recurrenceRule?: string | null;
 }
 
 export interface TaskUpdatePayload {
@@ -28,6 +29,7 @@ export interface TaskUpdatePayload {
   epicId?: string | null;
   clientVisible?: boolean;
   order?: number;
+  recurrenceRule?: string | null;
 }
 
 export const tasksApi = {

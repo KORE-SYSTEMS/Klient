@@ -244,6 +244,12 @@ model Task {
   approvalComment String?   // client's response comment
   approvedAt      DateTime?
   approvedById    String?   // userId who approved/rejected
+  // Wiederkehrende Tasks — JSON-Regel (siehe lib/recurrence.ts):
+  //   { kind: "daily"|"weekly"|"monthly", everyN: number,
+  //     weekdays?: number[], dayOfMonth?: number }
+  // Wenn gesetzt UND der Task wird in DONE-Category verschoben, erzeugt
+  // der Server eine Folge-Instanz mit neu berechnetem dueDate.
+  recurrenceRule  String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
