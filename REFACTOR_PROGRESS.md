@@ -413,7 +413,7 @@ a8ac333 P3.3: Multi-Select + Bulk-Toolbar
 721eb8d Semantische Tailwind-Farben → Theme-Tokens
 97e9fed P4.1: Calendar-View (Monatsraster, DnD für DueDate)
 f3b075c P4.4: My Day / Focus-Mode (eigene Daily-Briefing-Page)
-<HEAD>  P3.8: Recurring Tasks (recurrenceRule + auto-create on Done)
+1fdfa05 P3.8: Recurring Tasks (recurrenceRule + auto-create on Done)
 ```
 
 ---
