@@ -74,6 +74,7 @@ export interface Task {
   status: string;
   priority: string;
   clientVisible: boolean;
+  startDate?: string | null;
   dueDate?: string | null;
   assignee?: { id: string; name: string; email: string } | null;
   assigneeId?: string | null;

@@ -11,6 +11,7 @@ export interface TaskCreatePayload {
   description?: string;
   status?: string;
   priority?: string;
+  startDate?: string | null;
   dueDate?: string | null;
   assigneeId?: string | null;
   epicId?: string | null;
@@ -24,6 +25,7 @@ export interface TaskUpdatePayload {
   description?: string | null;
   status?: string;
   priority?: string;
+  startDate?: string | null;
   dueDate?: string | null;
   assigneeId?: string | null;
   epicId?: string | null;

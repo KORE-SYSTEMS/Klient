@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, description, status, priority, clientVisible, dueDate, projectId, assigneeId, order, epicId, parentId, recurrenceRule } = body;
+    const { title, description, status, priority, clientVisible, startDate, dueDate, projectId, assigneeId, order, epicId, parentId, recurrenceRule } = body;
 
     if (!title || !projectId) {
       return NextResponse.json({ error: "Title and projectId are required" }, { status: 400 });
@@ -194,6 +194,7 @@ export async function POST(request: NextRequest) {
         status: resolvedStatus,
         priority: priority || "MEDIUM",
         clientVisible: clientVisible ?? false,
+        startDate: startDate ? new Date(startDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         projectId,
         assigneeId: assigneeId || null,

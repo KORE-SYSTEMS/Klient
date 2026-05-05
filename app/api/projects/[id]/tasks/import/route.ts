@@ -31,6 +31,7 @@ interface RawRow {
   description?: string;
   status?: string;
   priority?: string;
+  startDate?: string;
   dueDate?: string;
   assignee?: string;
   epic?: string;
@@ -43,6 +44,7 @@ interface NormalizedRow {
   description: string | null;
   statusId: string;          // resolved
   priority: string;
+  startDate: Date | null;
   dueDate: Date | null;
   assigneeId: string | null;
   epicId: string | null;
@@ -190,6 +192,12 @@ export async function POST(
       warnings.push({ row: rowIndex, message: `Unbekannte Priorität "${raw.priority}" — MEDIUM verwendet` });
     }
 
+    // startDate
+    const startDate = parseDate(raw.startDate?.toString());
+    if (raw.startDate && !startDate) {
+      warnings.push({ row: rowIndex, message: `Ungültiges Startdatum "${raw.startDate}" — leer gelassen` });
+    }
+
     // dueDate
     const dueDate = parseDate(raw.dueDate?.toString());
     if (raw.dueDate && !dueDate) {
@@ -229,6 +237,7 @@ export async function POST(
       description: raw.description?.toString().trim() || null,
       statusId,
       priority,
+      startDate,
       dueDate,
       assigneeId,
       epicId,
@@ -306,6 +315,7 @@ export async function POST(
         status: row.statusId,
         priority: row.priority,
         clientVisible: row.clientVisible,
+        startDate: row.startDate,
         dueDate: row.dueDate,
         projectId,
         assigneeId: row.assigneeId,
@@ -330,6 +340,7 @@ export async function POST(
         status: row.statusId,
         priority: row.priority,
         clientVisible: row.clientVisible,
+        startDate: row.startDate,
         dueDate: row.dueDate,
         projectId,
         assigneeId: row.assigneeId,

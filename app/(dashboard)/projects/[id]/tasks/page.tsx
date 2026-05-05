@@ -51,6 +51,7 @@ import {
   List,
   LayoutGrid,
   CalendarDays,
+  GanttChart,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -115,6 +116,7 @@ import { SavedViewsMenu } from "./_components/saved-views-menu";
 import { TemplatesMenu } from "./_components/templates-menu";
 import { ImportExportMenu } from "./_components/import-export-menu";
 import { CalendarView } from "./_components/calendar-view";
+import { TimelineView } from "./_components/timeline-view";
 import { RecurrencePicker } from "./_components/recurrence-picker";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
@@ -138,7 +140,7 @@ export default function TasksPage() {
   const [statuses, setStatuses] = useState<TaskStatus[]>([]);
   const [epics, setEpics] = useState<Epic[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"kanban" | "list" | "calendar">("kanban");
+  const [view, setView] = useState<"kanban" | "list" | "calendar" | "timeline">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeWidth, setActiveWidth] = useState<number | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -153,6 +155,7 @@ export default function TasksPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formStatus, setFormStatus] = useState("BACKLOG");
   const [formPriority, setFormPriority] = useState("MEDIUM");
+  const [formStartDate, setFormStartDate] = useState("");
   const [formDueDate, setFormDueDate] = useState("");
   const [formAssigneeId, setFormAssigneeId] = useState("none");
   const [formClientVisible, setFormClientVisible] = useState(false);
@@ -286,6 +289,7 @@ export default function TasksPage() {
     setFormDescription(task?.description || "");
     setFormStatus(task?.status || defaultStatus || statuses[0]?.id || "BACKLOG");
     setFormPriority(task?.priority || "MEDIUM");
+    setFormStartDate(task?.startDate ? task.startDate.split("T")[0] : "");
     setFormDueDate(task?.dueDate ? task.dueDate.split("T")[0] : "");
     setFormAssigneeId(task?.assigneeId || "none");
     setFormClientVisible(task?.clientVisible || false);
@@ -300,7 +304,7 @@ export default function TasksPage() {
     setFormSubmitting(true);
     const patch: any = {
       title: formTitle, description: formDescription || "", priority: formPriority, status: formStatus,
-      clientVisible: formClientVisible, dueDate: formDueDate || null,
+      clientVisible: formClientVisible, startDate: formStartDate || null, dueDate: formDueDate || null,
       assigneeId: formAssigneeId === "none" ? null : formAssigneeId,
       epicId: formEpicId === "none" ? null : formEpicId,
       recurrenceRule: formRecurrence,
@@ -837,6 +841,16 @@ export default function TasksPage() {
               <CalendarDays className="h-4 w-4" />
               Kalender
             </button>
+            <button
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                view === "timeline" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setView("timeline")}
+            >
+              <GanttChart className="h-4 w-4" />
+              Timeline
+            </button>
           </div>
 
           {!isClient && (
@@ -919,8 +933,39 @@ export default function TasksPage() {
         }
       />
 
-      {/* Calendar View — separater DnD-Context, eigene DueDate-Drag-Logik */}
-      {view === "calendar" ? (
+      {/* Timeline / Gantt View */}
+      {view === "timeline" ? (
+        <TimelineView
+          tasks={filteredTasks}
+          epics={epics}
+          isClient={isClient}
+          onTaskClick={(t) => openTaskDialog(t)}
+          onDateChange={async (taskId, startDate, dueDate) => {
+            setTasks((prev) =>
+              prev.map((t) =>
+                t.id === taskId
+                  ? {
+                      ...t,
+                      startDate: startDate ? new Date(startDate + "T12:00:00").toISOString() : null,
+                      dueDate: dueDate ? new Date(dueDate + "T12:00:00").toISOString() : null,
+                    }
+                  : t,
+              ),
+            );
+            try {
+              await api(`/api/tasks/${taskId}`, {
+                method: "PATCH",
+                body: {
+                  startDate: startDate ? new Date(startDate + "T12:00:00").toISOString() : null,
+                  dueDate: dueDate ? new Date(dueDate + "T12:00:00").toISOString() : null,
+                },
+              });
+            } catch {
+              fetchTasks();
+            }
+          }}
+        />
+      ) : view === "calendar" ? (
         <CalendarView
           tasks={filteredTasks}
           isClient={isClient}
@@ -1486,11 +1531,17 @@ export default function TasksPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label>Start</Label>
+                  <DatePicker value={formStartDate} onChange={setFormStartDate} placeholder="Kein Datum" />
+                </div>
+                <div className="space-y-2">
                   <Label>Fällig am</Label>
                   <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
-                  <div className="pt-1">
-                    <RecurrencePicker value={formRecurrence} onChange={setFormRecurrence} />
-                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <RecurrencePicker value={formRecurrence} onChange={setFormRecurrence} />
                 </div>
                 <div className="space-y-2">
                   <Label>Zugewiesen an</Label>

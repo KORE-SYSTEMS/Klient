@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import type { TaskFilterState } from "../_components/task-filters";
 
-export type ViewKind = "kanban" | "list" | "calendar";
+export type ViewKind = "kanban" | "list" | "calendar" | "timeline";
 
 export interface SavedView {
   id: string;

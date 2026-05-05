@@ -48,6 +48,7 @@ export async function PATCH(
       if (body.status !== undefined) updateData.status = body.status;
       if (body.priority !== undefined) updateData.priority = body.priority;
       if (body.clientVisible !== undefined) updateData.clientVisible = body.clientVisible;
+      if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
       if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
       if (body.assigneeId !== undefined) updateData.assigneeId = body.assigneeId || null;
       if (body.order !== undefined) updateData.order = body.order;
@@ -181,6 +182,11 @@ export async function PATCH(
             orderBy: { order: "asc" },
             select: { id: true },
           });
+          let nextStart: Date | null = null;
+          if (updated.startDate && updated.dueDate) {
+            const durationMs = new Date(updated.dueDate).getTime() - new Date(updated.startDate).getTime();
+            nextStart = new Date(nextDue.getTime() - durationMs);
+          }
           await prisma.task.create({
             data: {
               title: updated.title,
@@ -188,6 +194,7 @@ export async function PATCH(
               status: firstOpen?.id ?? updated.status,
               priority: updated.priority,
               clientVisible: updated.clientVisible,
+              startDate: nextStart,
               dueDate: nextDue,
               projectId: updated.projectId,
               assigneeId: updated.assigneeId,

@@ -12,7 +12,7 @@ import { csvStringify } from "@/lib/csv";
  * das man als Vorlage befüllen und über /import wieder hochladen kann.
  *
  * CSV-Schema (Header in dieser Reihenfolge):
- *   title, description, status, priority, dueDate, assignee, epic, parentTitle, clientVisible
+ *   title, description, status, priority, startDate, dueDate, assignee, epic, parentTitle, clientVisible
  *
  *   - status, epic        → Anzeigenamen (case-insensitive Match beim Import)
  *   - assignee            → E-Mail-Adresse
@@ -28,6 +28,7 @@ const CSV_HEADERS = [
   "description",
   "status",
   "priority",
+  "startDate",
   "dueDate",
   "assignee",
   "epic",
@@ -36,10 +37,10 @@ const CSV_HEADERS = [
 ] as const;
 
 const SAMPLE_ROWS: string[][] = [
-  ["Onboarding-Call vorbereiten", "Agenda + Folien für Kickoff", "Backlog", "HIGH", "", "", "Onboarding", "", "false"],
-  ["Briefing durchgehen", "Mit Kunden Anforderungen klären", "Backlog", "MEDIUM", "", "", "Onboarding", "Onboarding-Call vorbereiten", "false"],
-  ["Folien-Template anpassen", "", "Backlog", "LOW", "", "", "Onboarding", "Onboarding-Call vorbereiten", "false"],
-  ["Wireframes erstellen", "Zwei Varianten zur Abstimmung", "In Arbeit", "MEDIUM", "2026-05-15", "team@example.com", "Design", "", "true"],
+  ["Onboarding-Call vorbereiten", "Agenda + Folien für Kickoff", "Backlog", "HIGH", "", "", "", "Onboarding", "", "false"],
+  ["Briefing durchgehen", "Mit Kunden Anforderungen klären", "Backlog", "MEDIUM", "", "", "", "Onboarding", "Onboarding-Call vorbereiten", "false"],
+  ["Folien-Template anpassen", "", "Backlog", "LOW", "", "", "", "Onboarding", "Onboarding-Call vorbereiten", "false"],
+  ["Wireframes erstellen", "Zwei Varianten zur Abstimmung", "In Arbeit", "MEDIUM", "2026-05-10", "2026-05-15", "team@example.com", "Design", "", "true"],
 ];
 
 function fmtDate(d: Date | string | null): string {
@@ -119,6 +120,7 @@ export async function GET(
     t.description ?? "",
     statusName.get(t.status) ?? t.status,
     t.priority,
+    fmtDate(t.startDate),
     fmtDate(t.dueDate),
     t.assignee?.email ?? "",
     t.epic?.title ?? "",
