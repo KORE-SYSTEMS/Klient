@@ -353,7 +353,7 @@ export default function MyTasksPage() {
                               {task.title}
                             </span>
                             {task.approvalStatus === "PENDING" && (
-                              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-meta font-semibold text-warning shrink-0">
+                              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-meta font-medium text-warning shrink-0">
                                 <Hourglass className="h-2.5 w-2.5" />Abnahme
                               </span>
                             )}
@@ -405,7 +405,7 @@ export default function MyTasksPage() {
                       {/* Status pill */}
                       <div className="w-[80px] shrink-0 hidden sm:block">
                         <span
-                          className="inline-flex rounded-full px-2 py-0.5 text-meta font-semibold truncate max-w-full"
+                          className="inline-flex rounded-full px-2 py-0.5 text-meta font-medium truncate max-w-full"
                           style={{
                             backgroundColor: task.statusColor + "20",
                             color: task.statusColor,

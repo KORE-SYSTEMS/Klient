@@ -424,12 +424,12 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {version && !version.updateAvailable && version.latest && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-caption font-semibold text-success">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-meta font-medium text-success">
                     <CheckCircle2 className="h-3 w-3" />Aktuell
                   </span>
                 )}
                 {version?.updateAvailable && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 text-caption font-semibold text-warning">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-meta font-medium text-warning">
                     <AlertCircle className="h-3 w-3" />Update verfügbar · v{version.latest?.version}
                   </span>
                 )}

@@ -50,8 +50,8 @@ export function StatusPill({
   const pill = (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium transition-colors select-none",
-        size === "sm" ? "px-2 py-0.5 text-meta" : "px-2.5 py-0.5 text-caption",
+        "inline-flex items-center gap-1 rounded-full font-medium text-meta transition-colors select-none",
+        size === "sm" ? "px-2 py-0.5" : "px-2.5 py-0.5",
         colorClass,
         editable && "cursor-pointer hover:brightness-125",
         className,

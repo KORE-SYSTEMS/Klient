@@ -400,7 +400,7 @@ export function TimerButton({
             onStart(taskId);
           }}
           className={cn(
-            "inline-flex items-center gap-1 rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary",
+            "inline-flex items-center gap-1 rounded-md text-muted-foreground/60 transition-colors hover:text-foreground",
             btnSize
           )}
           title="Timer starten"
@@ -409,5 +409,55 @@ export function TimerButton({
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * Ultra-compact timer-icon für TaskCard. Default: subtle Play (wie eye-icon).
+ * Aktiv: kleines rot pulsierendes Square mit Mini-Time.
+ */
+export function TaskCardTimer({
+  taskId,
+  isActive,
+  elapsed,
+  onStart,
+  onStop,
+}: {
+  taskId: string;
+  isActive: boolean;
+  elapsed: number;
+  onStart: (taskId: string) => void;
+  onStop: () => void;
+}) {
+  if (isActive) {
+    return (
+      <button
+        data-no-click
+        onClick={(e) => {
+          e.stopPropagation();
+          onStop();
+        }}
+        className="inline-flex items-center gap-1 rounded text-destructive transition-colors hover:bg-destructive/10 px-1 h-5"
+        title="Timer stoppen"
+      >
+        <Square className="h-2.5 w-2.5 fill-current" />
+        <span className="font-mono text-meta font-medium tabular-nums">
+          {formatDuration(elapsed)}
+        </span>
+      </button>
+    );
+  }
+  return (
+    <button
+      data-no-click
+      onClick={(e) => {
+        e.stopPropagation();
+        onStart(taskId);
+      }}
+      className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground/50 transition-colors hover:text-foreground hover:bg-accent"
+      title="Timer starten"
+    >
+      <Play className="h-3 w-3 fill-current" />
+    </button>
   );
 }

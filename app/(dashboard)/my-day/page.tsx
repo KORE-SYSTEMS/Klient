@@ -374,7 +374,7 @@ function TaskRow({
               {task.title}
             </span>
             {task.approvalStatus === "PENDING" && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-meta font-semibold text-warning shrink-0">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-warning/15 px-1.5 py-0.5 text-meta font-medium text-warning shrink-0">
                 <Hourglass className="h-2.5 w-2.5" />Abnahme
               </span>
             )}
@@ -413,7 +413,7 @@ function TaskRow({
         )}
 
         <span
-          className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-meta font-semibold whitespace-nowrap"
+          className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-meta font-medium whitespace-nowrap"
           style={{ backgroundColor: (task.statusColor || "#6b7280") + "20", color: task.statusColor || "#6b7280" }}
         >
           {task.statusName}

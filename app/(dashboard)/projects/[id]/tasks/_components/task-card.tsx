@@ -7,19 +7,18 @@ import {
   ArrowRight,
   Calendar,
   CheckCircle2,
-  Clock,
   Eye,
   Lock,
   MessageSquare,
   Paperclip,
   Repeat,
+  ClipboardCheck,
 } from "lucide-react";
 import { describeRecurrence, parseRecurrence } from "@/lib/recurrence";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { PriorityPill } from "@/components/task/priority-pill";
-import { ApprovalBadge } from "@/components/task/approval-badge";
-import { TimerButton, formatDurationShort } from "@/components/time-tracker";
+import { TaskCardTimer } from "@/components/time-tracker";
+import { getPriorityHex, PRIORITY_LABELS } from "@/lib/task-meta";
 import { InlineTitle } from "./inline-title";
 import { getNextStatus } from "../_lib/dnd";
 import type { Task, TaskStatus } from "../_lib/types";
@@ -36,18 +35,24 @@ interface TaskCardProps {
   currentUserId?: string;
   onUpdateTitle?: (id: string, title: string) => void;
   onNextPhase?: (task: Task) => void;
-  /** When true, card shows a selected ring + tinted background. */
   selected?: boolean;
-  /** Cmd/Ctrl-click toggles selection; shift-click extends range. */
   onSelect?: (taskId: string, mode: "toggle" | "range") => void;
-  /** Whether multi-select mode is active (changes plain-click behavior?). */
   selectionActive?: boolean;
 }
 
 /**
- * Sortable kanban card. The visible content while dragging is rendered by the
- * <DragOverlay> in the parent — this card swaps to a dashed placeholder so the
- * drop slot is obvious.
+ * Task-Card im Linear/Notion-Style:
+ *
+ *   ┌──────────────────────────────────────┐
+ *   │ Title                  ◷ ⟳ 👁 ▶      │  ← top-right: subtle icon row
+ *   │ Description (line-clamp-2)            │
+ *   │                                       │
+ *   │ ━━━━ Checklist 3/5 ━━━━━              │  ← optional progress bar
+ *   │                                       │
+ *   │ ● Hoch  ● Epic                        │  ← priority dot + epic dot
+ *   │ ─────────────────────────────────     │
+ *   │ KS  06.05.2026         💬 3  📎 1     │  ← bottom: avatar+date | counters
+ *   └──────────────────────────────────────┘
  */
 export function TaskCard({
   task,
@@ -112,6 +117,9 @@ export function TaskCard({
   const checkTotal = task._count?.checklistItems ?? 0;
   const checkDone = task._count?.checklistDone ?? 0;
   const checkPct = checkTotal > 0 ? Math.round((checkDone / checkTotal) * 100) : 0;
+  const recurrence = task.recurrenceRule ? parseRecurrence(task.recurrenceRule) : null;
+  const showPriority = task.priority && task.priority !== "MEDIUM";
+  const overdue = task.dueDate && new Date(task.dueDate) < new Date();
 
   return (
     <div
@@ -131,69 +139,76 @@ export function TaskCard({
         )}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest("[data-no-click]")) return;
-          // Modifier-click → multi-select instead of opening dialog
           if (!isClient && onSelect) {
             const meta = e.metaKey || e.ctrlKey;
             const shift = e.shiftKey;
             if (meta) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
             if (shift) { e.preventDefault(); onSelect(task.id, "range"); return; }
-            // While selection is active, plain click also toggles — opening
-            // the dialog would lose the ongoing bulk operation.
             if (selectionActive) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
           }
           onClick();
         }}
       >
-        <div className="p-4 space-y-3.5">
-          {/* Title */}
-          <div
-            className={cn(
-              "task-title-text text-sm font-semibold leading-snug",
-              isDone && "line-through text-muted-foreground",
-            )}
-            data-no-click=""
-          >
-            <InlineTitle
-              value={task.title}
-              onSave={(t) => onUpdateTitle?.(task.id, t)}
-              disabled={isClient || !onUpdateTitle}
-              inputClassName="text-sm font-semibold leading-snug"
-            />
-          </div>
+        <div className="p-3.5 space-y-3">
+          {/* Top row: Title left + subtle icons right */}
+          <div className="flex items-start gap-2">
+            <div
+              className={cn(
+                "flex-1 min-w-0 text-sm font-semibold leading-snug",
+                isDone && "line-through text-muted-foreground",
+              )}
+              data-no-click=""
+            >
+              <InlineTitle
+                value={task.title}
+                onSave={(t) => onUpdateTitle?.(task.id, t)}
+                disabled={isClient || !onUpdateTitle}
+                inputClassName="text-sm font-semibold leading-snug"
+              />
+            </div>
 
-          {/* Tags: epic · priority · approval · clientVisible */}
-          <div className="flex flex-wrap gap-1.5">
-            {task.epic && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
+            {/* Top-right: subtle icon cluster */}
+            <div className="flex items-center gap-0.5 shrink-0 -mt-0.5 -mr-1">
+              {task.approvalStatus === "PENDING" && (
                 <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: task.epic.color }}
-                />
-                {task.epic.title}
-              </span>
-            )}
-            <PriorityPill priority={task.priority} size="md" />
-            {task.approvalStatus && <ApprovalBadge status={task.approvalStatus as string} />}
-            {task.recurrenceRule && (() => {
-              const rule = parseRecurrence(task.recurrenceRule);
-              return rule ? (
+                  className="flex h-5 w-5 items-center justify-center rounded text-warning"
+                  title="Wartet auf Abnahme"
+                >
+                  <ClipboardCheck className="h-3 w-3" />
+                </span>
+              )}
+              {recurrence && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 text-caption font-medium text-info"
-                  title={describeRecurrence(rule)}
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50"
+                  title={describeRecurrence(recurrence)}
                 >
                   <Repeat className="h-3 w-3" />
                 </span>
-              ) : null;
-            })()}
-            {task.clientVisible && !isClient && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
-                <Eye className="h-3 w-3" />
-              </span>
-            )}
+              )}
+              {task.clientVisible && !isClient && (
+                <span
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50"
+                  title="Für Kunden sichtbar"
+                >
+                  <Eye className="h-3 w-3" />
+                </span>
+              )}
+              {!isClient && (
+                <span data-no-click>
+                  <TaskCardTimer
+                    taskId={task.id}
+                    isActive={isTimerActive}
+                    elapsed={timerElapsed}
+                    onStart={onTimerStart}
+                    onStop={onTimerStop}
+                  />
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Description (optional) */}
-          {task.description && (
+          {task.description?.trim() && (
             <p className="text-caption leading-relaxed text-muted-foreground line-clamp-2">
               {task.description}
             </p>
@@ -202,58 +217,74 @@ export function TaskCard({
           {/* Checklist progress bar */}
           {checkTotal > 0 && (
             <div className="space-y-1">
-              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
-                    checkPct === 100 ? "bg-success" : "bg-primary",
+                    checkPct === 100 ? "bg-success" : "bg-foreground/40",
                   )}
                   style={{ width: `${checkPct}%` }}
                 />
               </div>
-              <span
-                className={cn(
-                  "text-meta tabular-nums",
-                  checkPct === 100 ? "text-success" : "text-muted-foreground",
-                )}
-              >
-                {checkDone}/{checkTotal}
+              <span className="text-meta tabular-nums text-muted-foreground">
+                {checkDone}/{checkTotal} Subtasks
               </span>
             </div>
           )}
 
-          {/* Bottom row: avatar + date left | counts + timer right */}
-          <div className="flex items-center justify-between gap-2 pt-0.5">
+          {/* Priority + Epic — small dot indicators */}
+          {(showPriority || task.epic) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              {showPriority && (
+                <span className="inline-flex items-center gap-1.5 text-meta font-medium text-muted-foreground">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: getPriorityHex(task.priority) }}
+                  />
+                  {PRIORITY_LABELS[task.priority]}
+                </span>
+              )}
+              {task.epic && (
+                <span className="inline-flex items-center gap-1.5 text-meta font-medium text-muted-foreground truncate min-w-0">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: task.epic.color }}
+                  />
+                  <span className="truncate">{task.epic.title}</span>
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Bottom: Avatar + Date | Counters + NextPhase */}
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
             <div className="flex items-center gap-2 min-w-0">
               {task.assignee ? (
-                <Avatar className="h-6 w-6 shrink-0 border-2 border-background">
+                <Avatar className="h-5 w-5 shrink-0">
                   <AvatarFallback className="text-micro font-semibold">
                     {getInitials(task.assignee.name || task.assignee.email)}
                   </AvatarFallback>
                 </Avatar>
               ) : (
-                <div className="h-6 w-6 shrink-0 rounded-full border-2 border-dashed border-muted-foreground/20" />
+                <div className="h-5 w-5 shrink-0 rounded-full border border-dashed border-muted-foreground/30" />
               )}
-              {task.dueDate && (() => {
-                const overdue = new Date(task.dueDate) < new Date();
-                return (
-                  <span
-                    className={cn(
-                      "flex items-center gap-1 text-caption truncate",
-                      overdue ? "text-destructive" : "text-muted-foreground",
-                    )}
-                  >
-                    {overdue ? <AlertCircle className="h-3 w-3 shrink-0" /> : <Calendar className="h-3 w-3 shrink-0" />}
-                    {formatDate(task.dueDate)}
-                  </span>
-                );
-              })()}
+              {task.dueDate && (
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-meta truncate",
+                    overdue ? "text-destructive" : "text-muted-foreground",
+                  )}
+                >
+                  {overdue ? <AlertCircle className="h-2.5 w-2.5 shrink-0" /> : <Calendar className="h-2.5 w-2.5 shrink-0" />}
+                  {formatDate(task.dueDate)}
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+            <div className="flex items-center gap-2 shrink-0 text-meta text-muted-foreground/70">
               {task._count?.subtasks ? (
                 <span
-                  className="flex items-center gap-0.5 text-caption tabular-nums"
+                  className="flex items-center gap-0.5 tabular-nums"
                   title={`${task._count.subtasksDone ?? 0} von ${task._count.subtasks} Subtasks erledigt`}
                 >
                   <CheckCircle2 className="h-3 w-3" />
@@ -261,23 +292,17 @@ export function TaskCard({
                 </span>
               ) : null}
               {task._count?.comments ? (
-                <span className="flex items-center gap-0.5 text-caption">
+                <span className="flex items-center gap-0.5">
                   <MessageSquare className="h-3 w-3" />
                   {task._count.comments}
                 </span>
               ) : null}
               {task._count?.files ? (
-                <span className="flex items-center gap-0.5 text-caption">
+                <span className="flex items-center gap-0.5">
                   <Paperclip className="h-3 w-3" />
                   {task._count.files}
                 </span>
               ) : null}
-              {totalTime > 0 && (
-                <span className="flex items-center gap-0.5 text-caption">
-                  <Clock className="h-3 w-3" />
-                  {formatDurationShort(totalTime)}
-                </span>
-              )}
               {!isClient && nextStatus && onNextPhase && (
                 <button
                   data-no-click
@@ -286,23 +311,10 @@ export function TaskCard({
                     onNextPhase(task);
                   }}
                   title={`→ ${nextStatus.name}`}
-                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 opacity-0 transition group-hover:opacity-100 hover:bg-muted hover:text-primary"
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 opacity-0 transition group-hover:opacity-100 hover:bg-accent hover:text-foreground"
                 >
                   <ArrowRight className="h-3 w-3" />
                 </button>
-              )}
-              {!isClient && (
-                <span data-no-click>
-                  <TimerButton
-                    taskId={task.id}
-                    isActive={isTimerActive}
-                    elapsed={timerElapsed}
-                    totalTime={totalTime}
-                    onStart={onTimerStart}
-                    onStop={onTimerStop}
-                    size="sm"
-                  />
-                </span>
               )}
             </div>
           </div>

@@ -415,7 +415,7 @@ export default function InvoicesPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm truncate">{invoice.title}</span>
                         {overdue && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-meta font-semibold text-destructive">
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-meta font-medium text-destructive">
                             <AlertCircle className="h-2.5 w-2.5" />Überfällig
                           </span>
                         )}

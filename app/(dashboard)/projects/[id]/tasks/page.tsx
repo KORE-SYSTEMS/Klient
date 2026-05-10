@@ -1270,11 +1270,11 @@ export default function TasksPage() {
                 <span className="text-caption font-medium uppercase tracking-wider text-muted-foreground shrink-0">Phase</span>
                 {current && (
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-medium"
                     style={{ backgroundColor: current.color + "22", color: current.color }}
                   >
                     {current.name}
-                    {current.isApproval && <ClipboardCheck className="h-3 w-3" />}
+                    {current.isApproval && <ClipboardCheck className="h-2.5 w-2.5" />}
                   </span>
                 )}
                 <div className="flex-1" />
@@ -1319,7 +1319,7 @@ export default function TasksPage() {
                       {(() => {
                         const si = getStatusInfo(editTask.status);
                         return si ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-medium"
                             style={{ backgroundColor: si.color + "18", color: si.color }}>
                             {si.name}
                           </span>
@@ -1330,7 +1330,7 @@ export default function TasksPage() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Priorität</Label>
                     <div className="mt-1">
-                      <PriorityPill priority={editTask.priority} size="md" />
+                      <PriorityPill priority={editTask.priority} />
                     </div>
                   </div>
                   {editTask.dueDate && (
