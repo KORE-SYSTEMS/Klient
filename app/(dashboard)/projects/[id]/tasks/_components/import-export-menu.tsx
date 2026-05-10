@@ -211,7 +211,7 @@ export function ImportExportMenu({ projectId, onImported, compact, autoOpen }: I
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileUp className="h-4 w-4 text-primary" />
+              <FileUp className="h-4 w-4 text-muted-foreground" />
               Tasks importieren
             </DialogTitle>
           </DialogHeader>

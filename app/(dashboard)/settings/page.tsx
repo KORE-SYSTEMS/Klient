@@ -429,7 +429,7 @@ export default function SettingsPage() {
                   </span>
                 )}
                 {version?.updateAvailable && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-caption font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 text-caption font-semibold text-warning">
                     <AlertCircle className="h-3 w-3" />Update verfügbar · v{version.latest?.version}
                   </span>
                 )}

@@ -148,12 +148,12 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-card transition-all duration-200",
+        "flex flex-col border-r bg-[hsl(var(--sidebar))] transition-all duration-200",
         collapsed ? "w-16" : "w-60"
       )}
     >
       {/* Logo / header */}
-      <div className="flex h-14 items-center border-b px-3">
+      <div className="flex h-14 items-center border-b border-[hsl(var(--sidebar-border))] px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center gap-2 flex-1 min-w-0">
             {logo ? (
@@ -192,16 +192,16 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto py-3 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-4 space-y-6">
         {sections.map((section) => (
           <div key={section.section}>
             {!collapsed && (
-              <p className="mb-1 px-4 text-meta font-semibold uppercase tracking-wider text-muted-foreground/60 select-none">
+              <p className="mb-2 px-4 text-meta font-semibold uppercase tracking-wider text-muted-foreground/50 select-none">
                 {section.section}
               </p>
             )}
 
-            <div className="space-y-0.5 px-2">
+            <div className="space-y-1 px-3">
               {section.items.map((item) => {
                 const hasChildren = !!item.children?.length;
                 const isExpanded = expanded.has(item.href);
@@ -221,20 +221,20 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                         }}
                         title={collapsed ? item.label : undefined}
                         className={cn(
-                          "relative flex w-full items-center gap-3 rounded-sm py-2 text-sm font-medium transition-colors",
+                          "relative flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors",
                           collapsed ? "justify-center px-2" : "px-3",
                           isParentActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                            ? "bg-accent text-foreground"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         )}
                       >
                         {isParentActive && !collapsed && (
-                          <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-primary" />
+                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" />
                         )}
                         <item.icon
                           className={cn(
                             "shrink-0 h-4 w-4 transition-colors",
-                            isParentActive ? "text-primary" : "text-muted-foreground"
+                            isParentActive ? "text-foreground" : "text-muted-foreground"
                           )}
                         />
                         {!collapsed && (
@@ -254,20 +254,20 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                         href={item.href}
                         title={collapsed ? item.label : undefined}
                         className={cn(
-                          "relative flex items-center gap-3 rounded-sm py-2 text-sm font-medium transition-colors",
+                          "relative flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors",
                           collapsed ? "justify-center px-2" : "px-3",
                           isParentActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+                            ? "bg-accent text-foreground"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         )}
                       >
                         {isParentActive && !collapsed && (
-                          <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-primary" />
+                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" />
                         )}
                         <item.icon
                           className={cn(
                             "shrink-0 h-4 w-4 transition-colors",
-                            isParentActive ? "text-primary" : "text-muted-foreground"
+                            isParentActive ? "text-foreground" : "text-muted-foreground"
                           )}
                         />
                         {!collapsed && <span>{item.label}</span>}
@@ -276,7 +276,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
 
                     {/* Sub-items */}
                     {hasChildren && isExpanded && !collapsed && (
-                      <div className="mt-0.5 space-y-0.5 pl-3">
+                      <div className="mt-1 space-y-0.5 pl-4">
                         {item.children!.map((child) => {
                           const isActive = isChildActive(child, pathname);
                           return (
@@ -284,7 +284,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                               key={child.href}
                               href={child.href}
                               className={cn(
-                                "flex items-center gap-2.5 rounded-sm py-1.5 pl-4 pr-3 text-[13px] font-medium transition-colors",
+                                "flex items-center gap-2.5 rounded-lg py-1.5 pl-4 pr-3 text-[13px] font-medium transition-colors",
                                 isActive
                                   ? "text-foreground bg-accent"
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -307,7 +307,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
 
       {/* Footer */}
       {!collapsed ? (
-        <div className="flex items-center justify-between border-t px-4 py-3">
+        <div className="flex items-center justify-between border-t border-[hsl(var(--sidebar-border))] px-4 py-3">
           <span className="text-meta text-muted-foreground/50 font-mono">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
           </span>
@@ -333,7 +333,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-1 border-t px-2 py-3">
+        <div className="flex flex-col items-center gap-1 border-t border-[hsl(var(--sidebar-border))] px-2 py-3">
           <a
             href="https://github.com/KORE-SYSTEMS/Klient"
             target="_blank"

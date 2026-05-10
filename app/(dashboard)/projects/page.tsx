@@ -175,8 +175,8 @@ export default function ProjectsPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-4 space-y-3">
+            <Card key={i} className="gap-4 py-5">
+              <CardContent className="space-y-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-3 w-3 rounded-sm" />
@@ -206,13 +206,13 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-tight">
             Projekte
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-1.5">
             {projects.length} {projects.length === 1 ? "Projekt" : "Projekte"}
             {showArchived && " (inkl. archivierte)"}
           </p>
@@ -372,11 +372,11 @@ export default function ProjectsPage() {
             return (
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className={cn(
-                  "group cursor-pointer relative",
+                  "group cursor-pointer relative gap-4 py-5 transition-colors hover:border-border/80",
                   isOverdue    && "border-destructive/40",
                   project.archived && "opacity-60"
                 )}>
-                  <CardContent className="p-4 space-y-3">
+                  <CardContent className="space-y-3.5">
                     {/* Title row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">

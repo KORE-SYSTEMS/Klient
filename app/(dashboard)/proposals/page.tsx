@@ -696,7 +696,7 @@ export default function ProposalsPage() {
                             }
                           }}
                         >
-                          {p.status === s && <Check className="h-3.5 w-3.5 mr-2 text-primary" />}
+                          {p.status === s && <Check className="h-3.5 w-3.5 mr-2 text-foreground" />}
                           {p.status !== s && <span className="w-3.5 mr-2" />}
                           {STATUS_CONFIG[s]?.label}
                         </DropdownMenuItem>

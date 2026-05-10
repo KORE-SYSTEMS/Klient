@@ -99,7 +99,7 @@ export function TaskFilters({
     cn(
       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
       active
-        ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+        ? "border-foreground/30 bg-accent text-foreground"
         : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
     );
 
@@ -120,8 +120,8 @@ export function TaskFilters({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
         <div className="relative shrink-0">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -350,7 +350,7 @@ export function TaskFilters({
                     />
                     <span className="truncate">{epic.title}</span>
                     {filters.epicId === epic.id && (
-                      <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-primary" />
+                      <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-foreground" />
                     )}
                   </DropdownMenuItem>
                 ))}

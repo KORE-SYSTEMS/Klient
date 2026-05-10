@@ -130,11 +130,11 @@ export default async function DashboardPage() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{greet(userName)}</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
+        <p className="text-muted-foreground text-sm mt-1.5">
           {isClient
             ? "Hier ist der aktuelle Stand Ihrer Projekte."
             : "Hier ist eine Übersicht über alle Aktivitäten."}
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
           icon={CheckSquare}
           label="Meine Tasks"
           value={myTaskCount}
-          iconClass="text-primary"
+          iconClass="text-muted-foreground"
           href="/tasks"
           sublabel="zugewiesen"
         />
@@ -181,18 +181,18 @@ export default async function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* My Tasks */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CheckSquare className="h-4 w-4 text-primary" />
+                <CheckSquare className="h-4 w-4 text-muted-foreground" />
                 Meine Tasks
               </CardTitle>
-              <Link href="/tasks" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+              <Link href="/tasks" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                 Alle <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1.5 pt-0">
+          <CardContent className="space-y-2">
             {myTasks.length === 0 ? (
               <EmptyHint icon={CheckSquare} text="Keine Tasks zugewiesen" />
             ) : (
@@ -200,11 +200,11 @@ export default async function DashboardPage() {
                 <Link
                   key={task.id}
                   href={`/projects/${task.project.id}/tasks?task=${task.id}`}
-                  className="group flex items-start gap-3 rounded-lg border bg-card px-3 py-2.5 text-sm transition-colors hover:bg-accent"
+                  className="group flex items-start gap-3 rounded-lg border bg-card px-3.5 py-3 text-sm transition-colors hover:bg-accent/60"
                 >
                   <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-sm group-hover:text-primary transition-colors">
+                    <div className="truncate font-medium text-sm group-hover:text-foreground transition-colors">
                       {task.title}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -239,13 +239,13 @@ export default async function DashboardPage() {
 
         {/* Upcoming Deadlines */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-primary" />
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
               Bald fällig
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1.5 pt-0">
+          <CardContent className="space-y-2">
             {upcomingTasks.length === 0 ? (
               <EmptyHint icon={CalendarDays} text="Keine Deadlines in den nächsten 7 Tagen" />
             ) : (
@@ -258,19 +258,19 @@ export default async function DashboardPage() {
                   <Link
                     key={task.id}
                     href={`/projects/${task.project.id}/tasks?task=${task.id}`}
-                    className="group flex items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:bg-accent"
+                    className="group flex items-center gap-3 rounded-lg border bg-card px-3.5 py-3 transition-colors hover:bg-accent/60"
                   >
                     {/* Due indicator */}
                     <div className={cn(
                       "flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-md text-center",
-                      overdue ? "bg-destructive/10 text-destructive" : daysLeft <= 2 ? "bg-warning/10 text-warning" : "bg-primary/10 text-primary"
+                      overdue ? "bg-destructive/10 text-destructive" : daysLeft <= 2 ? "bg-warning/10 text-warning" : "bg-muted text-foreground"
                     )}>
                       <span className="text-caption font-bold leading-none">{dueDate.toLocaleDateString("de-DE", { day: "2-digit" })}</span>
                       <span className="text-micro leading-none mt-0.5">{dueDate.toLocaleDateString("de-DE", { month: "short" })}</span>
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
+                      <div className="truncate text-sm font-medium group-hover:text-foreground transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-caption text-muted-foreground">{task.project.name}</span>
                       </div>
@@ -300,13 +300,13 @@ export default async function DashboardPage() {
         {/* Pending Approvals */}
         {(pendingApprovals.length > 0 || isClient) && (
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <ClipboardCheck className="h-4 w-4 text-warning" />
                 {isClient ? "Zur Abnahme" : "Ausstehende Abnahmen"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1.5 pt-0">
+            <CardContent className="space-y-2">
               {pendingApprovals.length === 0 ? (
                 <EmptyHint icon={ClipboardCheck} text="Keine ausstehenden Abnahmen" />
               ) : (
@@ -314,11 +314,11 @@ export default async function DashboardPage() {
                   <Link
                     key={task.id}
                     href={`/projects/${task.project.id}/tasks?task=${task.id}`}
-                    className="group flex items-center gap-3 rounded-lg border border-warning/25 bg-warning/5 px-3 py-2.5 transition-colors hover:bg-warning/10"
+                    className="group flex items-center gap-3 rounded-lg border border-warning/25 bg-warning/5 px-3.5 py-3 transition-colors hover:bg-warning/10"
                   >
                     <ClipboardCheck className="h-4 w-4 shrink-0 text-warning" />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium group-hover:text-primary transition-colors">{task.title}</div>
+                      <div className="truncate text-sm font-medium group-hover:text-foreground transition-colors">{task.title}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-caption text-muted-foreground">{task.project.name}</span>
                       </div>
@@ -338,23 +338,23 @@ export default async function DashboardPage() {
 
         {/* Projects overview */}
         <Card className={cn(pendingApprovals.length === 0 && !isClient ? "lg:col-span-2" : "")}>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FolderKanban className="h-4 w-4 text-primary" />
+                <FolderKanban className="h-4 w-4 text-muted-foreground" />
                 Projekte
               </CardTitle>
-              <Link href="/projects" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+              <Link href="/projects" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                 Alle <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent>
             {projects.length === 0 ? (
               <EmptyHint icon={FolderKanban} text="Keine Projekte vorhanden" />
             ) : (
               <div className={cn(
-                "grid gap-2",
+                "grid gap-3",
                 pendingApprovals.length === 0 && !isClient ? "sm:grid-cols-2 lg:grid-cols-3" : ""
               )}>
                 {projects.map((project) => {
@@ -367,10 +367,10 @@ export default async function DashboardPage() {
                     <Link
                       key={project.id}
                       href={`/projects/${project.id}`}
-                      className="group flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
+                      className="group flex items-start gap-3 rounded-lg border bg-card p-3.5 transition-colors hover:bg-accent/60"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold group-hover:text-primary transition-colors">
+                        <div className="truncate text-sm font-semibold group-hover:text-foreground transition-colors">
                           {project.name}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -421,13 +421,13 @@ function StatCard({
   href?: string;
 }) {
   const inner = (
-    <div className={cn("rounded-xl border bg-card p-4 transition-colors", href && "hover:bg-accent cursor-pointer")}>
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+    <div className={cn("rounded-xl border bg-card p-5 shadow-sm transition-colors", href && "hover:bg-accent/40 cursor-pointer")}>
+      <div className="flex items-center gap-2 text-muted-foreground mb-2">
         <Icon className={cn("h-3.5 w-3.5", iconClass)} />
         <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
       </div>
       <div className={cn("text-2xl font-bold tabular-nums", valueClass)}>{value}</div>
-      {sublabel && <p className="text-caption text-muted-foreground mt-0.5">{sublabel}</p>}
+      {sublabel && <p className="text-caption text-muted-foreground mt-1">{sublabel}</p>}
     </div>
   );
   return href ? <Link href={href}>{inner}</Link> : inner;

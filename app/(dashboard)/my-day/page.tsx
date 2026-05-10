@@ -139,8 +139,8 @@ export default function MyDayPage() {
         label: "Heute",
         description: "Dein Fokus für heute.",
         icon: Target,
-        tone: "text-primary",
-        toneBg: "bg-primary/10",
+        tone: "text-foreground",
+        toneBg: "bg-muted",
         tasks: todayTasks,
       },
       {
@@ -210,11 +210,11 @@ export default function MyDayPage() {
   const GreetIcon = greetIcon();
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-8 max-w-4xl">
       {/* ── Greeting + stats ───────────────────────────────────────────── */}
-      <div className="space-y-3">
+      <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
             <GreetIcon className="h-5 w-5" />
           </div>
           <div>
@@ -229,8 +229,8 @@ export default function MyDayPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-          <StatCard label="Heute"        value={stats.today}        icon={Target}       tone="text-primary" />
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+          <StatCard label="Heute"        value={stats.today}        icon={Target}       tone="text-foreground" />
           <StatCard label="Überfällig"   value={stats.overdue}      icon={AlertCircle}  tone={stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"} />
           <StatCard label="Diese Woche"  value={stats.week}         icon={CalendarDays} tone="text-info" />
           <StatCard label="Erledigt jetzt" value={stats.completedToday} icon={Sparkles}  tone={stats.completedToday > 0 ? "text-success" : "text-muted-foreground"} />
@@ -300,8 +300,8 @@ function StatCard({
   tone: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-3">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+    <div className="rounded-xl border bg-card p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-muted-foreground mb-2">
         <Icon className={cn("h-3.5 w-3.5", tone)} />
         <span className="text-meta uppercase tracking-wider font-medium">{label}</span>
       </div>
@@ -322,8 +322,8 @@ function BucketSection({
   const Icon = bucket.icon;
   return (
     <section>
-      <div className="flex items-baseline justify-between mb-2 px-1">
-        <div className="flex items-center gap-2">
+      <div className="flex items-baseline justify-between mb-3 px-1">
+        <div className="flex items-center gap-2.5">
           <div className={cn("flex h-6 w-6 items-center justify-center rounded-full", bucket.toneBg)}>
             <Icon className={cn("h-3.5 w-3.5", bucket.tone)} />
           </div>
@@ -335,7 +335,7 @@ function BucketSection({
         <p className="text-meta text-muted-foreground hidden sm:block">{bucket.description}</p>
       </div>
 
-      <div className="rounded-lg border divide-y overflow-hidden">
+      <div className="rounded-xl border bg-card divide-y overflow-hidden shadow-sm">
         {bucket.tasks.map((task) => (
           <TaskRow key={task.id} task={task} onMarkDone={onMarkDone} />
         ))}
@@ -365,7 +365,7 @@ function TaskRow({
     })();
 
   return (
-    <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent/30">
+    <div className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40">
       {/* Quick mark-done */}
       {onMarkDone ? (
         <button
@@ -388,7 +388,7 @@ function TaskRow({
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+            <span className="text-sm font-medium truncate group-hover:text-foreground transition-colors">
               {task.title}
             </span>
             {task.approvalStatus === "PENDING" && (

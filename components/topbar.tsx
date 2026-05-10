@@ -29,7 +29,7 @@ interface TopbarProps {
 export function Topbar({ user }: TopbarProps) {
   const { density, toggle } = useDensity();
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-14 items-center justify-between border-b bg-background px-6">
       <button
         type="button"
         onClick={openCommandPalette}

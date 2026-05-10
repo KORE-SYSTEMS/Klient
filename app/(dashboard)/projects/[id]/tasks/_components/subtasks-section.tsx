@@ -149,7 +149,7 @@ export function SubtasksSection({
               <button
                 type="button"
                 onClick={() => toggleDone(sub)}
-                className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label={isDone ? "Als offen markieren" : "Als erledigt markieren"}
               >
                 {isDone

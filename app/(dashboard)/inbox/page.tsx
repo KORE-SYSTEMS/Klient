@@ -208,15 +208,15 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Inbox className="h-6 w-6 text-primary" />
+          <h1 className="font-heading text-2xl font-bold tracking-tight flex items-center gap-2.5">
+            <Inbox className="h-6 w-6 text-muted-foreground" />
             Inbox
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-1.5">
             {data.unreadCount > 0
               ? `${data.unreadCount} ungelesen`
               : "Alles gesichtet"}
@@ -240,7 +240,7 @@ export default function InboxPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         {PRESET_FILTERS.map((f) => {
           const active = filter === f.key && filterTypes.length === 0;
           const count = f.key === "unread" ? data.unreadCount : null;
@@ -255,7 +255,7 @@ export default function InboxPage() {
               {count !== null && count > 0 && (
                 <span className={cn(
                   "ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-meta font-semibold tabular-nums",
-                  active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary",
+                  active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-foreground",
                 )}>
                   {count}
                 </span>
@@ -353,7 +353,7 @@ export default function InboxPage() {
           }
         />
       ) : (
-        <div className="rounded-lg border divide-y overflow-hidden">
+        <div className="rounded-xl border bg-card divide-y overflow-hidden shadow-sm">
           {visible.map((n) => {
             const meta = TYPE_META[n.type] || { icon: Bell, label: n.type, tone: "text-muted-foreground bg-muted" };
             const Icon = meta.icon;
@@ -362,8 +362,8 @@ export default function InboxPage() {
               <div
                 key={n.id}
                 className={cn(
-                  "group flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer",
-                  !n.read && "bg-primary/5",
+                  "group flex items-start gap-3 px-4 py-3.5 transition-colors cursor-pointer",
+                  !n.read && "bg-accent/30",
                   isSelected && "bg-accent",
                   !isSelected && "hover:bg-accent/50",
                 )}

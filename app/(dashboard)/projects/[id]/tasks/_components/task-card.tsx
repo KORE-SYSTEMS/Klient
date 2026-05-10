@@ -122,7 +122,7 @@ export function TaskCard({
     >
       <div
         className={cn(
-          "group rounded-xl border bg-card",
+          "group rounded-xl border bg-card shadow-sm transition-colors hover:border-border/80",
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
           isTimerActive && "ring-2 ring-primary/30",
@@ -144,7 +144,7 @@ export function TaskCard({
           onClick();
         }}
       >
-        <div className="p-3.5 space-y-3">
+        <div className="p-4 space-y-3.5">
           {/* Title */}
           <div
             className={cn(

@@ -657,7 +657,7 @@ export default function GlobalInvoicesPage() {
                             disabled={inv.status === s}
                             onClick={() => changeStatus(inv, s)}
                           >
-                            {inv.status === s && <Check className="h-3.5 w-3.5 mr-2 text-primary" />}
+                            {inv.status === s && <Check className="h-3.5 w-3.5 mr-2 text-foreground" />}
                             {inv.status !== s && <span className="w-3.5 mr-2" />}
                             {STATUS_CONFIG[s]?.label}
                           </DropdownMenuItem>

@@ -127,18 +127,18 @@ export default async function ClientsPage() {
           {clients.map((client) => {
             const lastActivity = client.clientActivities[0];
             return (
-              <Card key={client.id} className="group relative overflow-hidden">
-                <CardContent className="p-4 space-y-3">
+              <Card key={client.id} className="group relative overflow-hidden gap-4 py-5 transition-colors hover:border-border/80">
+                <CardContent className="space-y-3.5">
                   <div className="flex items-start justify-between gap-3">
                     {/* Avatar + identity */}
                     <Link href={`/clients/${client.id}`} className="flex items-center gap-3 min-w-0 flex-1">
                       <Avatar className="h-10 w-10 shrink-0 border-2 border-background">
-                        <AvatarFallback className="font-semibold bg-primary/10 text-primary text-sm">
+                        <AvatarFallback className="font-semibold bg-muted text-foreground text-sm">
                           {getInitials(client.name || client.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                        <div className="font-semibold text-sm truncate group-hover:text-foreground transition-colors">
                           {client.name || "Kein Name"}
                         </div>
                         {client.company && (
@@ -197,7 +197,7 @@ export default async function ClientsPage() {
                   {/* Detail link */}
                   <Link
                     href={`/clients/${client.id}`}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors pt-1 border-t"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors pt-1 border-t"
                   >
                     Details öffnen
                     <ArrowRight className="h-3 w-3" />

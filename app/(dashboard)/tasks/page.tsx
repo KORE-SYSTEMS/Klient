@@ -225,7 +225,7 @@ export default function MyTasksPage() {
                 <Filter className="h-3.5 w-3.5" />
                 Priorität
                 {filterPriorities.length > 0 && (
-                  <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-meta font-bold text-primary-foreground">
+                  <span className="ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground px-1 text-meta font-bold text-background">
                     {filterPriorities.length}
                   </span>
                 )}
@@ -269,7 +269,7 @@ export default function MyTasksPage() {
                 className={cn(
                   "rounded px-2 py-0.5 text-caption font-medium transition-colors whitespace-nowrap",
                   filterDue === opt.value
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -300,7 +300,7 @@ export default function MyTasksPage() {
           description={activeFilters > 0 ? "Keine Tasks entsprechen den gewählten Filtern." : "Dir sind aktuell keine Tasks zugewiesen."}
         />
       ) : (
-        <div className="rounded-lg border overflow-hidden">
+        <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
           {/* Table header */}
           <div className="flex items-center border-b bg-muted/30 px-4 py-2 text-caption font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="flex-1 min-w-0">Task</div>

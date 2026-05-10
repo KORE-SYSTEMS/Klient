@@ -75,14 +75,14 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-w-[280px] max-w-[320px] flex-col rounded-lg transition-colors",
-        isOver ? "bg-primary/5 ring-2 ring-primary/30 ring-inset" : "bg-transparent",
+        "flex min-w-[300px] max-w-[340px] flex-col rounded-xl transition-colors",
+        isOver ? "bg-accent/40 ring-2 ring-primary/30 ring-inset" : "bg-transparent",
       )}
     >
       {/* Column header with color bar */}
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="h-[3px] rounded-full" style={{ backgroundColor: status.color }} />
-        <div className="flex items-center justify-between px-1 pt-2.5 pb-1">
+        <div className="flex items-center justify-between px-1 pt-3 pb-1.5">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{status.name}</span>
             {status.isApproval && (
@@ -135,7 +135,7 @@ export function KanbanColumn({
       {/* Cards */}
       <ScrollArea className="flex-1">
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2 px-0.5 pb-2" style={{ minHeight: 80 }}>
+          <div className="space-y-2.5 px-0.5 pb-2" style={{ minHeight: 80 }}>
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}
@@ -163,7 +163,7 @@ export function KanbanColumn({
       {!isClient && (
         <button
           onClick={() => onAddTask(status.id)}
-          className="mx-0.5 mb-1 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="mx-0.5 mt-1 mb-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
         >
           <Plus className="h-4 w-4" />
           <span>Task hinzufügen</span>
