@@ -6,8 +6,6 @@ import { SessionProvider } from "@/components/session-provider";
 import { GlobalTimerProvider } from "@/components/global-timer";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardShortcutOverlay } from "@/components/keyboard-shortcut-overlay";
-import { DensityProvider } from "@/components/density-provider";
-
 import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({
@@ -22,19 +20,17 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider session={session}>
-      <DensityProvider>
-        <GlobalTimerProvider>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar role={session.user.role} logo={workspace?.logo} />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Topbar user={session.user} />
-              <main className="flex-1 overflow-y-auto px-8 py-10">{children}</main>
-            </div>
+      <GlobalTimerProvider>
+        <div className="flex h-screen overflow-hidden">
+          <Sidebar role={session.user.role} logo={workspace?.logo} />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <Topbar user={session.user} />
+            <main className="flex-1 overflow-y-auto px-8 py-10">{children}</main>
           </div>
-          <CommandPalette />
-          <KeyboardShortcutOverlay />
-        </GlobalTimerProvider>
-      </DensityProvider>
+        </div>
+        <CommandPalette />
+        <KeyboardShortcutOverlay />
+      </GlobalTimerProvider>
     </SessionProvider>
   );
 }

@@ -13,7 +13,6 @@ import { useSession } from "next-auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { openCommandPalette } from "@/components/command-palette";
-import { useDensity } from "@/components/density-provider";
 
 interface ShortcutEntry {
   keys: string[];
@@ -36,7 +35,6 @@ const SHORTCUT_DOCS: ShortcutEntry[] = [
   { keys: ["/"],      description: "Suche öffnen", category: "Suche" },
   // Actions
   { keys: ["C"],      description: "Neuer Task (auf Task-Seiten)", category: "Aktionen" },
-  { keys: ["D"],      description: "Dichte umschalten", category: "Aktionen" },
   // General
   { keys: ["?"],   description: "Shortcuts anzeigen", category: "Allgemein" },
   { keys: ["Esc"], description: "Dialog schließen",   category: "Allgemein" },
@@ -56,8 +54,6 @@ export function KeyboardShortcutOverlay() {
   const router = useRouter();
   const { data: session } = useSession();
   const role = session?.user?.role;
-  const { toggle: toggleDensity } = useDensity();
-
   useKeyboardShortcuts({
     "?":     () => setOpen((v) => !v),
     "g+d":   () => router.push("/dashboard"),
@@ -69,7 +65,6 @@ export function KeyboardShortcutOverlay() {
     "g+r":   () => { if (role !== "CLIENT") router.push("/reports"); },
     "g+s":   () => { if (role === "ADMIN") router.push("/settings"); },
     "c":     () => emitNewTask(),
-    "d":     () => toggleDensity(),
     "meta+k":() => openCommandPalette(),
   });
 
