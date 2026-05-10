@@ -42,15 +42,30 @@ type NavSection = { section: string; items: NavItem[] };
 
 const adminNav: NavSection[] = [
   {
-    section: "Navigation",
+    section: "",
     items: [
-      { label: "Inbox",       href: "/inbox",     icon: Inbox },
-      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
-      { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",    href: "/projects",  icon: FolderKanban },
-      { label: "Meine Tasks",  href: "/tasks",      icon: CheckSquare },
-      { label: "Angebote",     href: "/proposals",  icon: FileSignature },
-      { label: "Rechnungen",   href: "/invoices",   icon: Receipt },
+      { label: "Inbox",     href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",  href: "/my-day",    icon: Sun },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    section: "Workspace",
+    items: [
+      { label: "Projekte",    href: "/projects", icon: FolderKanban },
+      { label: "Meine Tasks", href: "/tasks",    icon: CheckSquare },
+    ],
+  },
+  {
+    section: "Finance",
+    items: [
+      { label: "Angebote",   href: "/proposals", icon: FileSignature },
+      { label: "Rechnungen", href: "/invoices",  icon: Receipt },
+    ],
+  },
+  {
+    section: "Management",
+    items: [
       {
         label: "Kunden",
         href: "/clients",
@@ -83,29 +98,54 @@ const adminNav: NavSection[] = [
 
 const memberNav: NavSection[] = [
   {
-    section: "Navigation",
+    section: "",
     items: [
-      { label: "Inbox",       href: "/inbox",     icon: Inbox },
-      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
-      { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",    href: "/projects",  icon: FolderKanban },
-      { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
-      { label: "Rechnungen",  href: "/invoices",  icon: Receipt },
-      { label: "Reports",     href: "/reports",   icon: BarChart3 },
+      { label: "Inbox",     href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",  href: "/my-day",    icon: Sun },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    section: "Workspace",
+    items: [
+      { label: "Projekte",    href: "/projects", icon: FolderKanban },
+      { label: "Meine Tasks", href: "/tasks",    icon: CheckSquare },
+    ],
+  },
+  {
+    section: "Finance",
+    items: [
+      { label: "Rechnungen", href: "/invoices", icon: Receipt },
+    ],
+  },
+  {
+    section: "Management",
+    items: [
+      { label: "Reports", href: "/reports", icon: BarChart3 },
     ],
   },
 ];
 
 const clientNav: NavSection[] = [
   {
-    section: "Navigation",
+    section: "",
     items: [
-      { label: "Inbox",       href: "/inbox",     icon: Inbox },
-      { label: "Mein Tag",    href: "/my-day",    icon: Sun },
-      { label: "Dashboard",   href: "/dashboard", icon: LayoutDashboard },
-      { label: "Projekte",    href: "/projects",  icon: FolderKanban },
-      { label: "Meine Tasks", href: "/tasks",     icon: CheckSquare },
-      { label: "Rechnungen",  href: "/invoices",  icon: Receipt },
+      { label: "Inbox",     href: "/inbox",     icon: Inbox },
+      { label: "Mein Tag",  href: "/my-day",    icon: Sun },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    section: "Workspace",
+    items: [
+      { label: "Projekte",    href: "/projects", icon: FolderKanban },
+      { label: "Meine Tasks", href: "/tasks",    icon: CheckSquare },
+    ],
+  },
+  {
+    section: "Finance",
+    items: [
+      { label: "Rechnungen", href: "/invoices", icon: Receipt },
     ],
   },
 ];
@@ -195,7 +235,7 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
       <nav className="flex-1 overflow-y-auto py-4 space-y-6">
         {sections.map((section) => (
           <div key={section.section}>
-            {!collapsed && (
+            {!collapsed && section.section && (
               <p className="mb-2 px-4 text-meta font-semibold uppercase tracking-wider text-muted-foreground/50 select-none">
                 {section.section}
               </p>
