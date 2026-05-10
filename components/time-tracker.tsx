@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -209,13 +208,13 @@ export function FloatingTimer({
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setMinimized(false)}
-          className="group flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-primary-foreground shadow-lg transition-opacity hover:opacity-90"
+          className="group flex items-center gap-2.5 rounded-full border bg-card px-4 py-2.5 shadow-lg transition-colors hover:bg-accent/60"
         >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive/60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
           </span>
-          <span className="font-mono text-sm font-semibold tabular-nums">
+          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
             {formatDuration(elapsed)}
           </span>
         </button>
@@ -226,35 +225,36 @@ export function FloatingTimer({
   return (
     <>
       <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-        <Card className="w-[320px] overflow-hidden rounded-lg border shadow-2xl">
+        <div className="w-[300px] overflow-hidden rounded-xl border bg-card shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between bg-primary px-4 py-2.5">
+          <div className="flex items-center justify-between px-5 pt-4 pb-2">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
               </span>
-              <span className="text-xs font-medium text-primary-foreground/80">
+              <span className="text-meta uppercase tracking-wider font-semibold text-muted-foreground">
                 Timer läuft
               </span>
             </div>
             <button
               onClick={() => setMinimized(true)}
-              className="rounded-sm p-1 text-primary-foreground/60 transition-colors hover:text-primary-foreground"
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="Minimieren"
             >
               <Minimize2 className="h-3.5 w-3.5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-4">
-            <div className="mb-3 text-sm font-medium leading-tight text-foreground line-clamp-2">
+          <div className="px-5 pb-5">
+            <div className="mb-4 text-sm font-medium leading-tight text-foreground line-clamp-2">
               {activeTimer.task?.title || "Task"}
             </div>
 
             {/* Timer Display */}
-            <div className="mb-4 flex items-center justify-center">
-              <div className="font-mono text-4xl font-bold tabular-nums tracking-tight text-foreground">
+            <div className="mb-5 flex items-center justify-center">
+              <div className="font-mono text-[2.75rem] font-bold tabular-nums tracking-tight text-foreground leading-none">
                 {formatDuration(elapsed)}
               </div>
             </div>
@@ -262,15 +262,14 @@ export function FloatingTimer({
             {/* Stop Button */}
             <Button
               onClick={openStopDialog}
-              variant="destructive"
-              className="w-full gap-2"
-              size="lg"
+              variant="outline"
+              className="w-full gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              <Square className="h-4 w-4 fill-current" />
-              Timer stoppen
+              <Square className="h-3.5 w-3.5 fill-current" />
+              Stoppen
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Stop Dialog with Comment */}
@@ -385,7 +384,7 @@ export function TimerButton({
             onStop();
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-md bg-red-500/10 text-red-500 transition-colors hover:bg-red-500/20",
+            "inline-flex items-center gap-1.5 rounded-md bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20",
             btnSize
           )}
         >

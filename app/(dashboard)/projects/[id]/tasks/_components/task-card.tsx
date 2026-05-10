@@ -125,7 +125,7 @@ export function TaskCard({
           "group rounded-xl border bg-card shadow-sm transition-colors hover:border-border/80",
           !isClient && "cursor-grab active:cursor-grabbing",
           isClient && "cursor-pointer",
-          isTimerActive && "ring-2 ring-primary/30",
+          isTimerActive && "border-primary/50",
           selected && "ring-2 ring-primary border-primary bg-primary/5",
           isGreyedOut && "opacity-50",
         )}
@@ -240,7 +240,7 @@ export function TaskCard({
                   <span
                     className={cn(
                       "flex items-center gap-1 text-caption truncate",
-                      overdue ? "text-destructive font-medium" : "text-muted-foreground",
+                      overdue ? "text-destructive" : "text-muted-foreground",
                     )}
                   >
                     {overdue ? <AlertCircle className="h-3 w-3 shrink-0" /> : <Calendar className="h-3 w-3 shrink-0" />}

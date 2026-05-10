@@ -12,8 +12,8 @@ export function PriorityPill({ priority, size = "sm", className }: PriorityPillP
   return (
     <span
       className={cn(
-        "inline-flex rounded-full font-semibold",
-        size === "sm" ? "px-2 py-0.5 text-meta" : "px-2 py-0.5 text-caption",
+        "inline-flex rounded-full font-medium",
+        "px-2 py-0.5 text-meta",
         getPriorityPillStyle(priority),
         className,
       )}

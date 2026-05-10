@@ -373,7 +373,6 @@ export default function ProjectsPage() {
               <Link key={project.id} href={`/projects/${project.id}`}>
                 <Card className={cn(
                   "group cursor-pointer relative gap-4 py-5 transition-colors hover:border-border/80",
-                  isOverdue    && "border-destructive/40",
                   project.archived && "opacity-60"
                 )}>
                   <CardContent className="space-y-3.5">
@@ -454,7 +453,7 @@ export default function ProjectsPage() {
                       {project.dueDate && (
                         <span className={cn(
                           "flex items-center gap-1",
-                          isOverdue && "text-destructive font-medium"
+                          isOverdue && "text-destructive"
                         )}>
                           {isOverdue
                             ? <AlertCircle className="h-3 w-3" />

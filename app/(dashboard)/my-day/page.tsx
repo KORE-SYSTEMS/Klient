@@ -59,13 +59,6 @@ function greet(name: string | null | undefined): string {
   return name ? `${salut}, ${name.split(" ")[0]}` : salut;
 }
 
-function greetIcon(): React.ComponentType<{ className?: string }> {
-  const h = new Date().getHours();
-  if (h < 11) return Sunrise;
-  if (h < 17) return Sun;
-  return Coffee;
-}
-
 export default function MyDayPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name;
@@ -207,26 +200,19 @@ export default function MyDayPage() {
     }
   }
 
-  const GreetIcon = greetIcon();
-
   return (
     <div className="space-y-8 max-w-4xl">
       {/* ── Greeting + stats ───────────────────────────────────────────── */}
       <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
-            <GreetIcon className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight">
-              {greet(userName)}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {stats.overdue + stats.today === 0
-                ? "Du bist auf Kurs für heute. Nice."
-                : `${stats.today} heute, ${stats.overdue} überfällig.`}
-            </p>
-          </div>
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
+            {greet(userName)}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            {stats.overdue + stats.today === 0
+              ? "Du bist auf Kurs für heute. Nice."
+              : `${stats.today} heute, ${stats.overdue} überfällig.`}
+          </p>
         </div>
 
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
@@ -319,14 +305,10 @@ function BucketSection({
   bucket: BucketData;
   onMarkDone?: (task: MyTask) => void;
 }) {
-  const Icon = bucket.icon;
   return (
     <section>
       <div className="flex items-baseline justify-between mb-3 px-1">
-        <div className="flex items-center gap-2.5">
-          <div className={cn("flex h-6 w-6 items-center justify-center rounded-full", bucket.toneBg)}>
-            <Icon className={cn("h-3.5 w-3.5", bucket.tone)} />
-          </div>
+        <div className="flex items-baseline gap-2">
           <h2 className={cn("text-sm font-semibold", bucket.tone)}>{bucket.label}</h2>
           <span className="text-meta text-muted-foreground tabular-nums">
             {bucket.tasks.length}

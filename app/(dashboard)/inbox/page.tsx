@@ -212,8 +212,7 @@ export default function InboxPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight flex items-center gap-2.5">
-            <Inbox className="h-6 w-6 text-muted-foreground" />
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
             Inbox
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
