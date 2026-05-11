@@ -150,7 +150,19 @@ const clientNav: NavSection[] = [
   },
 ];
 
-export function Sidebar({ role, logo }: { role: string; logo?: string | null }) {
+export function Sidebar({
+  role,
+  logo,
+  footerEnabled = false,
+  imprintUrl,
+  privacyUrl,
+}: {
+  role: string;
+  logo?: string | null;
+  footerEnabled?: boolean;
+  imprintUrl?: string | null;
+  privacyUrl?: string | null;
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   // Track which parent items are expanded (by href)
@@ -268,9 +280,6 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                             : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         )}
                       >
-                        {isParentActive && !collapsed && (
-                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" />
-                        )}
                         <item.icon
                           className={cn(
                             "shrink-0 h-4 w-4 transition-colors",
@@ -301,9 +310,6 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
                             : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         )}
                       >
-                        {isParentActive && !collapsed && (
-                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" />
-                        )}
                         <item.icon
                           className={cn(
                             "shrink-0 h-4 w-4 transition-colors",
@@ -344,6 +350,35 @@ export function Sidebar({ role, logo }: { role: string; logo?: string | null }) 
           </div>
         ))}
       </nav>
+
+      {/* Optional Footer-Bar: Impressum + Datenschutz */}
+      {footerEnabled && !collapsed && (imprintUrl || privacyUrl) && (
+        <div className="flex items-center gap-3 border-t border-[hsl(var(--sidebar-border))] px-4 py-2.5 text-[11px]">
+          {imprintUrl && (
+            <a
+              href={imprintUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Impressum
+            </a>
+          )}
+          {imprintUrl && privacyUrl && (
+            <span className="text-muted-foreground/40">·</span>
+          )}
+          {privacyUrl && (
+            <a
+              href={privacyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Datenschutz
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       {!collapsed ? (

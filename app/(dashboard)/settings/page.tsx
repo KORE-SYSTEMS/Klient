@@ -20,6 +20,7 @@ import {
   Palette,
   Building2,
   Zap,
+  Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -43,59 +44,6 @@ const DESIGN_SETS: { name: string; label: string; color: string; description: st
   { name: "zinc",    label: "Dunkel",  color: "#18181B", description: "Minimalistisch" },
 ];
 
-const EXTRA_COLORS = [
-  "#E8520A", "#6366F1", "#8B5CF6", "#EC4899",
-  "#EF4444", "#F59E0B", "#10B981", "#14B8A6",
-  "#3B82F6", "#0EA5E9", "#64748B", "#18181B",
-];
-
-// ─── Color swatch — square, ring on select, no scale ─────────────────────────
-
-function ColorSwatch({
-  color,
-  selected,
-  onClick,
-  size = "md",
-}: {
-  color: string;
-  selected: boolean;
-  onClick: () => void;
-  size?: "sm" | "md";
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative rounded-lg border-2 transition-all flex items-center justify-center",
-        size === "md" ? "h-9 w-9" : "h-7 w-7",
-        selected
-          ? "border-foreground ring-2 ring-foreground/20 ring-offset-2 ring-offset-background"
-          : "border-transparent hover:border-foreground/30"
-      )}
-      style={{ backgroundColor: color }}
-      title={color}
-    >
-      {selected && (
-        <Check
-          className={cn(
-            "drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
-            size === "md" ? "h-4 w-4" : "h-3 w-3"
-          )}
-          style={{ color: getContrastColor(color) }}
-        />
-      )}
-    </button>
-  );
-}
-
-function getContrastColor(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? "#000000" : "#ffffff";
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface WorkspaceSettings {
@@ -109,6 +57,9 @@ interface WorkspaceSettings {
   smtpFrom: string;
   inviteEmailSubject: string;
   inviteEmailTemplate: string;
+  footerEnabled: boolean;
+  privacyUrl: string;
+  imprintUrl: string;
 }
 
 interface VersionInfo {
@@ -170,6 +121,9 @@ export default function SettingsPage() {
     smtpFrom: "",
     inviteEmailSubject: "",
     inviteEmailTemplate: "",
+    footerEnabled: false,
+    privacyUrl: "",
+    imprintUrl: "",
   });
   const [customHex, setCustomHex] = useState(settings.primaryColor);
   const [version, setVersion] = useState<VersionInfo | null>(null);
@@ -180,7 +134,15 @@ export default function SettingsPage() {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        if (!data.error) { setSettings(data); setCustomHex(data.primaryColor); }
+        if (!data.error) {
+          setSettings({
+            ...data,
+            footerEnabled: data.footerEnabled ?? false,
+            privacyUrl: data.privacyUrl ?? "",
+            imprintUrl: data.imprintUrl ?? "",
+          });
+          setCustomHex(data.primaryColor);
+        }
         setLoading(false);
       });
     checkVersion();
@@ -313,6 +275,54 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* ── Sidebar-Footer ──────────────────────────────────────────────── */}
+        <Section
+          icon={LinkIcon}
+          title="Sidebar-Footer"
+          description="Optionale Footer-Leiste in der Sidebar mit Links zu Impressum & Datenschutz"
+        >
+          <div className="space-y-5">
+            <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Footer aktivieren</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Zeigt eine Leiste mit Impressum- und Datenschutz-Link in der Sidebar.
+                </p>
+              </div>
+              <Switch
+                checked={settings.footerEnabled}
+                onCheckedChange={(v) => setSettings({ ...settings, footerEnabled: v })}
+                aria-label="Footer aktivieren"
+              />
+            </div>
+
+            {settings.footerEnabled && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="imprintUrl" className="text-sm">Impressum-Link</Label>
+                  <Input
+                    id="imprintUrl"
+                    type="url"
+                    value={settings.imprintUrl}
+                    onChange={(e) => setSettings({ ...settings, imprintUrl: e.target.value })}
+                    placeholder="https://example.com/impressum"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="privacyUrl" className="text-sm">Datenschutz-Link</Label>
+                  <Input
+                    id="privacyUrl"
+                    type="url"
+                    value={settings.privacyUrl}
+                    onChange={(e) => setSettings({ ...settings, privacyUrl: e.target.value })}
+                    placeholder="https://example.com/datenschutz"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+
         {/* ── Design Sets ─────────────────────────────────────────────────── */}
         <Section
           icon={Palette}
@@ -367,42 +377,27 @@ export default function SettingsPage() {
               <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium mb-3">
                 Eigene Farbe
               </p>
-              <div className="space-y-3">
-                {/* Swatches — squares, no overlap */}
-                <div className="flex flex-wrap gap-2">
-                  {EXTRA_COLORS.map((c) => (
-                    <ColorSwatch
-                      key={c}
-                      color={c}
-                      selected={settings.primaryColor.toLowerCase() === c.toLowerCase()}
-                      onClick={() => setColor(c)}
-                    />
-                  ))}
-                </div>
-
-                {/* Hex input */}
-                <div className="flex items-center gap-2 max-w-[200px]">
-                  <div
-                    className="h-9 w-9 shrink-0 rounded-lg border"
-                    style={{ backgroundColor: settings.primaryColor }}
-                  />
-                  <Input
-                    value={customHex}
-                    maxLength={7}
-                    onChange={(e) => {
-                      let v = e.target.value;
-                      if (!v.startsWith("#")) v = "#" + v;
-                      setCustomHex(v);
-                      if (/^#[0-9a-fA-F]{6}$/.test(v)) setColor(v);
-                    }}
-                    onBlur={() => {
-                      if (/^#[0-9a-fA-F]{6}$/.test(customHex)) setColor(customHex);
-                      else setCustomHex(settings.primaryColor);
-                    }}
-                    className="font-mono text-sm h-9"
-                    placeholder="#E8520A"
-                  />
-                </div>
+              <div className="flex items-center gap-2 max-w-[220px]">
+                <div
+                  className="h-9 w-9 shrink-0 rounded-lg border"
+                  style={{ backgroundColor: settings.primaryColor }}
+                />
+                <Input
+                  value={customHex}
+                  maxLength={7}
+                  onChange={(e) => {
+                    let v = e.target.value;
+                    if (!v.startsWith("#")) v = "#" + v;
+                    setCustomHex(v);
+                    if (/^#[0-9a-fA-F]{6}$/.test(v)) setColor(v);
+                  }}
+                  onBlur={() => {
+                    if (/^#[0-9a-fA-F]{6}$/.test(customHex)) setColor(customHex);
+                    else setCustomHex(settings.primaryColor);
+                  }}
+                  className="font-mono text-sm h-9"
+                  placeholder="#E8520A"
+                />
               </div>
             </div>
 

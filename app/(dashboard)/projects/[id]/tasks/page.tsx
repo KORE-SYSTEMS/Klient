@@ -143,6 +143,7 @@ export default function TasksPage() {
   const [view, setView] = useState<"kanban" | "list" | "calendar" | "timeline">("kanban");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeWidth, setActiveWidth] = useState<number | null>(null);
+  const [activeHeight, setActiveHeight] = useState<number | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ id: string; name: string; email: string; role?: string }[]>([]);
 
@@ -464,6 +465,7 @@ export default function TasksPage() {
     setActiveId(event.active.id as string);
     const rect = event.active.rect.current.initial;
     setActiveWidth(rect ? rect.width : null);
+    setActiveHeight(rect ? rect.height : null);
   }
   function handleDragOver(event: DragOverEvent) {
     if (isClient) return;
@@ -476,7 +478,7 @@ export default function TasksPage() {
 
   async function handleDragEnd(event: DragEndEvent) {
     if (isClient) return;
-    setActiveId(null); setOverId(null); setActiveWidth(null);
+    setActiveId(null); setOverId(null); setActiveWidth(null); setActiveHeight(null);
     const { active, over } = event;
     if (!over) return;
     const taskId = active.id as string;
@@ -1006,28 +1008,25 @@ export default function TasksPage() {
                   onNextPhase={isClient ? undefined : handleNextPhase}
                   isSelected={selection.isSelected}
                   onSelect={isClient ? undefined : handleSelect}
-                  selectionActive={selection.selectedCount > 0} />
+                  selectionActive={selection.selectedCount > 0}
+                  dragHeight={activeHeight ?? undefined} />
               );
             })}
           </div>
           <DragOverlay dropAnimation={null}>
             {activeTask && (
-              <div
-                className="rounded-xl border bg-card p-3.5 shadow-2xl cursor-grabbing"
-                style={{ width: activeWidth ?? undefined }}
-              >
-                <div className="space-y-2.5">
-                  <div className="text-sm font-semibold leading-snug">{activeTask.title}</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {activeTask.epic && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: activeTask.epic.color }} />
-                        {activeTask.epic.title}
-                      </span>
-                    )}
-                    <PriorityPill priority={activeTask.priority} size="md" />
-                  </div>
-                </div>
+              <div style={{ width: activeWidth ?? undefined }}>
+                <TaskCard
+                  task={activeTask}
+                  statuses={statuses}
+                  isTimerActive={false}
+                  timerElapsed={0}
+                  onTimerStart={() => {}}
+                  onTimerStop={() => {}}
+                  isClient={isClient}
+                  currentUserId={currentUserId}
+                  isOverlay
+                />
               </div>
             )}
           </DragOverlay>
@@ -1134,15 +1133,15 @@ export default function TasksPage() {
                       <div className="w-[140px] shrink-0">
                         {task.assignee ? (
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-5 w-5">
                               <AvatarFallback className="text-micro font-semibold">
                                 {getInitials(task.assignee.name || task.assignee.email)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs truncate">{task.assignee.name || task.assignee.email}</span>
+                            <span className="text-[11px] truncate">{task.assignee.name || task.assignee.email}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-[11px] text-muted-foreground">—</span>
                         )}
                       </div>
 
@@ -1151,13 +1150,13 @@ export default function TasksPage() {
                         {task.dueDate ? (() => {
                           const overdue = new Date(task.dueDate) < new Date();
                           return (
-                            <span className={cn("text-xs flex items-center gap-1", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                              {overdue && <AlertCircle className="h-3 w-3 shrink-0" />}
+                            <span className={cn("text-[11px] flex items-center gap-1", overdue ? "text-destructive" : "text-muted-foreground")}>
+                              {overdue && <AlertCircle className="h-2.5 w-2.5 shrink-0" />}
                               {formatDate(task.dueDate)}
                             </span>
                           );
                         })() : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-[11px] text-muted-foreground">—</span>
                         )}
                       </div>
 

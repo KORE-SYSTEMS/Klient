@@ -44,6 +44,8 @@ interface KanbanColumnProps {
   isSelected?: (taskId: string) => boolean;
   onSelect?: (taskId: string, mode: "toggle" | "range") => void;
   selectionActive?: boolean;
+  /** Height (px) der aktiv gezogenen Card — geht an alle TaskCards (nur die isDragging nutzt sie). */
+  dragHeight?: number;
 }
 
 /** Single droppable column on the kanban board. */
@@ -67,6 +69,7 @@ export function KanbanColumn({
   isSelected,
   onSelect,
   selectionActive,
+  dragHeight,
 }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id: status.id });
   const columnTotalTime = tasks.reduce((sum, t) => sum + (t.totalTime || 0), 0);
@@ -76,7 +79,7 @@ export function KanbanColumn({
       ref={setNodeRef}
       className={cn(
         "flex min-w-[300px] max-w-[340px] flex-col rounded-xl transition-colors",
-        isOver ? "bg-accent/40 ring-2 ring-primary/30 ring-inset" : "bg-transparent",
+        isOver ? "bg-accent/30" : "bg-transparent",
       )}
     >
       {/* Column header with color bar */}
@@ -153,6 +156,7 @@ export function KanbanColumn({
                 selected={isSelected?.(task.id)}
                 onSelect={onSelect}
                 selectionActive={selectionActive}
+                dragHeight={dragHeight}
               />
             ))}
           </div>

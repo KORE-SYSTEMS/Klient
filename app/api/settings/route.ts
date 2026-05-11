@@ -71,6 +71,11 @@ export async function PATCH(request: NextRequest) {
     if (body.proposalPrefix    !== undefined) updateData.proposalPrefix    = body.proposalPrefix;
     if (body.paymentTermsDays  !== undefined) updateData.paymentTermsDays  = Number(body.paymentTermsDays);
 
+    // Footer
+    if (body.footerEnabled !== undefined) updateData.footerEnabled = Boolean(body.footerEnabled);
+    if (body.privacyUrl    !== undefined) updateData.privacyUrl    = body.privacyUrl || null;
+    if (body.imprintUrl    !== undefined) updateData.imprintUrl    = body.imprintUrl || null;
+
     const updated = await prisma.workspace.update({
       where: { id: workspace.id },
       data: updateData,

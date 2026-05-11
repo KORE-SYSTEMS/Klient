@@ -487,13 +487,13 @@ function SortableRow({
       <button onClick={onEdit} className="flex-1 text-left">
         <p className="text-sm font-medium">{status.name}</p>
       </button>
-      <span className={cn("inline-flex items-center gap-1 text-caption", meta.className)}>
-        <CategoryIcon className="h-3 w-3" />
+      <span className={cn("inline-flex items-center gap-1 text-[10px] leading-none font-medium", meta.className)}>
+        <CategoryIcon className="h-2.5 w-2.5" />
         {meta.label}
       </span>
       {status.isApproval && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-meta font-medium text-warning">
-          <ClipboardCheck className="h-3 w-3" />Abnahme
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 h-5 px-2 text-[10px] leading-none font-medium text-warning">
+          <ClipboardCheck className="h-2.5 w-2.5" />Abnahme
         </span>
       )}
       <Button size="sm" variant="ghost" onClick={onEdit} className="h-8 px-2 text-xs">

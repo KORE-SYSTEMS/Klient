@@ -372,7 +372,7 @@ export default function MyTasksPage() {
                       {/* Project (when not grouping by project) */}
                       {groupBy !== "project" && (
                         <div className="w-[160px] shrink-0 hidden sm:flex items-center gap-1.5">
-                          <span className="text-xs text-muted-foreground truncate">{task.project.name}</span>
+                          <span className="text-[11px] text-muted-foreground truncate">{task.project.name}</span>
                         </div>
                       )}
 
@@ -388,16 +388,16 @@ export default function MyTasksPage() {
                         <div className="w-[110px] shrink-0 hidden sm:block">
                           {task.dueDate ? (
                             <span className={cn(
-                              "flex items-center gap-1 text-xs",
-                              overdue  ? "text-destructive font-medium" :
-                              dueToday ? "text-warning font-medium"     : "text-muted-foreground"
+                              "flex items-center gap-1 text-[11px]",
+                              overdue  ? "text-destructive" :
+                              dueToday ? "text-warning"     : "text-muted-foreground"
                             )}>
-                              {overdue  && <AlertCircle className="h-3 w-3 shrink-0" />}
-                              {dueToday && <Clock className="h-3 w-3 shrink-0" />}
+                              {overdue  && <AlertCircle className="h-2.5 w-2.5 shrink-0" />}
+                              {dueToday && <Clock className="h-2.5 w-2.5 shrink-0" />}
                               {formatDate(task.dueDate)}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-[11px] text-muted-foreground">—</span>
                           )}
                         </div>
                       )}

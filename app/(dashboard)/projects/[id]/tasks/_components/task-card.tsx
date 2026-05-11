@@ -25,7 +25,7 @@ import type { Task, TaskStatus } from "../_lib/types";
 
 interface TaskCardProps {
   task: Task;
-  onClick: () => void;
+  onClick?: () => void;
   statuses: TaskStatus[];
   isTimerActive: boolean;
   timerElapsed: number;
@@ -38,6 +38,10 @@ interface TaskCardProps {
   selected?: boolean;
   onSelect?: (taskId: string, mode: "toggle" | "range") => void;
   selectionActive?: boolean;
+  /** When true, renders as static drag-overlay copy (no useSortable, no interactivity). */
+  isOverlay?: boolean;
+  /** Pixel height of the source card while dragging — used to size the placeholder accurately. */
+  dragHeight?: number;
 }
 
 /**
@@ -69,6 +73,8 @@ export function TaskCard({
   selected,
   onSelect,
   selectionActive,
+  isOverlay,
+  dragHeight,
 }: TaskCardProps) {
   const isAssignedToClient = isClient && task.assigneeId === currentUserId;
   const isGreyedOut = isClient && !isAssignedToClient;
@@ -83,7 +89,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: isClient });
+  } = useSortable({ id: task.id, disabled: isClient || isOverlay });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -92,10 +98,13 @@ export function TaskCard({
 
   const totalTime = task.totalTime || 0;
 
-  if (isDragging && !task._isPreview) {
+  if (isDragging && !task._isPreview && !isOverlay) {
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
-        <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 h-[88px]" />
+        <div
+          className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5"
+          style={{ height: dragHeight ?? 88 }}
+        />
       </div>
     );
   }
@@ -123,21 +132,23 @@ export function TaskCard({
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      {...(isClient ? {} : { ...attributes, ...listeners })}
-      className={cn(!isClient && "touch-none", "outline-none")}
+      ref={isOverlay ? undefined : setNodeRef}
+      style={isOverlay ? undefined : style}
+      {...(isClient || isOverlay ? {} : { ...attributes, ...listeners })}
+      className={cn(!isClient && !isOverlay && "touch-none", "outline-none")}
     >
       <div
         className={cn(
           "group rounded-xl border bg-card shadow-sm transition-colors hover:border-border/80",
-          !isClient && "cursor-grab active:cursor-grabbing",
-          isClient && "cursor-pointer",
+          !isClient && !isOverlay && "cursor-grab active:cursor-grabbing",
+          isClient && !isOverlay && "cursor-pointer",
+          isOverlay && "shadow-2xl cursor-grabbing",
           isTimerActive && "border-primary/50",
           selected && "ring-2 ring-primary border-primary bg-primary/5",
           isGreyedOut && "opacity-50",
         )}
         onClick={(e) => {
+          if (isOverlay) return;
           if ((e.target as HTMLElement).closest("[data-no-click]")) return;
           if (!isClient && onSelect) {
             const meta = e.metaKey || e.ctrlKey;
@@ -146,7 +157,7 @@ export function TaskCard({
             if (shift) { e.preventDefault(); onSelect(task.id, "range"); return; }
             if (selectionActive) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
           }
-          onClick();
+          onClick?.();
         }}
       >
         <div className="p-3.5 space-y-3">

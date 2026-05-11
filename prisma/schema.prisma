@@ -473,4 +473,8 @@ model Workspace {
   invoicePrefix           String  @default("RE")
   proposalPrefix          String  @default("AN")
   paymentTermsDays        Int     @default(14)
+  // Footer-Links (Sidebar)
+  footerEnabled           Boolean @default(false)
+  privacyUrl              String?
+  imprintUrl              String?
 }

@@ -22,7 +22,13 @@ export default async function DashboardLayout({
     <SessionProvider session={session}>
       <GlobalTimerProvider>
         <div className="flex h-screen overflow-hidden">
-          <Sidebar role={session.user.role} logo={workspace?.logo} />
+          <Sidebar
+            role={session.user.role}
+            logo={workspace?.logo}
+            footerEnabled={workspace?.footerEnabled ?? false}
+            imprintUrl={workspace?.imprintUrl ?? null}
+            privacyUrl={workspace?.privacyUrl ?? null}
+          />
           <div className="flex flex-1 flex-col overflow-hidden">
             <Topbar user={session.user} />
             <main className="flex-1 overflow-y-auto px-8 py-10">{children}</main>
