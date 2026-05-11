@@ -1115,17 +1115,17 @@ export default function TasksPage() {
                           </button>
                         )}
                         <div className="min-w-0">
+                          {task.epic && (
+                            <span className="text-[10px] leading-none text-muted-foreground block mb-0.5">{task.epic.title}</span>
+                          )}
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
                             {totalTime > 0 && (
-                              <span className="flex items-center gap-0.5 text-caption text-muted-foreground shrink-0">
-                                <Clock className="h-3 w-3" />{formatDurationShort(totalTime)}
+                              <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground shrink-0">
+                                <Clock className="h-2.5 w-2.5" />{formatDurationShort(totalTime)}
                               </span>
                             )}
                           </div>
-                          {task.epic && (
-                            <span className="text-meta text-muted-foreground">{task.epic.title}</span>
-                          )}
                         </div>
                       </div>
 
@@ -1229,7 +1229,7 @@ export default function TasksPage() {
 
       {/* ===== Task Dialog ===== */}
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
-        <DialogContent className={cn("max-h-[90vh] overflow-y-auto", editTask ? "max-w-2xl" : "max-w-lg")}>
+        <DialogContent className={cn("max-h-[90vh] overflow-y-auto overflow-x-hidden", editTask ? "max-w-2xl" : "max-w-lg")}>
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>

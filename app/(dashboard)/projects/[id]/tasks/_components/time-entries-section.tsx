@@ -96,48 +96,52 @@ function TimeEntryRow({
   return (
     <div
       className={cn(
-        "group flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition-colors",
+        "group rounded-lg border px-3 py-2 text-xs transition-colors min-w-0",
         isRunning && "border-primary/30 bg-primary/5",
       )}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        {isRunning && (
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {isRunning && (
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+          )}
+          <span className="text-muted-foreground shrink-0">
+            {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
           </span>
-        )}
-        <span className="text-muted-foreground shrink-0">
-          {startDate.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
-        </span>
-        {entry.user && (
-          <span className="text-muted-foreground truncate">– {entry.user.name || entry.user.email}</span>
-        )}
-        {entry.description && (
-          <span className="text-muted-foreground/60 truncate italic">{entry.description}</span>
-        )}
+          {entry.user && (
+            <span className="text-muted-foreground truncate">– {entry.user.name || entry.user.email}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="font-mono font-semibold tabular-nums">
+            {isRunning ? "läuft…" : formatDuration(entry.duration)}
+          </span>
+          {!isRunning && !isClient && (
+            <>
+              <button
+                type="button" onClick={() => setEditing(true)}
+                className="hover-action text-muted-foreground hover:text-foreground transition-all"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+              <button
+                type="button" onClick={() => onDelete(entry.id)}
+                className="hover-action text-muted-foreground hover:text-destructive transition-all"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <span className="font-mono font-semibold tabular-nums">
-          {isRunning ? "läuft…" : formatDuration(entry.duration)}
-        </span>
-        {!isRunning && !isClient && (
-          <>
-            <button
-              type="button" onClick={() => setEditing(true)}
-              className="hover-action text-muted-foreground hover:text-foreground transition-all"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-            <button
-              type="button" onClick={() => onDelete(entry.id)}
-              className="hover-action text-muted-foreground hover:text-destructive transition-all"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </>
-        )}
-      </div>
+      {entry.description && (
+        <p className="mt-1 text-muted-foreground/70 italic break-words whitespace-pre-wrap">
+          {entry.description}
+        </p>
+      )}
     </div>
   );
 }

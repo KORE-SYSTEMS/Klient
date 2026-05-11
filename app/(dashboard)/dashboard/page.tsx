@@ -224,7 +224,7 @@ export default async function DashboardPage() {
                     {task.dueDate && (() => {
                       const overdue = new Date(task.dueDate) < now;
                       return (
-                        <span className={cn("flex items-center gap-0.5 text-meta", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                        <span className={cn("flex items-center gap-0.5 text-[10px] leading-none", overdue ? "text-destructive" : "text-muted-foreground")}>
                           {overdue && <AlertCircle className="h-2.5 w-2.5" />}
                           {formatDate(task.dueDate)}
                         </span>

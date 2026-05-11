@@ -348,6 +348,14 @@ export default function MyTasksPage() {
                       <div className="flex-1 min-w-0 flex items-center gap-2.5">
                         <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
                         <div className="min-w-0">
+                          {task.epic && (
+                            <span
+                              className="text-[10px] leading-none block mb-0.5"
+                              style={{ color: task.epic.color }}
+                            >
+                              {task.epic.title}
+                            </span>
+                          )}
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                               {task.title}
@@ -358,14 +366,6 @@ export default function MyTasksPage() {
                               </span>
                             )}
                           </div>
-                          {task.epic && (
-                            <span
-                              className="text-meta font-medium"
-                              style={{ color: task.epic.color }}
-                            >
-                              {task.epic.title}
-                            </span>
-                          )}
                         </div>
                       </div>
 

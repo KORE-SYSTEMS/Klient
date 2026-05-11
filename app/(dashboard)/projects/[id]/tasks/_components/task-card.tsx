@@ -6,6 +6,7 @@ import {
   AlertCircle,
   ArrowRight,
   Calendar,
+  Check,
   CheckCircle2,
   Eye,
   Lock,
@@ -161,8 +162,28 @@ export function TaskCard({
         }}
       >
         <div className="p-3.5 space-y-3">
-          {/* Top row: Title left + subtle icons right */}
+          {/* Top row: Checkbox + Title left + subtle icons right */}
           <div className="flex items-start gap-2">
+            {!isClient && !isOverlay && onSelect && (
+              <button
+                type="button"
+                data-no-click
+                onClick={(e) => { e.stopPropagation(); onSelect(task.id, "toggle"); }}
+                className={cn(
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all",
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted-foreground/40 hover:border-foreground",
+                  selected || selectionActive
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-100",
+                )}
+                aria-label={selected ? "Abwählen" : "Auswählen"}
+                title={selected ? "Abwählen" : "Auswählen (oder Cmd+Click)"}
+              >
+                {selected && <Check className="h-3 w-3" />}
+              </button>
+            )}
             <div
               className={cn(
                 "flex-1 min-w-0 text-sm font-semibold leading-snug",
@@ -268,7 +289,7 @@ export function TaskCard({
           )}
 
           {/* Bottom: Avatar + Date | Counters + NextPhase */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
+          <div className="flex items-center justify-between gap-2 pt-2.5">
             <div className="flex items-center gap-2 min-w-0">
               {task.assignee ? (
                 <Avatar className="h-5 w-5 shrink-0">
@@ -282,35 +303,34 @@ export function TaskCard({
               {task.dueDate && (
                 <span
                   className={cn(
-                    "flex items-center gap-1 text-meta truncate",
+                    "text-[10px] leading-none truncate tabular-nums",
                     overdue ? "text-destructive" : "text-muted-foreground",
                   )}
                 >
-                  {overdue ? <AlertCircle className="h-2.5 w-2.5 shrink-0" /> : <Calendar className="h-2.5 w-2.5 shrink-0" />}
                   {formatDate(task.dueDate)}
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 text-meta text-muted-foreground/70">
+            <div className="flex items-center gap-2.5 shrink-0 text-[10px] leading-none text-muted-foreground/70">
               {task._count?.subtasks ? (
                 <span
                   className="flex items-center gap-0.5 tabular-nums"
                   title={`${task._count.subtasksDone ?? 0} von ${task._count.subtasks} Subtasks erledigt`}
                 >
-                  <CheckCircle2 className="h-3 w-3" />
+                  <CheckCircle2 className="h-2.5 w-2.5" />
                   {task._count.subtasksDone ?? 0}/{task._count.subtasks}
                 </span>
               ) : null}
               {task._count?.comments ? (
                 <span className="flex items-center gap-0.5">
-                  <MessageSquare className="h-3 w-3" />
+                  <MessageSquare className="h-2.5 w-2.5" />
                   {task._count.comments}
                 </span>
               ) : null}
               {task._count?.files ? (
                 <span className="flex items-center gap-0.5">
-                  <Paperclip className="h-3 w-3" />
+                  <Paperclip className="h-2.5 w-2.5" />
                   {task._count.files}
                 </span>
               ) : null}
