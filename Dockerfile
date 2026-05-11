@@ -58,19 +58,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma runtime (client + engines + CLI for migrate deploy)
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-
-# Copy bcryptjs (needed for seed + auth at runtime)
-COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
-
-# Puppeteer wird im Runner separat installiert (dynamic import wird vom
-# Standalone-Tracer nicht erkannt). PUPPETEER_SKIP_DOWNLOAD vermeidet
-# den Chromium-Download — wir nutzen die System-Chromium-Binary (siehe oben).
-RUN PUPPETEER_SKIP_DOWNLOAD=true \
-    npm install puppeteer --no-package-lock --no-save --legacy-peer-deps --omit=dev
+# Komplette node_modules aus dem Builder kopieren.
+# Beinhaltet:
+#   - Prisma CLI + Client + Engines (für db push + Runtime)
+#   - bcryptjs (für Seed + Auth)
+#   - Puppeteer + alle transitiven Deps (dynamic import in PDF-Route wird vom
+#     Next.js Standalone-Tracer nicht erkannt → explizit nötig)
+#   - Alle anderen Runtime-Deps
+# Chromium-Binary wird NICHT mitgezogen (PUPPETEER_SKIP_DOWNLOAD im deps-Stage)
+# — Wir nutzen die System-Chromium via PUPPETEER_EXECUTABLE_PATH.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy prisma schema + migrations + seed for runtime migrate deploy
 COPY --from=builder /app/prisma ./prisma
