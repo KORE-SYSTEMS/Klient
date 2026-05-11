@@ -1,0 +1,230 @@
+/* A4 Print-Layout — bewusst NICHT Tailwind-abhängig damit es 1:1 in PDFs
+   landet auch ohne komplizierte Layer-Cascades. Im Print-Modus weiß. */
+
+@page {
+  size: A4;
+  margin: 20mm 18mm;
+}
+
+html, body {
+  background: white;
+  color: #1a1a1a;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.invoice-page {
+  max-width: 174mm;
+  margin: 0 auto;
+  padding: 12mm 0;
+  color: #1a1a1a;
+}
+
+/* ── Sender ───────────────────────────────────────────────────────────── */
+.sender {
+  text-align: right;
+  margin-bottom: 18mm;
+}
+.logo {
+  max-height: 18mm;
+  max-width: 60mm;
+  margin-left: auto;
+  display: block;
+  margin-bottom: 6mm;
+}
+.sender-name {
+  font-weight: 600;
+  font-size: 11pt;
+}
+.sender-addr {
+  font-size: 9.5pt;
+  color: #4a4a4a;
+  margin-top: 1mm;
+}
+.sender-meta {
+  font-size: 9pt;
+  color: #6a6a6a;
+  margin-top: 2mm;
+}
+
+/* ── Recipient + Meta block ──────────────────────────────────────────── */
+.recipient-block {
+  display: grid;
+  grid-template-columns: 1fr 70mm;
+  gap: 8mm;
+  margin-bottom: 14mm;
+}
+.recipient .bold {
+  font-weight: 600;
+}
+.recipient-line {
+  font-size: 10.5pt;
+  line-height: 1.5;
+}
+.recipient-line.muted {
+  color: #7a7a7a;
+  font-size: 9.5pt;
+  margin-top: 1mm;
+}
+.recipient-addr {
+  font-size: 10pt;
+  color: #3a3a3a;
+  margin-top: 0.5mm;
+}
+.meta {
+  font-size: 9.5pt;
+  border-left: 2px solid #e5e5e5;
+  padding-left: 5mm;
+  align-self: end;
+}
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+  padding: 1mm 0;
+}
+.meta-label {
+  color: #6a6a6a;
+}
+
+/* ── Title ───────────────────────────────────────────────────────────── */
+.title {
+  font-size: 22pt;
+  font-weight: 700;
+  letter-spacing: -0.5pt;
+  margin: 0 0 1mm;
+}
+.subtitle {
+  font-size: 11pt;
+  color: #5a5a5a;
+  margin: 0 0 10mm;
+}
+
+/* ── Items table ─────────────────────────────────────────────────────── */
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 6mm;
+  font-size: 10pt;
+}
+.items thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  color: #6a6a6a;
+  padding: 3mm 2mm;
+  border-bottom: 1.5px solid #1a1a1a;
+}
+.items tbody td {
+  padding: 3mm 2mm;
+  border-bottom: 1px solid #ececec;
+  vertical-align: top;
+}
+.items tbody tr:last-child td {
+  border-bottom: none;
+}
+.col-pos {
+  width: 10mm;
+  color: #7a7a7a;
+}
+.col-desc {
+  width: auto;
+}
+.col-qty {
+  width: 22mm;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.col-price {
+  width: 28mm;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.col-total {
+  width: 28mm;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* ── Totals ──────────────────────────────────────────────────────────── */
+.totals {
+  margin-left: auto;
+  width: 70mm;
+  font-size: 10pt;
+  font-variant-numeric: tabular-nums;
+}
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5mm 2mm;
+}
+.totals-final {
+  border-top: 1.5px solid #1a1a1a;
+  margin-top: 1mm;
+  padding-top: 3mm;
+  font-weight: 700;
+  font-size: 11.5pt;
+}
+
+/* ── Notes ───────────────────────────────────────────────────────────── */
+.notes,
+.payment {
+  margin-top: 10mm;
+  page-break-inside: avoid;
+}
+.notes-heading {
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  color: #6a6a6a;
+  font-weight: 600;
+  margin: 0 0 2mm;
+}
+.notes-text {
+  font-size: 10pt;
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ── Payment ─────────────────────────────────────────────────────────── */
+.bank-grid {
+  display: grid;
+  grid-template-columns: 30mm 1fr;
+  gap: 2mm 5mm;
+  margin-top: 3mm;
+  font-size: 10pt;
+}
+.bank-label {
+  color: #6a6a6a;
+}
+.mono {
+  font-family: "JetBrains Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.2pt;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 18mm;
+  padding-top: 4mm;
+  border-top: 1px solid #e5e5e5;
+  text-align: center;
+  font-size: 8.5pt;
+  color: #8a8a8a;
+}
+.footer > div {
+  margin: 0.5mm 0;
+}
+
+/* Print-only: Hide print button if we add one later */
+@media print {
+  body {
+    margin: 0;
+  }
+}

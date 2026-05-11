@@ -496,6 +496,9 @@ export default function InvoicesPage() {
                       <DropdownMenuItem onClick={() => openDialog(invoice)}>
                         <Pencil className="mr-2 h-3.5 w-3.5" />Bearbeiten
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.open(`/print/invoices/${invoice.id}`, "_blank")}>
+                        <Download className="mr-2 h-3.5 w-3.5" />Als PDF herunterladen
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {invoice.status === "DRAFT" && (
                         <DropdownMenuItem onClick={() => updateStatus(invoice.id, "SENT")}>

@@ -678,6 +678,9 @@ export default function GlobalInvoicesPage() {
                           <Send className="h-3.5 w-3.5 mr-2" />
                           {sending === inv.id ? "Wird gesendet…" : "Per E-Mail senden"}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.open(`/print/invoices/${inv.id}`, "_blank")}>
+                          <FileText className="h-3.5 w-3.5 mr-2" /> Als PDF herunterladen
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => copyShareLink(inv)}>
                           <ExternalLink className="h-3.5 w-3.5 mr-2" /> Link kopieren
                         </DropdownMenuItem>
