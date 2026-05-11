@@ -39,6 +39,7 @@ interface MyTask {
   approvalStatus?: string | null;
   project: { id: string; name: string; color: string | null };
   epic?: { id: string; title: string; color: string } | null;
+  doneStatusId?: string | null;
 }
 
 type Bucket = "overdue" | "today" | "week" | "later" | "undated";
@@ -174,19 +175,24 @@ export default function MyDayPage() {
     return { overdue, today, week, completedToday: completedNow.size };
   }, [buckets, completedNow]);
 
-  /** Mark as done — moves the task to the "first DONE-category status".
-   *  We don't know the project's DONE status without an extra fetch, so we
-   *  PATCH `status: "DONE"` and let the server normalize. If the project
-   *  uses a project-scoped status id (most do), the optimistic UI just
-   *  hides the task locally and the server may fail — we then refetch.
+  /** Marks task as done by setting its status to the project's DONE-category
+   *  status (delivered via /api/my-tasks as doneStatusId). Falls back to
+   *  refetch if no DONE status exists (z.B. Projekt ohne konfigurierten DONE).
    */
   async function markDone(task: MyTask) {
+    if (!task.doneStatusId) {
+      // Projekt hat keinen DONE-Status — Toast statt stillem Schlucken
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Keine 'Erledigt'-Phase",
+        description: `Projekt "${task.project.name}" hat keine Phase der Kategorie 'Erledigt'. Bitte in den Workflow-Einstellungen anlegen.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setCompletedNow((prev) => new Set(prev).add(task.id));
-    // Best-effort: try with hardcoded "DONE" first; backend may reject.
-    // Safer: fetch the project's DONE status. But that's a round-trip per
-    // task. Pragmatic compromise — refetch on error.
     const ok = await run(
-      tasksApi.update(task.id, { status: "DONE" }),
+      tasksApi.update(task.id, { status: task.doneStatusId }),
       { success: null, error: null },
     );
     if (!ok) {
@@ -195,7 +201,6 @@ export default function MyDayPage() {
         next.delete(task.id);
         return next;
       });
-      // Quietly refetch so the UI is at least consistent
       fetchTasks();
     }
   }

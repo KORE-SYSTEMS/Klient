@@ -138,7 +138,7 @@ export function KanbanColumn({
       {/* Cards */}
       <ScrollArea className="flex-1">
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2.5 px-0.5 pb-2" style={{ minHeight: 80 }}>
+          <div className="space-y-2.5 px-1 pt-1 pb-2" style={{ minHeight: 80 }}>
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}

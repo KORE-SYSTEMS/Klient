@@ -57,15 +57,30 @@ export async function GET(request: NextRequest) {
   const statuses  = statusIds.length
     ? await prisma.taskStatus.findMany({
         where: { id: { in: statusIds } },
-        select: { id: true, name: true, color: true },
+        select: { id: true, name: true, color: true, category: true, projectId: true },
       })
     : [];
   const statusMap = Object.fromEntries(statuses.map((s) => [s.id, s]));
+
+  // Pro Projekt: ersten DONE-Category Status finden (für "Als erledigt markieren" Quick-Action)
+  const projectIds = Array.from(new Set(tasks.map((t) => t.project.id)));
+  const doneStatuses = projectIds.length
+    ? await prisma.taskStatus.findMany({
+        where: { projectId: { in: projectIds }, category: "DONE" },
+        select: { id: true, projectId: true, order: true },
+        orderBy: { order: "asc" },
+      })
+    : [];
+  const doneByProject: Record<string, string> = {};
+  for (const s of doneStatuses) {
+    if (!doneByProject[s.projectId]) doneByProject[s.projectId] = s.id;
+  }
 
   const enriched = tasks.map((t) => ({
     ...t,
     statusName:  statusMap[t.status]?.name  || t.status,
     statusColor: statusMap[t.status]?.color || "#6b7280",
+    doneStatusId: doneByProject[t.project.id] || null,
   }));
 
   return NextResponse.json(enriched);
