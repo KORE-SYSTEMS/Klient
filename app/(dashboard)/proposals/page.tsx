@@ -120,9 +120,27 @@ const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.
 
 const ALL_STATUSES = ["DRAFT", "SENT", "ACCEPTED", "DECLINED", "EXPIRED"];
 const UNITS        = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
-const EMPTY_ITEM   = (): ProposalItem => ({ description: "", quantity: 1, unitPrice: 0, unit: "Std." });
+const EMPTY_ITEM   = (unitPrice = 0): ProposalItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
 
 const TAX_RATES = [0, 7, 19];
+
+interface BillingDefaults {
+  currency:          string;
+  defaultHourlyRate: number | null;
+  defaultTaxRate:    number;
+  invoicePrefix:     string;
+  proposalPrefix:    string;
+  paymentTermsDays:  number;
+}
+
+const FALLBACK_DEFAULTS: BillingDefaults = {
+  currency: "EUR",
+  defaultHourlyRate: null,
+  defaultTaxRate: 19,
+  invoicePrefix: "RE",
+  proposalPrefix: "AN",
+  paymentTermsDays: 14,
+};
 
 function calcNetto(items: ProposalItem[]): number {
   return items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
@@ -133,8 +151,8 @@ function calcBrutto(items: ProposalItem[], taxRate: number): number {
   return netto + netto * taxRate / 100;
 }
 
-function formatCurrency(n: number): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+function formatCurrency(n: number, currency = "EUR"): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(n);
 }
 
 function isExpired(p: Proposal): boolean {
@@ -212,6 +230,7 @@ export default function ProposalsPage() {
   const [formTaxRate,   setFormTaxRate]   = useState("19");
   const [formNotes,     setFormNotes]     = useState("");
   const [formItems,     setFormItems]     = useState<ProposalItem[]>([EMPTY_ITEM()]);
+  const [defaults,      setDefaults]      = useState<BillingDefaults>(FALLBACK_DEFAULTS);
 
   // Task import
   const [importOpen,    setImportOpen]    = useState(false);
@@ -248,6 +267,10 @@ export default function ProposalsPage() {
     fetchProposals();
     fetchProjects();
     fetchClients();
+    fetch("/api/billing-defaults")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setDefaults(d); })
+      .catch(() => {});
   }, [fetchProposals, fetchProjects, fetchClients]);
 
   // ── Task import ────────────────────────────────────────────────────────────
@@ -313,9 +336,9 @@ export default function ProposalsPage() {
     setFormNumber("");
     setFormStatus("DRAFT");
     setFormValidUntil("");
-    setFormTaxRate("19");
+    setFormTaxRate(String(defaults.defaultTaxRate));
     setFormNotes("");
-    setFormItems([EMPTY_ITEM()]);
+    setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     setDialogOpen(true);
   }
 
@@ -333,7 +356,7 @@ export default function ProposalsPage() {
     setDialogOpen(true);
   }
 
-  function addItem()             { setFormItems((p) => [...p, EMPTY_ITEM()]); }
+  function addItem()             { setFormItems((p) => [...p, EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]); }
   function removeItem(i: number) { setFormItems((p) => p.filter((_, j) => j !== i)); }
   function updateItem(i: number, k: keyof ProposalItem, v: unknown) {
     setFormItems((p) => p.map((item, j) => j === i ? { ...item, [k]: v } : item));
@@ -623,7 +646,7 @@ export default function ProposalsPage() {
 
                   {/* Amount (brutto) */}
                   <span className="text-sm font-semibold tabular-nums">
-                    {formatCurrency(brutto)}
+                    {formatCurrency(brutto, defaults.currency)}
                   </span>
 
                   {/* Status */}
@@ -958,15 +981,15 @@ export default function ProposalsPage() {
                     <div className="text-right space-y-1">
                       <div className="flex gap-6 justify-between">
                         <span className="text-muted-foreground text-xs">Netto</span>
-                        <span className="font-medium tabular-nums">{formatCurrency(nettoPreview)}</span>
+                        <span className="font-medium tabular-nums">{formatCurrency(nettoPreview, defaults.currency)}</span>
                       </div>
                       <div className="flex gap-6 justify-between">
                         <span className="text-muted-foreground text-xs">MwSt. {formTaxRate} %</span>
-                        <span className="font-medium tabular-nums">{formatCurrency(taxPreview)}</span>
+                        <span className="font-medium tabular-nums">{formatCurrency(taxPreview, defaults.currency)}</span>
                       </div>
                       <div className="flex gap-6 justify-between border-t pt-1 mt-1">
                         <span className="text-xs font-semibold">Brutto</span>
-                        <span className="text-base font-bold tabular-nums">{formatCurrency(bruttoPreview)}</span>
+                        <span className="text-base font-bold tabular-nums">{formatCurrency(bruttoPreview, defaults.currency)}</span>
                       </div>
                     </div>
                   </div>

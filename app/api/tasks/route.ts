@@ -36,6 +36,33 @@ export async function GET(request: NextRequest) {
       ? { parentId: parentIdParam }
       : { parentId: null };
 
+  // Orphan-Repair: Tasks mit Status, der nicht (mehr) zu einem TaskStatus
+  // des Projekts gehört, werden auf die erste DONE-Category Phase gemapped.
+  // Häufige Ursache: alte My-Day-Bug (status: "DONE" als String statt cuid).
+  // Nur Staff (Admin/Member) räumt auf — Clients dürfen keine Mutations.
+  if (!isClient) {
+    const allProjectStatuses = await prisma.taskStatus.findMany({
+      where: { projectId },
+      select: { id: true, category: true, order: true },
+      orderBy: { order: "asc" },
+    });
+    const validIds = new Set(allProjectStatuses.map((s) => s.id));
+    const doneFallback = allProjectStatuses.find((s) => s.category === "DONE")?.id
+      ?? allProjectStatuses[0]?.id;
+    if (doneFallback) {
+      const orphanTasks = await prisma.task.findMany({
+        where: { projectId, NOT: { status: { in: Array.from(validIds) } } },
+        select: { id: true },
+      });
+      if (orphanTasks.length > 0) {
+        await prisma.task.updateMany({
+          where: { id: { in: orphanTasks.map((t) => t.id) } },
+          data: { status: doneFallback },
+        });
+      }
+    }
+  }
+
   const tasks = await prisma.task.findMany({
     where: { projectId, ...parentFilter },
     include: {

@@ -123,14 +123,38 @@ const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.
 
 const ALL_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
 const UNITS        = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
-const EMPTY_ITEM   = (): InvoiceItem => ({ description: "", quantity: 1, unitPrice: 0, unit: "Std." });
+const EMPTY_ITEM   = (unitPrice = 0): InvoiceItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
+
+interface BillingDefaults {
+  currency:          string;
+  defaultHourlyRate: number | null;
+  defaultTaxRate:    number;
+  invoicePrefix:     string;
+  proposalPrefix:    string;
+  paymentTermsDays:  number;
+}
+
+const FALLBACK_DEFAULTS: BillingDefaults = {
+  currency: "EUR",
+  defaultHourlyRate: null,
+  defaultTaxRate: 19,
+  invoicePrefix: "RE",
+  proposalPrefix: "AN",
+  paymentTermsDays: 14,
+};
 
 function calcTotal(items: InvoiceItem[]): number {
   return items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 }
 
-function formatCurrency(n: number): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+function formatCurrency(n: number, currency = "EUR"): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(n);
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
 }
 
 function isOverdue(inv: Invoice): boolean {
@@ -185,6 +209,7 @@ export default function GlobalInvoicesPage() {
   const [invoices,  setInvoices]  = useState<Invoice[]>([]);
   const [projects,  setProjects]  = useState<Project[]>([]);
   const [loading,   setLoading]   = useState(true);
+  const [defaults,  setDefaults]  = useState<BillingDefaults>(FALLBACK_DEFAULTS);
 
   // Filters
   const [search,        setSearch]        = useState("");
@@ -230,7 +255,13 @@ export default function GlobalInvoicesPage() {
 
   useEffect(() => {
     fetchInvoices();
-    if (!isReadOnly) fetchProjects();
+    if (!isReadOnly) {
+      fetchProjects();
+      fetch("/api/billing-defaults")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setDefaults(d); })
+        .catch(() => {});
+    }
   }, [fetchInvoices, fetchProjects, isReadOnly]);
 
   // ── Task import ────────────────────────────────────────────────────────────
@@ -294,10 +325,12 @@ export default function GlobalInvoicesPage() {
     setFormTitle("");
     setFormNumber("");
     setFormStatus("DRAFT");
-    setFormDueDate("");
+    // Default-Due-Date aus paymentTermsDays
+    const due = addDays(new Date(), defaults.paymentTermsDays);
+    setFormDueDate(due.toISOString().slice(0, 10));
     setFormNotes("");
-    setFormTaxRate(19);
-    setFormItems([EMPTY_ITEM()]);
+    setFormTaxRate(defaults.defaultTaxRate);
+    setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     setDialogOpen(true);
   }
 
@@ -314,7 +347,7 @@ export default function GlobalInvoicesPage() {
     setDialogOpen(true);
   }
 
-  function addItem()                { setFormItems((p) => [...p, EMPTY_ITEM()]); }
+  function addItem()                { setFormItems((p) => [...p, EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]); }
   function removeItem(i: number)    { setFormItems((p) => p.filter((_, j) => j !== i)); }
   function updateItem(i: number, k: keyof InvoiceItem, v: unknown) {
     setFormItems((p) => p.map((item, j) => j === i ? { ...item, [k]: v } : item));
@@ -483,10 +516,10 @@ export default function GlobalInvoicesPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Gesamt fakturiert"   value={formatCurrency(stats.totalBilled)}  icon={Euro}         iconClass="text-muted-foreground" />
-        <StatCard label="Offen"               value={formatCurrency(stats.outstanding)}   icon={Clock}        iconClass={stats.outstanding > 0 ? "text-info" : "text-muted-foreground"}    accent={stats.outstanding > 0 ? "text-info" : undefined} />
-        <StatCard label="Überfällig"          value={formatCurrency(stats.overdueTotal)}  icon={AlertCircle}  iconClass={stats.overdueTotal > 0 ? "text-destructive" : "text-muted-foreground"}    accent={stats.overdueTotal > 0 ? "text-destructive" : undefined} />
-        <StatCard label="Eingegangen (Monat)" value={formatCurrency(stats.paidThisMonth)} icon={TrendingUp}   iconClass="text-success" accent="text-success" />
+        <StatCard label="Gesamt fakturiert"   value={formatCurrency(stats.totalBilled, defaults.currency)}  icon={Euro}         iconClass="text-muted-foreground" />
+        <StatCard label="Offen"               value={formatCurrency(stats.outstanding, defaults.currency)}   icon={Clock}        iconClass={stats.outstanding > 0 ? "text-info" : "text-muted-foreground"}    accent={stats.outstanding > 0 ? "text-info" : undefined} />
+        <StatCard label="Überfällig"          value={formatCurrency(stats.overdueTotal, defaults.currency)}  icon={AlertCircle}  iconClass={stats.overdueTotal > 0 ? "text-destructive" : "text-muted-foreground"}    accent={stats.overdueTotal > 0 ? "text-destructive" : undefined} />
+        <StatCard label="Eingegangen (Monat)" value={formatCurrency(stats.paidThisMonth, defaults.currency)} icon={TrendingUp}   iconClass="text-success" accent="text-success" />
       </div>
 
       {/* Filter + List */}
@@ -610,7 +643,7 @@ export default function GlobalInvoicesPage() {
                   {/* Amount — show brutto if taxRate > 0 */}
                   <div className="tabular-nums">
                     <span className="text-sm font-semibold">
-                      {formatCurrency(total * (1 + (inv.taxRate ?? 0) / 100))}
+                      {formatCurrency(total * (1 + (inv.taxRate ?? 0) / 100), defaults.currency)}
                     </span>
                     {(inv.taxRate ?? 0) > 0 && (
                       <p className="text-meta text-muted-foreground">inkl. {inv.taxRate}% MwSt.</p>
@@ -908,17 +941,17 @@ export default function GlobalInvoicesPage() {
                     <div className="text-right space-y-1 min-w-[180px]">
                       <div className="flex items-center justify-between gap-8 text-sm text-muted-foreground">
                         <span>Netto</span>
-                        <span className="tabular-nums">{formatCurrency(netto)}</span>
+                        <span className="tabular-nums">{formatCurrency(netto, defaults.currency)}</span>
                       </div>
                       {formTaxRate > 0 && (
                         <div className="flex items-center justify-between gap-8 text-sm text-muted-foreground">
                           <span>MwSt. {formTaxRate}%</span>
-                          <span className="tabular-nums">{formatCurrency(mwst)}</span>
+                          <span className="tabular-nums">{formatCurrency(mwst, defaults.currency)}</span>
                         </div>
                       )}
                       <div className="flex items-center justify-between gap-8 border-t pt-1">
                         <span className="text-sm font-semibold">Gesamt</span>
-                        <span className="text-lg font-bold tabular-nums">{formatCurrency(brutto)}</span>
+                        <span className="text-lg font-bold tabular-nums">{formatCurrency(brutto, defaults.currency)}</span>
                       </div>
                     </div>
                   </div>

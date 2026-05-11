@@ -132,6 +132,8 @@ export default function TasksPage() {
   // `?import=true` kommt vom Projekt-Erstellen-Flow → öffnet direkt den
   // File-Picker des Import/Export-Menüs.
   const autoOpenImport = search.get("import") === "true";
+  // `?task=<id>` öffnet direkt den Task-Dialog (Link aus My Day, Inbox, etc.)
+  const autoOpenTaskId = search.get("task");
   const { data: session } = useSession();
   const isClient = session?.user?.role === "CLIENT";
   const currentUserId = session?.user?.id || "";
@@ -244,6 +246,16 @@ export default function TasksPage() {
     setOnChange(() => fetchTasks);
     return () => setOnChange(null);
   }, [setOnChange, fetchTasks]);
+
+  // Auto-open Task-Dialog wenn ?task=<id> in der URL (Link aus My Day, Inbox)
+  useEffect(() => {
+    if (!autoOpenTaskId || loading || taskDialogOpen) return;
+    const target = tasks.find((t) => t.id === autoOpenTaskId);
+    if (target) {
+      openTaskDialog(target);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenTaskId, loading, tasks.length]);
 
   // Global "c" shortcut → open the new-task dialog from anywhere on this page.
   useEffect(() => {

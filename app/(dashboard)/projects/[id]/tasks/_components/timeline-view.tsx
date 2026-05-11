@@ -443,9 +443,9 @@ export function TimelineView({
                     <div
                       key={toDateKey(day)}
                       className={cn(
-                        "shrink-0 flex items-center justify-center text-meta tabular-nums border-r",
+                        "shrink-0 flex items-center justify-center text-[10px] leading-none tabular-nums border-r",
                         isToday(day) && "bg-primary/20 font-bold text-primary",
-                        isWeekend(day) && !isToday(day) && "bg-muted/40 text-muted-foreground",
+                        isWeekend(day) && !isToday(day) && "bg-muted/30 text-muted-foreground/60",
                       )}
                       style={{ width: config.dayWidth }}
                     >
@@ -474,7 +474,7 @@ export function TimelineView({
                     key={`col-${toDateKey(day)}`}
                     className={cn(
                       "absolute top-0 bottom-0 border-r",
-                      isWeekend(day) && "bg-muted/20",
+                      isWeekend(day) && "bg-muted/15",
                     )}
                     style={{
                       left: differenceInDays(day, rangeStart) * config.dayWidth,

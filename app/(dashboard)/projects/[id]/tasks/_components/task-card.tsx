@@ -6,7 +6,6 @@ import {
   AlertCircle,
   ArrowRight,
   Calendar,
-  Check,
   CheckCircle2,
   Eye,
   Lock,
@@ -151,44 +150,13 @@ export function TaskCard({
         onClick={(e) => {
           if (isOverlay) return;
           if ((e.target as HTMLElement).closest("[data-no-click]")) return;
-          if (!isClient && onSelect) {
-            const meta = e.metaKey || e.ctrlKey;
-            const shift = e.shiftKey;
-            if (meta) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
-            if (shift) { e.preventDefault(); onSelect(task.id, "range"); return; }
-            if (selectionActive) { e.preventDefault(); onSelect(task.id, "toggle"); return; }
-          }
           onClick?.();
         }}
       >
         <div className="p-3.5">
-          <div className="flex items-start gap-2">
-            {/* Checkbox column (always reserved space so layout doesn't shift) */}
-            {!isClient && !isOverlay && onSelect && (
-              <button
-                type="button"
-                data-no-click
-                onClick={(e) => { e.stopPropagation(); onSelect(task.id, "toggle"); }}
-                className={cn(
-                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all",
-                  selected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/40 hover:border-foreground",
-                  selected || selectionActive
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100",
-                )}
-                aria-label={selected ? "Abwählen" : "Auswählen"}
-                title={selected ? "Abwählen" : "Auswählen (oder Cmd+Click)"}
-              >
-                {selected && <Check className="h-3 w-3" />}
-              </button>
-            )}
-
-            {/* Content column — alles rechts der Checkbox, einheitliche linke Kante */}
-            <div className="flex-1 min-w-0 space-y-3">
-              {/* Title row */}
-              <div className="flex items-start gap-2">
+          <div className="space-y-3">
+            {/* Title row */}
+            <div className="flex items-start gap-2">
                 <div
                   className={cn(
                     "flex-1 min-w-0 text-sm font-semibold leading-snug",
@@ -358,6 +326,5 @@ export function TaskCard({
           </div>
         </div>
       </div>
-    </div>
   );
 }

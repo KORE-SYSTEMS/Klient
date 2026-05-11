@@ -104,13 +104,37 @@ function calcTotal(items: InvoiceItem[]): number {
   return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount);
+function formatCurrency(amount: number, currency = "EUR"): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount);
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
 }
 
 const UNITS = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
 
-const EMPTY_ITEM = (): InvoiceItem => ({ description: "", quantity: 1, unitPrice: 0, unit: "Std." });
+const EMPTY_ITEM = (unitPrice = 0): InvoiceItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
+
+interface BillingDefaults {
+  currency:          string;
+  defaultHourlyRate: number | null;
+  defaultTaxRate:    number;
+  invoicePrefix:     string;
+  proposalPrefix:    string;
+  paymentTermsDays:  number;
+}
+
+const FALLBACK_DEFAULTS: BillingDefaults = {
+  currency: "EUR",
+  defaultHourlyRate: null,
+  defaultTaxRate: 19,
+  invoicePrefix: "RE",
+  proposalPrefix: "AN",
+  paymentTermsDays: 14,
+};
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -135,6 +159,7 @@ export default function InvoicesPage() {
   const [formDueDate, setFormDueDate] = useState("");
   const [formNotes,   setFormNotes]   = useState("");
   const [formItems,   setFormItems]   = useState<InvoiceItem[]>([EMPTY_ITEM()]);
+  const [defaults,    setDefaults]    = useState<BillingDefaults>(FALLBACK_DEFAULTS);
 
   // Task/Epic import state
   const [importOpen, setImportOpen] = useState(false);
@@ -204,7 +229,13 @@ export default function InvoicesPage() {
     setLoading(false);
   }, [projectId]);
 
-  useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+  useEffect(() => {
+    fetchInvoices();
+    fetch("/api/billing-defaults")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setDefaults(d); })
+      .catch(() => {});
+  }, [fetchInvoices]);
 
   // Clients can't access this page
   if (isClient) {
@@ -228,15 +259,15 @@ export default function InvoicesPage() {
       setFormTitle("");
       setFormNumber("");
       setFormStatus("DRAFT");
-      setFormDueDate("");
+      setFormDueDate(addDays(new Date(), defaults.paymentTermsDays).toISOString().slice(0, 10));
       setFormNotes("");
-      setFormItems([EMPTY_ITEM()]);
+      setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     }
     setDialogOpen(true);
   }
 
   function addItem() {
-    setFormItems((prev) => [...prev, EMPTY_ITEM()]);
+    setFormItems((prev) => [...prev, EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
   }
 
   function removeItem(index: number) {
@@ -367,7 +398,7 @@ export default function InvoicesPage() {
             <div key={card.label} className="rounded-lg border bg-card px-4 py-3">
               <div className="text-caption font-medium text-muted-foreground">{card.label}</div>
               <div className={cn("text-lg font-bold tabular-nums mt-0.5", card.cls)}>
-                {formatCurrency(card.amount)}
+                {formatCurrency(card.amount, defaults.currency)}
               </div>
             </div>
           ))}
@@ -435,7 +466,7 @@ export default function InvoicesPage() {
 
                 {/* Amount */}
                 <div className="w-[120px] shrink-0 text-right font-semibold tabular-nums text-sm">
-                  {formatCurrency(total)}
+                  {formatCurrency(total, defaults.currency)}
                 </div>
 
                 {/* Due date */}
@@ -701,7 +732,7 @@ export default function InvoicesPage() {
               <div className="flex justify-end border-t pt-2 mt-2">
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-muted-foreground">Gesamt:</span>
-                  <span className="text-xl font-bold tabular-nums">{formatCurrency(formTotal)}</span>
+                  <span className="text-xl font-bold tabular-nums">{formatCurrency(formTotal, defaults.currency)}</span>
                 </div>
               </div>
             </div>
