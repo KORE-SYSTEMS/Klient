@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Clock, Pencil, Plus, X } from "lucide-react";
+import { ChevronDown, Pencil, Play, Plus, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -150,13 +150,21 @@ interface TimeEntriesSectionProps {
   taskId: string;
   onUpdate: () => void;
   isClient: boolean;
+  isTimerActive?: boolean;
+  timerElapsed?: number;
+  onTimerStart?: (taskId: string) => void;
+  onTimerStop?: () => void;
 }
 
 /** Manual + tracked time entries, listed under Task-Dialog → Details. */
-export function TimeEntriesSection({ taskId, onUpdate, isClient }: TimeEntriesSectionProps) {
+export function TimeEntriesSection({
+  taskId, onUpdate, isClient,
+  isTimerActive = false, timerElapsed = 0, onTimerStart, onTimerStop,
+}: TimeEntriesSectionProps) {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const [addDate, setAddDate] = useState(todayStr);
@@ -232,29 +240,46 @@ export function TimeEntriesSection({ taskId, onUpdate, isClient }: TimeEntriesSe
 
   if (loading) return null;
 
+  const visibleEntries = expanded ? entries : entries.slice(0, 2);
+  const hiddenCount = entries.length - visibleEntries.length;
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Zeiterfassung
         </Label>
-        <div className="flex items-center gap-3">
-          {totalSeconds > 0 && (
-            <span className="flex items-center gap-1.5 text-xs font-medium">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              {formatDuration(totalSeconds)} gesamt
-            </span>
-          )}
-          {!isClient && (
+        {!isClient && (
+          <div className="flex items-center gap-1.5">
             <button
               type="button" onClick={() => setAdding(!adding)}
-              className="flex items-center gap-1 text-xs text-primary hover:underline"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Plus className="h-3 w-3" />
               Zeit hinzufügen
             </button>
-          )}
-        </div>
+            {onTimerStart && onTimerStop && (
+              isTimerActive ? (
+                <button
+                  type="button" onClick={onTimerStop}
+                  className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-xs font-mono font-semibold tabular-nums text-destructive transition-colors hover:bg-destructive/20"
+                  title="Timer stoppen"
+                >
+                  <Square className="h-2.5 w-2.5 fill-current" />
+                  {formatDuration(timerElapsed)}
+                </button>
+              ) : (
+                <button
+                  type="button" onClick={() => onTimerStart(taskId)}
+                  className="inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  title="Timer starten"
+                >
+                  <Play className="h-3 w-3 fill-current" />
+                </button>
+              )
+            )}
+          </div>
+        )}
       </div>
 
       {adding && !isClient && (
@@ -304,14 +329,40 @@ export function TimeEntriesSection({ taskId, onUpdate, isClient }: TimeEntriesSe
       {entries.length === 0 && !adding ? (
         <p className="text-xs text-muted-foreground py-1">Noch keine Zeit erfasst</p>
       ) : (
-        <div className="max-h-[220px] space-y-1 overflow-y-auto">
-          {entries.map((entry) => (
-            <TimeEntryRow
-              key={entry.id} entry={entry} isClient={isClient}
-              onDelete={deleteEntry} onSave={saveEdit}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-1.5">
+            {visibleEntries.map((entry) => (
+              <TimeEntryRow
+                key={entry.id} entry={entry} isClient={isClient}
+                onDelete={deleteEntry} onSave={saveEdit}
+              />
+            ))}
+          </div>
+          {hiddenCount > 0 && (
+            <button
+              type="button" onClick={() => setExpanded(true)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronDown className="h-3 w-3" />
+              {hiddenCount} weitere {hiddenCount === 1 ? "Eintrag" : "Einträge"} anzeigen
+            </button>
+          )}
+          {expanded && entries.length > 2 && (
+            <button
+              type="button" onClick={() => setExpanded(false)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronDown className="h-3 w-3 rotate-180" />
+              Weniger anzeigen
+            </button>
+          )}
+          {totalSeconds > 0 && (
+            <div className="flex items-center justify-between border-t pt-2.5 mt-1">
+              <span className="text-xs font-medium text-muted-foreground">Gesamtzeit</span>
+              <span className="font-mono text-sm font-semibold tabular-nums">{formatDuration(totalSeconds)}</span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

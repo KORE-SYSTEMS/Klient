@@ -1243,18 +1243,11 @@ export default function TasksPage() {
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
         <DialogContent className={cn("max-h-[90vh] overflow-y-auto overflow-x-hidden", editTask ? "max-w-2xl" : "max-w-lg")}>
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>
-                {isCreateMode && "Neuer Task"}
-                {isEditMode && "Task bearbeiten"}
-                {isClientViewingTask && (editTask?.title || "Task")}
-              </DialogTitle>
-              {editTask && !isClient && (
-                <TimerButton taskId={editTask.id} isActive={activeTimer?.taskId === editTask.id}
-                  elapsed={activeTimer?.taskId === editTask.id ? elapsed : 0} totalTime={editTask.totalTime || 0}
-                  onStart={handleTimerStart} onStop={handleTimerStop} showTotal />
-              )}
-            </div>
+            <DialogTitle>
+              {isCreateMode && "Neuer Task"}
+              {isEditMode && "Task bearbeiten"}
+              {isClientViewingTask && (editTask?.title || "Task")}
+            </DialogTitle>
           </DialogHeader>
 
           {/* Tabs */}
@@ -1360,7 +1353,17 @@ export default function TasksPage() {
                     </div>
                   )}
                 </div>
-                <div className="border-t pt-3"><TimeEntriesSection taskId={editTask.id} onUpdate={fetchTasks} isClient={isClient} /></div>
+                <div className="border-t mt-4 pt-5">
+                  <TimeEntriesSection
+                    taskId={editTask.id}
+                    onUpdate={fetchTasks}
+                    isClient={isClient}
+                    isTimerActive={activeTimer?.taskId === editTask.id}
+                    timerElapsed={activeTimer?.taskId === editTask.id ? elapsed : 0}
+                    onTimerStart={handleTimerStart}
+                    onTimerStop={handleTimerStop}
+                  />
+                </div>
               </div>
 
               {/* ── Handoff comment (shown to client when task is in approval) ── */}
@@ -1596,7 +1599,19 @@ export default function TasksPage() {
                   onChange={(e) => setFormClientVisible(e.target.checked)} className="rounded-sm" />
                 <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
               </div>
-              {editTask && <div className="border-t pt-4"><TimeEntriesSection taskId={editTask.id} onUpdate={fetchTasks} isClient={isClient} /></div>}
+              {editTask && (
+                <div className="border-t mt-4 pt-5">
+                  <TimeEntriesSection
+                    taskId={editTask.id}
+                    onUpdate={fetchTasks}
+                    isClient={isClient}
+                    isTimerActive={activeTimer?.taskId === editTask.id}
+                    timerElapsed={activeTimer?.taskId === editTask.id ? elapsed : 0}
+                    onTimerStart={handleTimerStart}
+                    onTimerStop={handleTimerStop}
+                  />
+                </div>
+              )}
 
               {/* Approval status panel visible to staff */}
               {editTask?.approvalStatus && (
