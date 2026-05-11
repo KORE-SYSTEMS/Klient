@@ -125,12 +125,14 @@ const EMPTY_ITEM   = (unitPrice = 0): ProposalItem => ({ description: "", quanti
 const TAX_RATES = [0, 7, 19];
 
 interface BillingDefaults {
-  currency:          string;
-  defaultHourlyRate: number | null;
-  defaultTaxRate:    number;
-  invoicePrefix:     string;
-  proposalPrefix:    string;
-  paymentTermsDays:  number;
+  currency:             string;
+  defaultHourlyRate:    number | null;
+  defaultTaxRate:       number;
+  invoicePrefix:        string;
+  proposalPrefix:       string;
+  paymentTermsDays:     number;
+  defaultInvoiceNotes:  string;
+  defaultProposalNotes: string;
 }
 
 const FALLBACK_DEFAULTS: BillingDefaults = {
@@ -140,6 +142,8 @@ const FALLBACK_DEFAULTS: BillingDefaults = {
   invoicePrefix: "RE",
   proposalPrefix: "AN",
   paymentTermsDays: 14,
+  defaultInvoiceNotes: "",
+  defaultProposalNotes: "",
 };
 
 function calcNetto(items: ProposalItem[]): number {
@@ -337,7 +341,7 @@ export default function ProposalsPage() {
     setFormStatus("DRAFT");
     setFormValidUntil("");
     setFormTaxRate(String(defaults.defaultTaxRate));
-    setFormNotes("");
+    setFormNotes(defaults.defaultProposalNotes ?? "");
     setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     setDialogOpen(true);
   }

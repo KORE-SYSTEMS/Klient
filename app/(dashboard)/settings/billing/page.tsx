@@ -43,6 +43,9 @@ interface BillingSettings {
   // Tab: Nummerierung
   invoicePrefix: string;
   proposalPrefix: string;
+  // Default-Anmerkungen
+  defaultInvoiceNotes: string;
+  defaultProposalNotes: string;
 }
 
 const DEFAULTS: BillingSettings = {
@@ -56,6 +59,8 @@ const DEFAULTS: BillingSettings = {
   currency: "EUR",
   invoicePrefix: "RE",
   proposalPrefix: "AN",
+  defaultInvoiceNotes: "",
+  defaultProposalNotes: "",
 };
 
 type TabId = "firma" | "abrechnung" | "nummerierung";
@@ -115,6 +120,8 @@ export default function BillingSettingsPage() {
             currency:          data.currency          ?? "EUR",
             invoicePrefix:     data.invoicePrefix     ?? "RE",
             proposalPrefix:    data.proposalPrefix    ?? "AN",
+            defaultInvoiceNotes:  data.defaultInvoiceNotes  ?? "",
+            defaultProposalNotes: data.defaultProposalNotes ?? "",
           });
         }
         setLoading(false);
@@ -140,6 +147,8 @@ export default function BillingSettingsPage() {
           currency:          s.currency,
           invoicePrefix:     s.invoicePrefix,
           proposalPrefix:    s.proposalPrefix,
+          defaultInvoiceNotes:  s.defaultInvoiceNotes,
+          defaultProposalNotes: s.defaultProposalNotes,
         }),
       });
 
@@ -261,6 +270,7 @@ export default function BillingSettingsPage() {
 
         {/* ── Tab: Abrechnung ── */}
         {activeTab === "abrechnung" && (
+          <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -347,6 +357,44 @@ export default function BillingSettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Standard-Anmerkungen */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Euro className="h-4 w-4 text-muted-foreground" />
+                Standard-Anmerkungen
+              </CardTitle>
+              <CardDescription>
+                Werden in neu erstellte Rechnungen und Angebote automatisch vorbefüllt.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="defaultInvoiceNotes">Anmerkungen für Rechnungen</Label>
+                <textarea
+                  id="defaultInvoiceNotes"
+                  value={s.defaultInvoiceNotes}
+                  onChange={field("defaultInvoiceNotes")}
+                  rows={4}
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder={"z.B.\nZahlbar innerhalb von 14 Tagen ohne Abzug.\nVielen Dank für die gute Zusammenarbeit."}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="defaultProposalNotes">Anmerkungen für Angebote</Label>
+                <textarea
+                  id="defaultProposalNotes"
+                  value={s.defaultProposalNotes}
+                  onChange={field("defaultProposalNotes")}
+                  rows={4}
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder={"z.B.\nDieses Angebot ist 30 Tage gültig.\nPreise verstehen sich zzgl. MwSt."}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          </div>
         )}
 
         {/* ── Tab: Nummerierung ── */}

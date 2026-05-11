@@ -15,11 +15,13 @@ export async function GET() {
 
   const ws = await prisma.workspace.findFirst();
   return NextResponse.json({
-    currency:          ws?.currency          ?? "EUR",
-    defaultHourlyRate: ws?.defaultHourlyRate ?? null,
-    defaultTaxRate:    ws?.defaultTaxRate    ?? 19,
-    invoicePrefix:     ws?.invoicePrefix     ?? "RE",
-    proposalPrefix:    ws?.proposalPrefix    ?? "AN",
-    paymentTermsDays:  ws?.paymentTermsDays  ?? 14,
+    currency:             ws?.currency             ?? "EUR",
+    defaultHourlyRate:    ws?.defaultHourlyRate    ?? null,
+    defaultTaxRate:       ws?.defaultTaxRate       ?? 19,
+    invoicePrefix:        ws?.invoicePrefix        ?? "RE",
+    proposalPrefix:       ws?.proposalPrefix       ?? "AN",
+    paymentTermsDays:     ws?.paymentTermsDays     ?? 14,
+    defaultInvoiceNotes:  ws?.defaultInvoiceNotes  ?? "",
+    defaultProposalNotes: ws?.defaultProposalNotes ?? "",
   });
 }

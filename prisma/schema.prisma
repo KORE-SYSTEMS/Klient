@@ -473,6 +473,9 @@ model Workspace {
   invoicePrefix           String  @default("RE")
   proposalPrefix          String  @default("AN")
   paymentTermsDays        Int     @default(14)
+  // Default-Anmerkungen für neue Rechnungen/Angebote
+  defaultInvoiceNotes     String?
+  defaultProposalNotes    String?
   // Footer-Links (Sidebar)
   footerEnabled           Boolean @default(false)
   privacyUrl              String?

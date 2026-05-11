@@ -119,12 +119,14 @@ const UNITS = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
 const EMPTY_ITEM = (unitPrice = 0): InvoiceItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
 
 interface BillingDefaults {
-  currency:          string;
-  defaultHourlyRate: number | null;
-  defaultTaxRate:    number;
-  invoicePrefix:     string;
-  proposalPrefix:    string;
-  paymentTermsDays:  number;
+  currency:             string;
+  defaultHourlyRate:    number | null;
+  defaultTaxRate:       number;
+  invoicePrefix:        string;
+  proposalPrefix:       string;
+  paymentTermsDays:     number;
+  defaultInvoiceNotes:  string;
+  defaultProposalNotes: string;
 }
 
 const FALLBACK_DEFAULTS: BillingDefaults = {
@@ -134,6 +136,8 @@ const FALLBACK_DEFAULTS: BillingDefaults = {
   invoicePrefix: "RE",
   proposalPrefix: "AN",
   paymentTermsDays: 14,
+  defaultInvoiceNotes: "",
+  defaultProposalNotes: "",
 };
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -260,7 +264,7 @@ export default function InvoicesPage() {
       setFormNumber("");
       setFormStatus("DRAFT");
       setFormDueDate(addDays(new Date(), defaults.paymentTermsDays).toISOString().slice(0, 10));
-      setFormNotes("");
+      setFormNotes(defaults.defaultInvoiceNotes ?? "");
       setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     }
     setDialogOpen(true);
