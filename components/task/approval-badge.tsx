@@ -4,6 +4,9 @@ interface ApprovalBadgeProps {
   status: string | null | undefined;
 }
 
+const BASE_CLS =
+  "inline-flex items-center gap-1 rounded-full font-medium text-[10px] leading-none h-5 px-2";
+
 /**
  * Renders the client approval state on a task. Returns null for tasks without
  * an approval workflow (the common case) so callers can drop it in unchecked.
@@ -13,7 +16,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "PENDING") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-meta font-medium text-warning">
+      <span className={`${BASE_CLS} bg-warning/10 text-warning`}>
         <Hourglass className="h-2.5 w-2.5" />
         Abnahme ausstehend
       </span>
@@ -22,7 +25,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "APPROVED") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-meta font-medium text-success">
+      <span className={`${BASE_CLS} bg-success/10 text-success`}>
         <ThumbsUp className="h-2.5 w-2.5" />
         Abgenommen
       </span>
@@ -31,7 +34,7 @@ export function ApprovalBadge({ status }: ApprovalBadgeProps) {
 
   if (status === "REJECTED") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-meta font-medium text-destructive">
+      <span className={`${BASE_CLS} bg-destructive/10 text-destructive`}>
         <ThumbsDown className="h-2.5 w-2.5" />
         Abgelehnt
       </span>

@@ -18,11 +18,11 @@ import {
  * pills in the kanban/list views.
  */
 const PROJECT_STATUSES = [
-  { value: "PLANNING",  label: "Planung",       color: "bg-info/15 text-info border-info/30" },
-  { value: "ACTIVE",    label: "Aktiv",         color: "bg-success/15 text-success border-success/30" },
-  { value: "REVIEW",    label: "Review",        color: "bg-warning/15 text-warning border-warning/30" },
-  { value: "COMPLETED", label: "Abgeschlossen", color: "bg-success/15 text-success border-success/30" },
-  { value: "ON_HOLD",   label: "Pausiert",      color: "bg-muted text-muted-foreground border-border" },
+  { value: "PLANNING",  label: "Planung",       color: "bg-info/10 text-info" },
+  { value: "ACTIVE",    label: "Aktiv",         color: "bg-success/10 text-success" },
+  { value: "REVIEW",    label: "Review",        color: "bg-warning/10 text-warning" },
+  { value: "COMPLETED", label: "Abgeschlossen", color: "bg-success/10 text-success" },
+  { value: "ON_HOLD",   label: "Pausiert",      color: "bg-muted/60 text-muted-foreground" },
 ] as const;
 
 interface StatusPillProps {
@@ -50,15 +50,14 @@ export function StatusPill({
   const pill = (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium text-meta transition-colors select-none",
-        size === "sm" ? "px-2 py-0.5" : "px-2.5 py-0.5",
+        "inline-flex items-center gap-1 rounded-full font-medium text-[10px] leading-none h-5 px-2 transition-colors select-none",
         colorClass,
         editable && "cursor-pointer hover:brightness-125",
         className,
       )}
     >
       {label}
-      {editable && <ChevronDown className={cn("opacity-60", size === "sm" ? "h-2.5 w-2.5" : "h-3 w-3")} />}
+      {editable && <ChevronDown className="h-2.5 w-2.5 opacity-60" />}
     </span>
   );
 

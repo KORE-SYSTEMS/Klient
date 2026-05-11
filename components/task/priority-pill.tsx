@@ -8,12 +8,11 @@ interface PriorityPillProps {
 }
 
 /** Standardized colored pill for task priorities. Used across board, list, dialog. */
-export function PriorityPill({ priority, size = "sm", className }: PriorityPillProps) {
+export function PriorityPill({ priority, className }: PriorityPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full font-medium",
-        "px-2 py-0.5 text-meta",
+        "inline-flex items-center rounded-full font-medium text-[10px] leading-none h-5 px-2",
         getPriorityPillStyle(priority),
         className,
       )}

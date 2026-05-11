@@ -155,7 +155,7 @@ export default async function ClientsPage() {
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {client.leadStatus && (
-                        <span className={cn("rounded-full px-2 py-0.5 text-meta font-semibold", LEAD_STATUS_STYLES[client.leadStatus])}>
+                        <span className={cn("inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium", LEAD_STATUS_STYLES[client.leadStatus])}>
                           {LEAD_STATUS_LABELS[client.leadStatus]}
                         </span>
                       )}

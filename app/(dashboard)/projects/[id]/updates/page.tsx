@@ -182,7 +182,7 @@ export default function UpdatesPage() {
                           {update.author.name || update.author.email}
                         </span>
                         <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-semibold border",
+                          "inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium border",
                           cfg.bg, cfg.color, cfg.border
                         )}>
                           <TypeIcon className="h-2.5 w-2.5" />

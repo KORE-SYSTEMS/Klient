@@ -413,7 +413,7 @@ function TaskRow({
         )}
 
         <span
-          className="hidden sm:inline-flex rounded-full px-2 py-0.5 text-meta font-medium whitespace-nowrap"
+          className="hidden sm:inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium whitespace-nowrap"
           style={{ backgroundColor: (task.statusColor || "#6b7280") + "20", color: task.statusColor || "#6b7280" }}
         >
           {task.statusName}

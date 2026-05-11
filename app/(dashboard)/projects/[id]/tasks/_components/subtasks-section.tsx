@@ -168,7 +168,7 @@ export function SubtasksSection({
                 <span className="text-sm truncate">{sub.title}</span>
                 {status && !isDone && (
                   <span
-                    className="ml-auto inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-meta font-semibold shrink-0"
+                    className="ml-auto inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium shrink-0"
                     style={{ backgroundColor: status.color + "20", color: status.color }}
                   >
                     {status.name}

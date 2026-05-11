@@ -1169,7 +1169,7 @@ export default function TasksPage() {
                       {/* Status */}
                       <div className="w-[110px] shrink-0">
                         <span
-                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-meta font-semibold"
+                          className="inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium"
                           style={{
                             backgroundColor: group.status.color + "18",
                             color: group.status.color,
@@ -1270,7 +1270,7 @@ export default function TasksPage() {
                 <span className="text-caption font-medium uppercase tracking-wider text-muted-foreground shrink-0">Phase</span>
                 {current && (
                   <span
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-medium"
+                    className="inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium"
                     style={{ backgroundColor: current.color + "22", color: current.color }}
                   >
                     {current.name}
@@ -1319,7 +1319,7 @@ export default function TasksPage() {
                       {(() => {
                         const si = getStatusInfo(editTask.status);
                         return si ? (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-meta font-medium"
+                          <span className="inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium"
                             style={{ backgroundColor: si.color + "18", color: si.color }}>
                             {si.name}
                           </span>

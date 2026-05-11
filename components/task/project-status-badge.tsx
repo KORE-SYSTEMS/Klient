@@ -9,14 +9,11 @@ interface ProjectStatusBadgeProps {
   className?: string;
 }
 
-/**
- * Pill for the project's coarse status (PLANNING / IN_PROGRESS / ON_HOLD / DONE).
- */
 export function ProjectStatusBadge({ status, className }: ProjectStatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-meta font-medium",
+        "inline-flex items-center rounded-full font-medium text-[10px] leading-none h-5 px-2",
         getProjectStatusPillStyle(status),
         className,
       )}

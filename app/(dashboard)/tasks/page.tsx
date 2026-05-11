@@ -405,7 +405,7 @@ export default function MyTasksPage() {
                       {/* Status pill */}
                       <div className="w-[80px] shrink-0 hidden sm:block">
                         <span
-                          className="inline-flex rounded-full px-2 py-0.5 text-meta font-medium truncate max-w-full"
+                          className="inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium truncate max-w-full"
                           style={{
                             backgroundColor: task.statusColor + "20",
                             color: task.statusColor,

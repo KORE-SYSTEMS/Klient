@@ -804,7 +804,7 @@ export default function ClientDetailPage() {
                         <span className="text-sm font-medium truncate">{inv.projectName}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className={cn("rounded-full px-2 py-0.5 text-meta font-semibold", statusColors[inv.status] ?? "bg-muted text-muted-foreground")}>
+                        <span className={cn("inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium", statusColors[inv.status] ?? "bg-muted text-muted-foreground")}>
                           {statusLabels[inv.status] ?? inv.status}
                         </span>
                         <span className="text-sm font-mono font-semibold">{formatEur(total)}</span>
