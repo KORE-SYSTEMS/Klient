@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Archive,
   ArchiveRestore,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -122,6 +124,17 @@ export default function ProjectsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archived: !project.archived }),
     });
+    if (res.ok) fetchProjects();
+  }
+
+  async function permanentDelete(project: Project, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const ok = window.confirm(
+      `"${project.name}" und alle Daten (Tasks, Zeit-Einträge, Kommentare, Dateien, Rechnungen) ENDGÜLTIG löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`,
+    );
+    if (!ok) return;
+    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     if (res.ok) fetchProjects();
   }
 
@@ -298,11 +311,9 @@ export default function ProjectsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="due">Fälligkeitsdatum</Label>
-                  <Input
-                    id="due"
-                    type="date"
+                  <DatePicker
                     value={newDueDate}
-                    onChange={(e) => setNewDueDate(e.target.value)}
+                    onChange={(v) => setNewDueDate(v ?? "")}
                   />
                 </div>
                 <div className="flex flex-col gap-2 pt-1">
@@ -401,12 +412,22 @@ export default function ProjectsPage() {
                                 <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                               </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuContent align="end" className="w-48">
                               {project.archived ? (
-                                <DropdownMenuItem onClick={(e) => toggleArchive(project, e)}>
-                                  <ArchiveRestore className="mr-2 h-3.5 w-3.5 text-success" />
-                                  Wiederherstellen
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem onClick={(e) => toggleArchive(project, e)}>
+                                    <ArchiveRestore className="mr-2 h-3.5 w-3.5 text-success" />
+                                    Wiederherstellen
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => permanentDelete(project, e)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                    Endgültig löschen
+                                  </DropdownMenuItem>
+                                </>
                               ) : (
                                 <DropdownMenuItem onClick={(e) => toggleArchive(project, e)}>
                                   <Archive className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
