@@ -754,7 +754,7 @@ export default function ProposalsPage() {
 
       {/* ── Create / Edit Dialog ───────────────────────────────────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{editProposal ? "Angebot bearbeiten" : "Neues Angebot"}</DialogTitle>
           </DialogHeader>
@@ -890,22 +890,43 @@ export default function ProposalsPage() {
                   ) : importTasks.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Keine Aufgaben mit erfasster Zeit gefunden.</p>
                   ) : (
-                    <div className="max-h-52 overflow-y-auto space-y-1">
-                      {importTasks.map((t) => (
-                        <label key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent/50">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(t.id)}
-                            onChange={() => toggleSelect(t.id)}
-                            className="rounded"
-                          />
-                          <span className="flex-1 text-xs truncate">{t.title}</span>
-                          <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                            {Math.round(((t.totalTime ?? 0) / 3600) * 100) / 100} Std.
-                          </span>
-                        </label>
-                      ))}
-                    </div>
+                    <>
+                      <label className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent/50 text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.size === importTasks.length && importTasks.length > 0}
+                          ref={(el) => {
+                            if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < importTasks.length;
+                          }}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedIds(new Set(importTasks.map((t) => t.id)));
+                            else setSelectedIds(new Set());
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-xs font-medium">
+                          {selectedIds.size === importTasks.length && importTasks.length > 0
+                            ? "Alle abwählen"
+                            : "Alle auswählen"}
+                        </span>
+                      </label>
+                      <div className="max-h-52 overflow-y-auto space-y-1 min-w-0">
+                        {importTasks.map((t) => (
+                          <label key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent/50 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(t.id)}
+                              onChange={() => toggleSelect(t.id)}
+                              className="rounded shrink-0"
+                            />
+                            <span className="flex-1 text-xs truncate">{t.title}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                              {Math.round(((t.totalTime ?? 0) / 3600) * 100) / 100} Std.
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
                   )}
                   <Button
                     type="button"

@@ -6,6 +6,10 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY prisma/schema.prisma ./prisma/schema.prisma
+# Puppeteer bundelt Chromium per Default — wir nutzen aber das System-Chromium
+# von Alpine im Runner-Stage. Spart ~300MB Image-Größe und vermeidet Alpine-
+# Inkompatibilität der vorgebauten Chromium-Binary von Google.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 # npm ci ensures exact versions from lockfile
 RUN npm ci --legacy-peer-deps
 
@@ -29,7 +33,22 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="file:/app/data/klient.db"
 
 # su-exec for dropping privileges (root → nextjs) after permission fix
-RUN apk add --no-cache su-exec
+# chromium + Fonts + libs für PDF-Generierung via Puppeteer
+RUN apk add --no-cache \
+    su-exec \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto \
+    font-noto-emoji
+
+# Puppeteer soll die System-Chromium-Binary nutzen statt versuchen
+# selbst eine herunterzuladen.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -46,6 +65,12 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Copy bcryptjs (needed for seed + auth at runtime)
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
+
+# Puppeteer wird im Runner separat installiert (dynamic import wird vom
+# Standalone-Tracer nicht erkannt). PUPPETEER_SKIP_DOWNLOAD vermeidet
+# den Chromium-Download — wir nutzen die System-Chromium-Binary (siehe oben).
+RUN PUPPETEER_SKIP_DOWNLOAD=true \
+    npm install puppeteer --no-package-lock --no-save --legacy-peer-deps --omit=dev
 
 # Copy prisma schema + migrations + seed for runtime migrate deploy
 COPY --from=builder /app/prisma ./prisma

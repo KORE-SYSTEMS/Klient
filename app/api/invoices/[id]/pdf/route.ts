@@ -55,10 +55,14 @@ export async function GET(
   try {
     browser = await puppeteer.launch({
       headless: true,
+      // In Docker (Alpine): /usr/bin/chromium-browser via env gesetzt.
+      // Lokal: undefined → Puppeteer nutzt seine eigene Chromium-Binary.
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--disable-gpu",
       ],
     });
     const page = await browser.newPage();

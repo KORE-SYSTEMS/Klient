@@ -29,9 +29,16 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
-type NavChild = { label: string; href: string; icon: LucideIcon; exact?: boolean };
+type NavChild = {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  /** Falls statt eines Icons ein Farbpunkt rendern soll (für Projekt-Liste). */
+  colorDot?: string | null;
+  exact?: boolean;
+};
 type NavItem = {
   label: string;
   href: string;
@@ -150,26 +157,63 @@ const clientNav: NavSection[] = [
   },
 ];
 
+interface SidebarProject {
+  id: string;
+  name: string;
+  color?: string | null;
+}
+
 export function Sidebar({
   role,
   logo,
   footerEnabled = false,
   imprintUrl,
   privacyUrl,
+  projects = [],
 }: {
   role: string;
   logo?: string | null;
   footerEnabled?: boolean;
   imprintUrl?: string | null;
   privacyUrl?: string | null;
+  projects?: SidebarProject[];
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   // Track which parent items are expanded (by href)
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const sections =
+  const baseSections =
     role === "CLIENT" ? clientNav : role === "MEMBER" ? memberNav : adminNav;
+
+  // Projekt-Liste dynamisch als Children unter dem "Projekte"-Item injizieren.
+  // Wenn keine Projekte vorhanden sind → bleibt einfacher Link ohne Chevron.
+  // Erstes Child = "Übersicht" → /projects (matched Pattern von Kunden/Einstellungen)
+  const sections = useMemo<NavSection[]>(() => {
+    if (projects.length === 0) return baseSections;
+    return baseSections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => {
+        if (item.href !== "/projects") return item;
+        return {
+          ...item,
+          children: [
+            {
+              label: "Übersicht",
+              href: "/projects",
+              icon: LayoutList,
+              exact: true,
+            },
+            ...projects.map((p) => ({
+              label: p.name,
+              href: `/projects/${p.id}`,
+              colorDot: p.color ?? null,
+            })),
+          ],
+        };
+      }),
+    }));
+  }, [baseSections, projects]);
 
   // Auto-expand parent items whose children match current route
   useEffect(() => {
@@ -329,6 +373,7 @@ export function Sidebar({
                             <Link
                               key={child.href}
                               href={child.href}
+                              title={child.label}
                               className={cn(
                                 "flex items-center gap-2.5 rounded-lg py-1.5 pl-4 pr-3 text-[13px] font-medium transition-colors",
                                 isActive
@@ -336,8 +381,15 @@ export function Sidebar({
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                               )}
                             >
-                              <child.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-foreground/80" : "text-muted-foreground")} />
-                              <span>{child.label}</span>
+                              {child.icon ? (
+                                <child.icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-foreground/80" : "text-muted-foreground")} />
+                              ) : (
+                                <span
+                                  className="h-2 w-2 shrink-0 rounded-full"
+                                  style={{ backgroundColor: child.colorDot || "#6b7280" }}
+                                />
+                              )}
+                              <span className="truncate">{child.label}</span>
                             </Link>
                           );
                         })}

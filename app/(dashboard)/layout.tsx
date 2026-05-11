@@ -16,7 +16,19 @@ export default async function DashboardLayout({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const workspace = await prisma.workspace.findFirst();
+  const isClient = session.user.role === "CLIENT";
+  const [workspace, projects] = await Promise.all([
+    prisma.workspace.findFirst(),
+    prisma.project.findMany({
+      where: {
+        archived: false,
+        ...(isClient ? { members: { some: { userId: session.user.id } } } : {}),
+      },
+      select: { id: true, name: true, color: true },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   return (
     <SessionProvider session={session}>
@@ -28,6 +40,7 @@ export default async function DashboardLayout({
             footerEnabled={workspace?.footerEnabled ?? false}
             imprintUrl={workspace?.imprintUrl ?? null}
             privacyUrl={workspace?.privacyUrl ?? null}
+            projects={projects}
           />
           <div className="flex flex-1 flex-col overflow-hidden">
             <Topbar user={session.user} />
