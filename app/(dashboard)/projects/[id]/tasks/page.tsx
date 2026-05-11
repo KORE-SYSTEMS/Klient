@@ -1160,7 +1160,7 @@ export default function TasksPage() {
                       {/* Due date */}
                       <div className="w-[100px] shrink-0">
                         {task.dueDate ? (() => {
-                          const overdue = new Date(task.dueDate) < new Date();
+                          const overdue = group.status.category !== "DONE" && new Date(task.dueDate) < new Date();
                           return (
                             <span className={cn("text-[11px] flex items-center gap-1", overdue ? "text-destructive" : "text-muted-foreground")}>
                               {overdue && <AlertCircle className="h-2.5 w-2.5 shrink-0" />}

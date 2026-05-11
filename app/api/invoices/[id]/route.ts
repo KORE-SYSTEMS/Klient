@@ -45,6 +45,7 @@ export async function PATCH(
   if (body.number  !== undefined) updateData.number  = body.number;
   if (body.status  !== undefined) updateData.status  = body.status;
   if (body.notes   !== undefined) updateData.notes   = body.notes || null;
+  if (body.intro   !== undefined) updateData.intro   = body.intro || null;
   if (body.taxRate !== undefined) updateData.taxRate = Number(body.taxRate);
   if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (body.paidAt  !== undefined) updateData.paidAt  = body.paidAt  ? new Date(body.paidAt)  : null;

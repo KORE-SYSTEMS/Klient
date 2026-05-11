@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   if (session instanceof NextResponse) return session;
 
   const body = await request.json();
-  const { projectId, title, number, status, dueDate, notes, items, taxRate } = body;
+  const { projectId, title, number, status, dueDate, notes, intro, items, taxRate } = body;
 
   if (!projectId || !title) {
     return NextResponse.json({ error: "projectId and title are required" }, { status: 400 });
@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
       taxRate: resolvedTaxRate,
       dueDate: dueDate ? new Date(dueDate) : null,
       notes: notes || null,
+      intro: intro || null,
       items: items?.length
         ? {
             create: items.map((item: any, i: number) => ({

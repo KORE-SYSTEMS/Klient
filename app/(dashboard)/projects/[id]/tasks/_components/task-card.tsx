@@ -128,7 +128,7 @@ export function TaskCard({
   const checkPct = checkTotal > 0 ? Math.round((checkDone / checkTotal) * 100) : 0;
   const recurrence = task.recurrenceRule ? parseRecurrence(task.recurrenceRule) : null;
   const showPriority = task.priority && task.priority !== "MEDIUM";
-  const overdue = task.dueDate && new Date(task.dueDate) < new Date();
+  const overdue = !isDone && task.dueDate && new Date(task.dueDate) < new Date();
 
   return (
     <div

@@ -46,6 +46,9 @@ interface BillingSettings {
   // Default-Anmerkungen
   defaultInvoiceNotes: string;
   defaultProposalNotes: string;
+  // Einleitungstexte
+  defaultInvoiceIntro: string;
+  defaultProposalIntro: string;
 }
 
 const DEFAULTS: BillingSettings = {
@@ -61,6 +64,8 @@ const DEFAULTS: BillingSettings = {
   proposalPrefix: "AN",
   defaultInvoiceNotes: "",
   defaultProposalNotes: "",
+  defaultInvoiceIntro: "",
+  defaultProposalIntro: "",
 };
 
 type TabId = "firma" | "abrechnung" | "nummerierung";
@@ -122,6 +127,8 @@ export default function BillingSettingsPage() {
             proposalPrefix:    data.proposalPrefix    ?? "AN",
             defaultInvoiceNotes:  data.defaultInvoiceNotes  ?? "",
             defaultProposalNotes: data.defaultProposalNotes ?? "",
+            defaultInvoiceIntro:  data.defaultInvoiceIntro  ?? "",
+            defaultProposalIntro: data.defaultProposalIntro ?? "",
           });
         }
         setLoading(false);
@@ -149,6 +156,8 @@ export default function BillingSettingsPage() {
           proposalPrefix:    s.proposalPrefix,
           defaultInvoiceNotes:  s.defaultInvoiceNotes,
           defaultProposalNotes: s.defaultProposalNotes,
+          defaultInvoiceIntro:  s.defaultInvoiceIntro,
+          defaultProposalIntro: s.defaultProposalIntro,
         }),
       });
 
@@ -358,6 +367,43 @@ export default function BillingSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Einleitungstexte (oben unter dem Titel auf der PDF) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Euro className="h-4 w-4 text-muted-foreground" />
+                Einleitungstexte
+              </CardTitle>
+              <CardDescription>
+                Erscheinen im PDF direkt unter dem Titel "Rechnung" bzw. "Angebot".
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="defaultInvoiceIntro">Einleitung für Rechnungen</Label>
+                <textarea
+                  id="defaultInvoiceIntro"
+                  value={s.defaultInvoiceIntro}
+                  onChange={field("defaultInvoiceIntro")}
+                  rows={3}
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder={"z.B.\nVielen Dank für Ihren Auftrag — hiermit stellen wir Ihnen die nachfolgenden Leistungen in Rechnung."}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="defaultProposalIntro">Einleitung für Angebote</Label>
+                <textarea
+                  id="defaultProposalIntro"
+                  value={s.defaultProposalIntro}
+                  onChange={field("defaultProposalIntro")}
+                  rows={3}
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder={"z.B.\nVielen Dank für Ihr Interesse — gerne unterbreiten wir Ihnen das folgende Angebot."}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Standard-Anmerkungen */}
           <Card>
             <CardHeader>
@@ -366,7 +412,7 @@ export default function BillingSettingsPage() {
                 Standard-Anmerkungen
               </CardTitle>
               <CardDescription>
-                Werden in neu erstellte Rechnungen und Angebote automatisch vorbefüllt.
+                Werden im PDF unter den Positionen als "Anmerkungen" angezeigt.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">

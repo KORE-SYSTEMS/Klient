@@ -11,7 +11,7 @@ import {
   ClipboardCheck,
   TrendingUp,
   CalendarDays,
-  Circle,
+  Calendar,
   ArrowRight,
   Users,
 } from "lucide-react";
@@ -49,6 +49,14 @@ export default async function DashboardPage() {
   const safeProjectWhere = isClient
     ? { members: { some: { userId } }, archived: false }
     : { archived: false };
+
+  // Alle DONE-Category Status-IDs (project-scoped) — werden gebraucht damit
+  // erledigte Tasks NICHT als überfällig gefärbt/gezählt werden.
+  const doneStatusRows = await prisma.taskStatus.findMany({
+    where: { category: "DONE" },
+    select: { id: true },
+  });
+  const doneStatusIds = new Set(doneStatusRows.map((s) => s.id));
 
   // ── parallel queries ───────────────────────────────────────────────────────
   const [
@@ -116,12 +124,13 @@ export default async function DashboardPage() {
     // Total project count
     prisma.project.count({ where: safeProjectWhere }),
 
-    // Overdue task count
+    // Overdue task count — exkl. erledigter Tasks
     prisma.task.count({
       where: {
         project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
         ...(isClient ? { clientVisible: true } : {}),
         dueDate:  { not: null, lt: now },
+        status:   doneStatusIds.size > 0 ? { notIn: Array.from(doneStatusIds) } : undefined,
       },
     }),
   ]);
@@ -196,43 +205,53 @@ export default async function DashboardPage() {
             {myTasks.length === 0 ? (
               <EmptyHint icon={CheckSquare} text="Keine Tasks zugewiesen" />
             ) : (
-              myTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href={`/projects/${task.project.id}/tasks?task=${task.id}`}
-                  className="group flex items-start gap-3 rounded-lg border bg-card px-3.5 py-3 text-sm transition-colors hover:bg-accent/60"
-                >
-                  <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-sm group-hover:text-foreground transition-colors">
-                      {task.title}
+              myTasks.map((task) => {
+                const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+                const taskDone = doneStatusIds.has(task.status);
+                const overdue = dueDate && !taskDone ? dueDate < now : false;
+                const daysLeft = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / 86400000) : null;
+                return (
+                  <Link
+                    key={task.id}
+                    href={`/projects/${task.project.id}/tasks?task=${task.id}`}
+                    className="group flex items-center gap-3 rounded-lg border bg-card px-3.5 py-3 transition-colors hover:bg-accent/60"
+                  >
+                    {/* Due indicator (oder Platzhalter wenn kein Datum) */}
+                    {dueDate ? (
+                      <div className={cn(
+                        "flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-md text-center",
+                        overdue ? "bg-destructive/10 text-destructive" : (daysLeft !== null && daysLeft <= 2) ? "bg-warning/10 text-warning" : "bg-muted text-foreground"
+                      )}>
+                        <span className="text-caption font-bold leading-none">{dueDate.toLocaleDateString("de-DE", { day: "2-digit" })}</span>
+                        <span className="text-micro leading-none mt-0.5">{dueDate.toLocaleDateString("de-DE", { month: "short" })}</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-dashed border-muted-foreground/30 text-muted-foreground/40">
+                        <Calendar className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium group-hover:text-foreground transition-colors">{task.title}</div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-caption text-muted-foreground truncate">{task.project.name}</span>
+                        {task.epic && (
+                          <span
+                            className="hidden sm:inline-flex items-center gap-1 text-meta font-medium"
+                            style={{ color: task.epic.color }}
+                          >
+                            · {task.epic.title}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-caption text-muted-foreground truncate">{task.project.name}</span>
-                      {task.epic && (
-                        <span
-                          className="hidden sm:inline-flex items-center gap-1 text-meta font-medium"
-                          style={{ color: task.epic.color }}
-                        >
-                          {task.epic.title}
-                        </span>
-                      )}
+
+                    <div className="shrink-0">
+                      <PriorityPill priority={task.priority} />
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <PriorityPill priority={task.priority} />
-                    {task.dueDate && (() => {
-                      const overdue = new Date(task.dueDate) < now;
-                      return (
-                        <span className={cn("flex items-center gap-0.5 text-[10px] leading-none", overdue ? "text-destructive" : "text-muted-foreground")}>
-                          {overdue && <AlertCircle className="h-2.5 w-2.5" />}
-                          {formatDate(task.dueDate)}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </Link>
-              ))
+                  </Link>
+                );
+              })
             )}
           </CardContent>
         </Card>
@@ -251,7 +270,8 @@ export default async function DashboardPage() {
             ) : (
               upcomingTasks.map((task) => {
                 const dueDate = new Date(task.dueDate!);
-                const overdue = dueDate < now;
+                const taskDone = doneStatusIds.has(task.status);
+                const overdue = !taskDone && dueDate < now;
                 const daysLeft = Math.ceil((dueDate.getTime() - now.getTime()) / 86400000);
 
                 return (

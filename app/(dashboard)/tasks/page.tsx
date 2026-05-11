@@ -39,6 +39,7 @@ interface Task {
   status: string;
   statusName: string;
   statusColor: string;
+  isDone?: boolean;
   priority: string;
   dueDate?: string | null;
   approvalStatus?: string | null;
@@ -331,7 +332,7 @@ export default function MyTasksPage() {
 
                 {/* Rows */}
                 {!isCollapsed && group.tasks.map((task) => {
-                  const overdue = task.dueDate && new Date(task.dueDate) < now;
+                  const overdue = !task.isDone && task.dueDate && new Date(task.dueDate) < now;
                   const dueToday = task.dueDate && (() => {
                     const d = new Date(task.dueDate!);
                     const t = new Date(now.getFullYear(), now.getMonth(), now.getDate());

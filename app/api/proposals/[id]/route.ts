@@ -61,6 +61,7 @@ export async function PATCH(
   if (body.status     !== undefined) updateData.status     = body.status;
   if (body.taxRate    !== undefined) updateData.taxRate    = Number(body.taxRate);
   if (body.notes      !== undefined) updateData.notes      = body.notes || null;
+  if (body.intro      !== undefined) updateData.intro      = body.intro || null;
   if (body.clientId   !== undefined) updateData.clientId   = body.clientId || null;
   if (body.projectId  !== undefined) updateData.projectId  = body.projectId || null;
   if (body.validUntil !== undefined) {

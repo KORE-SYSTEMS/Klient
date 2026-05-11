@@ -23,5 +23,7 @@ export async function GET() {
     paymentTermsDays:     ws?.paymentTermsDays     ?? 14,
     defaultInvoiceNotes:  ws?.defaultInvoiceNotes  ?? "",
     defaultProposalNotes: ws?.defaultProposalNotes ?? "",
+    defaultInvoiceIntro:  ws?.defaultInvoiceIntro  ?? "",
+    defaultProposalIntro: ws?.defaultProposalIntro ?? "",
   });
 }

@@ -127,6 +127,8 @@ interface BillingDefaults {
   paymentTermsDays:     number;
   defaultInvoiceNotes:  string;
   defaultProposalNotes: string;
+  defaultInvoiceIntro:  string;
+  defaultProposalIntro: string;
 }
 
 const FALLBACK_DEFAULTS: BillingDefaults = {
@@ -138,6 +140,8 @@ const FALLBACK_DEFAULTS: BillingDefaults = {
   paymentTermsDays: 14,
   defaultInvoiceNotes: "",
   defaultProposalNotes: "",
+  defaultInvoiceIntro: "",
+  defaultProposalIntro: "",
 };
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -162,6 +166,7 @@ export default function InvoicesPage() {
   const [formStatus,  setFormStatus]  = useState("DRAFT");
   const [formDueDate, setFormDueDate] = useState("");
   const [formNotes,   setFormNotes]   = useState("");
+  const [formIntro,   setFormIntro]   = useState("");
   const [formItems,   setFormItems]   = useState<InvoiceItem[]>([EMPTY_ITEM()]);
   const [defaults,    setDefaults]    = useState<BillingDefaults>(FALLBACK_DEFAULTS);
 
@@ -276,6 +281,7 @@ export default function InvoicesPage() {
       setFormStatus(invoice.status);
       setFormDueDate(invoice.dueDate ? invoice.dueDate.split("T")[0] : "");
       setFormNotes(invoice.notes || "");
+      setFormIntro((invoice as Invoice & { intro?: string | null }).intro || "");
       setFormItems(invoice.items.length ? invoice.items : [EMPTY_ITEM()]);
     } else {
       setFormTitle("");
@@ -283,6 +289,7 @@ export default function InvoicesPage() {
       setFormStatus("DRAFT");
       setFormDueDate(addDays(new Date(), defaults.paymentTermsDays).toISOString().slice(0, 10));
       setFormNotes(defaults.defaultInvoiceNotes ?? "");
+      setFormIntro(defaults.defaultInvoiceIntro ?? "");
       setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     }
     setDialogOpen(true);
@@ -314,6 +321,7 @@ export default function InvoicesPage() {
         status:  formStatus,
         dueDate: formDueDate || null,
         notes:   formNotes.trim() || null,
+        intro:   formIntro.trim() || null,
         items:   formItems.filter((i) => i.description.trim()),
       };
 
@@ -514,8 +522,8 @@ export default function InvoicesPage() {
                       <DropdownMenuItem onClick={() => openDialog(invoice)}>
                         <Pencil className="mr-2 h-3.5 w-3.5" />Bearbeiten
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => window.open(`/print/invoices/${invoice.id}`, "_blank")}>
-                        <Download className="mr-2 h-3.5 w-3.5" />Als PDF herunterladen
+                      <DropdownMenuItem onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, "_blank")}>
+                        <Download className="mr-2 h-3.5 w-3.5" />Als PDF öffnen
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {invoice.status === "DRAFT" && (
@@ -760,6 +768,21 @@ export default function InvoicesPage() {
                   <span className="text-xl font-bold tabular-nums">{formatCurrency(formTotal, defaults.currency)}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Intro (über Positionen im PDF) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="inv-intro">Einleitungstext</Label>
+              <Textarea
+                id="inv-intro"
+                value={formIntro}
+                onChange={(e) => setFormIntro(e.target.value)}
+                placeholder="z.B. Vielen Dank für Ihren Auftrag…"
+                rows={2}
+              />
+              <p className="text-meta text-muted-foreground">
+                Erscheint im PDF direkt unter dem Titel.
+              </p>
             </div>
 
             {/* Notes */}

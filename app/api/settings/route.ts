@@ -72,6 +72,8 @@ export async function PATCH(request: NextRequest) {
     if (body.paymentTermsDays  !== undefined) updateData.paymentTermsDays  = Number(body.paymentTermsDays);
     if (body.defaultInvoiceNotes  !== undefined) updateData.defaultInvoiceNotes  = body.defaultInvoiceNotes || null;
     if (body.defaultProposalNotes !== undefined) updateData.defaultProposalNotes = body.defaultProposalNotes || null;
+    if (body.defaultInvoiceIntro  !== undefined) updateData.defaultInvoiceIntro  = body.defaultInvoiceIntro || null;
+    if (body.defaultProposalIntro !== undefined) updateData.defaultProposalIntro = body.defaultProposalIntro || null;
 
     // Footer
     if (body.footerEnabled !== undefined) updateData.footerEnabled = Boolean(body.footerEnabled);

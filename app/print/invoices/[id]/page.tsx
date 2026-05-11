@@ -6,6 +6,7 @@ import "./print.css";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ raw?: string }>;
 }
 
 function formatCurrency(n: number, currency: string): string {
@@ -30,13 +31,18 @@ function formatPeriod(from: Date | null, to: Date | null): string {
   return `${formatDate(from)} – ${formatDate(to)}`;
 }
 
-export default async function InvoicePrintPage({ params }: PageProps) {
+export default async function InvoicePrintPage({ params, searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user || session.user.role === "CLIENT") {
     redirect("/login");
   }
 
   const { id } = await params;
+  const sp = await searchParams;
+  // `?raw=1` deaktiviert AutoPrint — wird vom Puppeteer-Renderer benutzt,
+  // damit er nicht den Print-Dialog triggert sondern die Page ruhig zu PDF
+  // konvertiert.
+  const rawMode = sp.raw === "1";
   const [invoice, workspace] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id },
@@ -110,7 +116,7 @@ export default async function InvoicePrintPage({ params }: PageProps) {
 
   return (
     <div className="invoice-page">
-      <AutoPrint />
+      {!rawMode && <AutoPrint />}
 
       {/* Top stripe: Logo links + Absender rechts */}
       <header className="top-stripe">
@@ -183,6 +189,7 @@ export default async function InvoicePrintPage({ params }: PageProps) {
       {/* Title */}
       <h1 className="title">Rechnung</h1>
       {invoice.title && <p className="subtitle">{invoice.title}</p>}
+      {invoice.intro && <p className="intro-text">{invoice.intro}</p>}
 
       {/* Items table */}
       <table className="items">
@@ -196,25 +203,40 @@ export default async function InvoicePrintPage({ params }: PageProps) {
           </tr>
         </thead>
         <tbody>
-          {invoice.items.map((item, i) => (
-            <tr key={item.id}>
-              <td className="col-pos">{i + 1}</td>
-              <td className="col-desc">
-                <div className="item-desc">{item.description}</div>
-              </td>
-              <td className="col-qty">
-                {item.quantity.toLocaleString("de-DE", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 2,
-                })}{" "}
-                {item.unit}
-              </td>
-              <td className="col-price">{formatCurrency(item.unitPrice, currency)}</td>
-              <td className="col-total">
-                {formatCurrency(item.quantity * item.unitPrice, currency)}
-              </td>
-            </tr>
-          ))}
+          {invoice.items.map((item, i) => {
+            // Erste Zeile = Titel (bold), Rest = Zeit-Tracking-Notizen (dezent)
+            const lines = (item.description || "").split("\n");
+            const titleLine = lines[0] || "";
+            const subLines = lines.slice(1)
+              .map((l) => l.replace(/^[•·\-]\s*/, "").trim())
+              .filter(Boolean);
+            return (
+              <tr key={item.id}>
+                <td className="col-pos">{i + 1}</td>
+                <td className="col-desc">
+                  <div className="item-title">{titleLine}</div>
+                  {subLines.length > 0 && (
+                    <div className="item-sub">
+                      {subLines.map((line, j) => (
+                        <div key={j}>{line}</div>
+                      ))}
+                    </div>
+                  )}
+                </td>
+                <td className="col-qty">
+                  {item.quantity.toLocaleString("de-DE", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  {item.unit}
+                </td>
+                <td className="col-price">{formatCurrency(item.unitPrice, currency)}</td>
+                <td className="col-total">
+                  {formatCurrency(item.quantity * item.unitPrice, currency)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

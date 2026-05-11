@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     ...t,
     statusName:  statusMap[t.status]?.name  || t.status,
     statusColor: statusMap[t.status]?.color || "#6b7280",
+    isDone:      statusMap[t.status]?.category === "DONE",
     doneStatusId: doneByProject[t.project.id] || null,
   }));
 

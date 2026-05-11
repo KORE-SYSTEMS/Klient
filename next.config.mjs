@@ -20,6 +20,8 @@ const nextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  // Puppeteer darf nicht von Webpack gebundelt werden (binäre Chromium-Files).
+  serverExternalPackages: ["puppeteer", "puppeteer-core"],
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_GITHUB_REPO: "KORE-SYSTEMS/Klient",

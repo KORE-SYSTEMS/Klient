@@ -34,6 +34,7 @@ interface MyTask {
   status: string;
   statusName: string;
   statusColor: string;
+  isDone?: boolean;
   priority: string;
   dueDate?: string | null;
   approvalStatus?: string | null;
@@ -100,7 +101,7 @@ export default function MyDayPage() {
     // Tasks die wir gerade als done geklickt haben werden überall ausgeblendet
     const visible = tasks.filter((t) => !completedNow.has(t.id));
 
-    const overdue = visible.filter((t) => t.dueDate && new Date(t.dueDate) < today);
+    const overdue = visible.filter((t) => !t.isDone && t.dueDate && new Date(t.dueDate) < today);
     const todayTasks = visible.filter((t) => {
       if (!t.dueDate) return false;
       const d = new Date(t.dueDate);
@@ -340,7 +341,7 @@ function TaskRow({
   task: MyTask;
   onMarkDone?: (task: MyTask) => void;
 }) {
-  const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+  const overdue = !task.isDone && task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
   const dueToday =
     task.dueDate &&
     (() => {

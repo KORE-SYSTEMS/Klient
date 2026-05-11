@@ -134,6 +134,8 @@ interface BillingDefaults {
   paymentTermsDays:     number;
   defaultInvoiceNotes:  string;
   defaultProposalNotes: string;
+  defaultInvoiceIntro:  string;
+  defaultProposalIntro: string;
 }
 
 const FALLBACK_DEFAULTS: BillingDefaults = {
@@ -145,6 +147,8 @@ const FALLBACK_DEFAULTS: BillingDefaults = {
   paymentTermsDays: 14,
   defaultInvoiceNotes: "",
   defaultProposalNotes: "",
+  defaultInvoiceIntro: "",
+  defaultProposalIntro: "",
 };
 
 function calcTotal(items: InvoiceItem[]): number {
@@ -230,6 +234,7 @@ export default function GlobalInvoicesPage() {
   const [formStatus,    setFormStatus]    = useState("DRAFT");
   const [formDueDate,   setFormDueDate]   = useState("");
   const [formNotes,     setFormNotes]     = useState("");
+  const [formIntro,     setFormIntro]     = useState("");
   const [formTaxRate,   setFormTaxRate]   = useState(19);
   const [formItems,     setFormItems]     = useState<InvoiceItem[]>([EMPTY_ITEM()]);
   const [sending,       setSending]       = useState<string | null>(null); // invoiceId being sent
@@ -354,6 +359,7 @@ export default function GlobalInvoicesPage() {
     const due = addDays(new Date(), defaults.paymentTermsDays);
     setFormDueDate(due.toISOString().slice(0, 10));
     setFormNotes(defaults.defaultInvoiceNotes ?? "");
+    setFormIntro(defaults.defaultInvoiceIntro ?? "");
     setFormTaxRate(defaults.defaultTaxRate);
     setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     setDialogOpen(true);
@@ -367,6 +373,7 @@ export default function GlobalInvoicesPage() {
     setFormStatus(inv.status);
     setFormDueDate(inv.dueDate ? inv.dueDate.split("T")[0] : "");
     setFormNotes(inv.notes ?? "");
+    setFormIntro((inv as Invoice & { intro?: string | null }).intro ?? "");
     setFormTaxRate(inv.taxRate ?? 19);
     setFormItems(inv.items.length ? inv.items : [EMPTY_ITEM()]);
     setDialogOpen(true);
@@ -393,6 +400,7 @@ export default function GlobalInvoicesPage() {
         taxRate:   formTaxRate,
         dueDate:   formDueDate || null,
         notes:     formNotes.trim() || null,
+        intro:     formIntro.trim() || null,
         items:     formItems.filter((i) => i.description.trim()),
       };
 
@@ -699,8 +707,8 @@ export default function GlobalInvoicesPage() {
                           <Send className="h-3.5 w-3.5 mr-2" />
                           {sending === inv.id ? "Wird gesendet…" : "Per E-Mail senden"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.open(`/print/invoices/${inv.id}`, "_blank")}>
-                          <FileText className="h-3.5 w-3.5 mr-2" /> Als PDF herunterladen
+                        <DropdownMenuItem onClick={() => window.open(`/api/invoices/${inv.id}/pdf`, "_blank")}>
+                          <FileText className="h-3.5 w-3.5 mr-2" /> Als PDF öffnen
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => copyShareLink(inv)}>
                           <ExternalLink className="h-3.5 w-3.5 mr-2" /> Link kopieren
@@ -987,7 +995,23 @@ export default function GlobalInvoicesPage() {
               })()}
             </div>
 
-            {/* Notes */}
+            {/* Intro (über den Positionen im PDF) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="intro">Einleitungstext</Label>
+              <Textarea
+                id="intro"
+                rows={3}
+                value={formIntro}
+                onChange={(e) => setFormIntro(e.target.value)}
+                placeholder="Vielen Dank für Ihren Auftrag…"
+                className="resize-none text-sm"
+              />
+              <p className="text-meta text-muted-foreground">
+                Erscheint im PDF direkt unter dem Titel.
+              </p>
+            </div>
+
+            {/* Notes (unter den Positionen im PDF) */}
             <div className="space-y-1.5">
               <Label htmlFor="notes">Anmerkungen</Label>
               <Textarea

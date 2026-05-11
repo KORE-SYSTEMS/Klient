@@ -133,6 +133,8 @@ interface BillingDefaults {
   paymentTermsDays:     number;
   defaultInvoiceNotes:  string;
   defaultProposalNotes: string;
+  defaultInvoiceIntro:  string;
+  defaultProposalIntro: string;
 }
 
 const FALLBACK_DEFAULTS: BillingDefaults = {
@@ -144,6 +146,8 @@ const FALLBACK_DEFAULTS: BillingDefaults = {
   paymentTermsDays: 14,
   defaultInvoiceNotes: "",
   defaultProposalNotes: "",
+  defaultInvoiceIntro: "",
+  defaultProposalIntro: "",
 };
 
 function calcNetto(items: ProposalItem[]): number {
@@ -233,6 +237,7 @@ export default function ProposalsPage() {
   const [formValidUntil,setFormValidUntil]= useState("");
   const [formTaxRate,   setFormTaxRate]   = useState("19");
   const [formNotes,     setFormNotes]     = useState("");
+  const [formIntro,     setFormIntro]     = useState("");
   const [formItems,     setFormItems]     = useState<ProposalItem[]>([EMPTY_ITEM()]);
   const [defaults,      setDefaults]      = useState<BillingDefaults>(FALLBACK_DEFAULTS);
 
@@ -342,6 +347,7 @@ export default function ProposalsPage() {
     setFormValidUntil("");
     setFormTaxRate(String(defaults.defaultTaxRate));
     setFormNotes(defaults.defaultProposalNotes ?? "");
+    setFormIntro(defaults.defaultProposalIntro ?? "");
     setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
     setDialogOpen(true);
   }
@@ -356,6 +362,7 @@ export default function ProposalsPage() {
     setFormValidUntil(p.validUntil ? p.validUntil.split("T")[0] : "");
     setFormTaxRate(String(p.taxRate));
     setFormNotes(p.notes ?? "");
+    setFormIntro((p as Proposal & { intro?: string | null }).intro ?? "");
     setFormItems(p.items.length ? p.items : [EMPTY_ITEM()]);
     setDialogOpen(true);
   }
@@ -382,6 +389,7 @@ export default function ProposalsPage() {
         validUntil: formValidUntil || null,
         taxRate:    parseInt(formTaxRate, 10),
         notes:      formNotes.trim() || null,
+        intro:      formIntro.trim() || null,
         items:      formItems.filter((i) => i.description.trim()),
       };
 
@@ -999,6 +1007,22 @@ export default function ProposalsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Intro (über den Positionen im PDF) */}
+            <div className="space-y-1.5">
+              <Label htmlFor="intro">Einleitungstext</Label>
+              <Textarea
+                id="intro"
+                rows={3}
+                value={formIntro}
+                onChange={(e) => setFormIntro(e.target.value)}
+                placeholder="Vielen Dank für Ihr Interesse…"
+                className="resize-none text-sm"
+              />
+              <p className="text-meta text-muted-foreground">
+                Erscheint im PDF direkt unter dem Titel.
+              </p>
             </div>
 
             {/* Notes */}
