@@ -105,6 +105,28 @@ export async function GET(
       assignee: { select: { email: true } },
       epic: { select: { title: true } },
       parent: { select: { title: true } },
+      checklistItems: {
+        select: { title: true, done: true, order: true },
+        orderBy: { order: "asc" },
+      },
+      timeEntries: {
+        select: {
+          startedAt: true,
+          stoppedAt: true,
+          duration: true,
+          description: true,
+          user: { select: { email: true } },
+        },
+        orderBy: { startedAt: "asc" },
+      },
+      comments: {
+        select: {
+          content: true,
+          createdAt: true,
+          author: { select: { email: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
     orderBy: [{ parentId: "asc" }, { order: "asc" }, { createdAt: "asc" }],
   });
@@ -129,13 +151,45 @@ export async function GET(
   ]);
 
   if (format === "json") {
-    const json = rows.map((row) =>
-      Object.fromEntries(CSV_HEADERS.map((h, i) => [h, row[i] ?? ""])),
-    );
+    // JSON exportiert alles nested — Time-Entries, Checklist, Comments,
+    // Recurrence, Approval, Reihenfolge. Reichhaltiger als CSV.
+    const json = tasks.map((t) => ({
+      title: t.title,
+      description: t.description ?? "",
+      status: statusName.get(t.status) ?? t.status,
+      priority: t.priority,
+      startDate: fmtDate(t.startDate),
+      dueDate: fmtDate(t.dueDate),
+      assignee: t.assignee?.email ?? "",
+      epic: t.epic?.title ?? "",
+      parentTitle: t.parent?.title ?? "",
+      clientVisible: t.clientVisible,
+      order: t.order,
+      recurrenceRule: t.recurrenceRule ?? null,
+      approvalStatus: t.approvalStatus ?? null,
+      handoffComment: t.handoffComment ?? null,
+      approvalComment: t.approvalComment ?? null,
+      checklist: t.checklistItems.map((c) => ({
+        title: c.title,
+        done: c.done,
+      })),
+      timeEntries: t.timeEntries.map((e) => ({
+        startedAt: e.startedAt.toISOString(),
+        stoppedAt: e.stoppedAt ? e.stoppedAt.toISOString() : null,
+        duration: e.duration,
+        description: e.description ?? null,
+        userEmail: e.user?.email ?? null,
+      })),
+      comments: t.comments.map((c) => ({
+        content: c.content,
+        createdAt: c.createdAt.toISOString(),
+        authorEmail: c.author?.email ?? null,
+      })),
+    }));
     return new NextResponse(JSON.stringify(json, null, 2), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${slug}-tasks.json"`,
+        "Content-Disposition": `attachment; filename="${slug}-tasks-full.json"`,
       },
     });
   }

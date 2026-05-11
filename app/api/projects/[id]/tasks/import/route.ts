@@ -26,6 +26,25 @@ import { csvParse, csvToObjects } from "@/lib/csv";
  *   }
  */
 
+interface RawTimeEntry {
+  startedAt?: string;
+  stoppedAt?: string | null;
+  duration?: number;
+  description?: string | null;
+  userEmail?: string | null;
+}
+
+interface RawChecklistItem {
+  title?: string;
+  done?: boolean;
+}
+
+interface RawComment {
+  content?: string;
+  createdAt?: string;
+  authorEmail?: string | null;
+}
+
 interface RawRow {
   title?: string;
   description?: string;
@@ -37,6 +56,14 @@ interface RawRow {
   epic?: string;
   parentTitle?: string;
   clientVisible?: string | boolean;
+  // Nested (nur JSON):
+  recurrenceRule?: string | null;
+  approvalStatus?: string | null;
+  handoffComment?: string | null;
+  approvalComment?: string | null;
+  checklist?: RawChecklistItem[];
+  timeEntries?: RawTimeEntry[];
+  comments?: RawComment[];
 }
 
 interface NormalizedRow {
@@ -51,10 +78,18 @@ interface NormalizedRow {
   parentTitle: string;       // empty = top-level
   clientVisible: boolean;
   rowIndex: number;
+  // Nested
+  recurrenceRule: string | null;
+  approvalStatus: string | null;
+  handoffComment: string | null;
+  approvalComment: string | null;
+  checklist: RawChecklistItem[];
+  timeEntries: RawTimeEntry[];
+  comments: RawComment[];
 }
 
 interface ImportResult {
-  created: { topLevel: number; subtasks: number };
+  created: { topLevel: number; subtasks: number; checklist: number; timeEntries: number; comments: number };
   skipped: { row: number; reason: string }[];
   warnings: { row: number; message: string }[];
   dryRun: boolean;
@@ -244,6 +279,13 @@ export async function POST(
       parentTitle: raw.parentTitle?.toString().trim() ?? "",
       clientVisible: parseBoolean(raw.clientVisible),
       rowIndex,
+      recurrenceRule: raw.recurrenceRule ?? null,
+      approvalStatus: raw.approvalStatus ?? null,
+      handoffComment: raw.handoffComment ?? null,
+      approvalComment: raw.approvalComment ?? null,
+      checklist: Array.isArray(raw.checklist) ? raw.checklist : [],
+      timeEntries: Array.isArray(raw.timeEntries) ? raw.timeEntries : [],
+      comments: Array.isArray(raw.comments) ? raw.comments : [],
     });
   });
 
@@ -270,6 +312,9 @@ export async function POST(
       created: {
         topLevel: finalRows.filter((r) => !r.parentTitle).length,
         subtasks: finalRows.filter((r) => r.parentTitle).length,
+        checklist: finalRows.reduce((s, r) => s + r.checklist.length, 0),
+        timeEntries: finalRows.reduce((s, r) => s + r.timeEntries.length, 0),
+        comments: finalRows.reduce((s, r) => s + r.comments.length, 0),
       },
       skipped,
       warnings,
@@ -306,6 +351,81 @@ export async function POST(
   const titleToId = new Map<string, string>();
   let createdTop = 0;
   let createdSub = 0;
+  let createdChecklist = 0;
+  let createdTimeEntries = 0;
+  let createdComments = 0;
+
+  // E-Mail → User-ID Lookup für Time-Entries und Comments. Wir akzeptieren
+  // alle Workspace-User (nicht nur Project-Member) für Backwards-Compat von
+  // re-importierten Exporten.
+  const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
+  const userByEmail = new Map(allUsers.map((u) => [u.email.toLowerCase(), u.id]));
+
+  async function attachNested(taskId: string, row: NormalizedRow) {
+    // Checklist
+    if (row.checklist.length > 0) {
+      const valid = row.checklist
+        .filter((c) => c.title && c.title.toString().trim())
+        .map((c, i) => ({
+          taskId,
+          title: c.title!.toString().trim(),
+          done: parseBoolean(c.done),
+          order: i,
+        }));
+      if (valid.length > 0) {
+        await prisma.taskChecklistItem.createMany({ data: valid });
+        createdChecklist += valid.length;
+      }
+    }
+    // Time-Entries
+    if (row.timeEntries.length > 0) {
+      for (const te of row.timeEntries) {
+        const userId = te.userEmail
+          ? userByEmail.get(te.userEmail.toLowerCase()) ?? null
+          : null;
+        if (!userId) {
+          warnings.push({
+            row: row.rowIndex,
+            message: `Time-Entry-User "${te.userEmail ?? "?"}" nicht gefunden — übersprungen`,
+          });
+          continue;
+        }
+        const startedAt = te.startedAt ? new Date(te.startedAt) : null;
+        if (!startedAt || Number.isNaN(startedAt.getTime())) continue;
+        const duration = Number(te.duration ?? 0);
+        if (duration <= 0) continue;
+        await prisma.timeEntry.create({
+          data: {
+            taskId,
+            userId,
+            startedAt,
+            stoppedAt: te.stoppedAt ? new Date(te.stoppedAt) : new Date(startedAt.getTime() + duration * 1000),
+            duration,
+            description: te.description?.toString().trim() || null,
+          },
+        });
+        createdTimeEntries++;
+      }
+    }
+    // Comments
+    if (row.comments.length > 0) {
+      for (const c of row.comments) {
+        if (!c.content || !c.content.trim()) continue;
+        const authorId = c.authorEmail
+          ? userByEmail.get(c.authorEmail.toLowerCase()) ?? userId
+          : userId;
+        await prisma.taskComment.create({
+          data: {
+            taskId,
+            authorId,
+            content: c.content.trim(),
+            ...(c.createdAt ? { createdAt: new Date(c.createdAt) } : {}),
+          },
+        });
+        createdComments++;
+      }
+    }
+  }
 
   for (const row of topLevel) {
     const created = await prisma.task.create({
@@ -320,11 +440,16 @@ export async function POST(
         projectId,
         assigneeId: row.assigneeId,
         epicId: row.epicId,
+        recurrenceRule: row.recurrenceRule,
+        approvalStatus: row.approvalStatus,
+        handoffComment: row.handoffComment,
+        approvalComment: row.approvalComment,
       },
       select: { id: true },
     });
     titleToId.set(row.title.toLowerCase(), created.id);
     createdTop++;
+    await attachNested(created.id, row);
   }
 
   for (const row of subtasks) {
@@ -333,7 +458,7 @@ export async function POST(
       skipped.push({ row: row.rowIndex, reason: `Parent-ID konnte nicht aufgelöst werden` });
       continue;
     }
-    await prisma.task.create({
+    const created = await prisma.task.create({
       data: {
         title: row.title,
         description: row.description,
@@ -346,13 +471,25 @@ export async function POST(
         assigneeId: row.assigneeId,
         epicId: row.epicId,
         parentId,
+        recurrenceRule: row.recurrenceRule,
+        approvalStatus: row.approvalStatus,
+        handoffComment: row.handoffComment,
+        approvalComment: row.approvalComment,
       },
+      select: { id: true },
     });
     createdSub++;
+    await attachNested(created.id, row);
   }
 
   return NextResponse.json({
-    created: { topLevel: createdTop, subtasks: createdSub },
+    created: {
+      topLevel: createdTop,
+      subtasks: createdSub,
+      checklist: createdChecklist,
+      timeEntries: createdTimeEntries,
+      comments: createdComments,
+    },
     skipped,
     warnings,
     dryRun: false,

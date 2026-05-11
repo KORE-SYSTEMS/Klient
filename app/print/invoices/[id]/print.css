@@ -1,13 +1,13 @@
 /* A4 Print-Layout — bewusst NICHT Tailwind-abhängig damit es 1:1 in PDFs
-   landet auch ohne komplizierte Layer-Cascades. Im Print-Modus weiß. */
+   landet. Modernes deutsches Rechnungslayout mit allen Pflichtangaben. */
 
 @page {
   size: A4;
-  margin: 20mm 18mm;
+  margin: 18mm 16mm;
 }
 
 html, body {
-  background: white;
+  background: white !important;
   color: #1a1a1a;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 10.5pt;
@@ -17,88 +17,120 @@ html, body {
 }
 
 .invoice-page {
-  max-width: 174mm;
+  max-width: 178mm;
   margin: 0 auto;
-  padding: 12mm 0;
+  padding: 8mm 0;
   color: #1a1a1a;
 }
 
-/* ── Sender ───────────────────────────────────────────────────────────── */
-.sender {
-  text-align: right;
-  margin-bottom: 18mm;
+/* ── Top stripe: Logo links + Absender rechts ───────────────────────── */
+.top-stripe {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  padding-bottom: 8mm;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 12mm;
+}
+.logo-block {
+  display: flex;
+  align-items: flex-start;
 }
 .logo {
-  max-height: 18mm;
-  max-width: 60mm;
-  margin-left: auto;
-  display: block;
-  margin-bottom: 6mm;
+  max-height: 22mm;
+  max-width: 70mm;
+  object-fit: contain;
+}
+.sender-block {
+  text-align: right;
+  font-size: 9.5pt;
+  line-height: 1.5;
 }
 .sender-name {
   font-weight: 600;
   font-size: 11pt;
+  color: #0a0a0a;
 }
 .sender-addr {
-  font-size: 9.5pt;
   color: #4a4a4a;
   margin-top: 1mm;
 }
 .sender-meta {
-  font-size: 9pt;
   color: #6a6a6a;
   margin-top: 2mm;
+  font-size: 8.5pt;
 }
 
-/* ── Recipient + Meta block ──────────────────────────────────────────── */
+/* ── Empfänger + Rechnungs-Meta ──────────────────────────────────────── */
 .recipient-block {
   display: grid;
-  grid-template-columns: 1fr 70mm;
-  gap: 8mm;
+  grid-template-columns: 1fr 75mm;
+  gap: 10mm;
   margin-bottom: 14mm;
+}
+.recipient-label {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.6pt;
+  color: #8a8a8a;
+  font-weight: 600;
+  margin-bottom: 3mm;
 }
 .recipient .bold {
   font-weight: 600;
 }
 .recipient-line {
   font-size: 10.5pt;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 .recipient-line.muted {
   color: #7a7a7a;
   font-size: 9.5pt;
-  margin-top: 1mm;
+  margin-top: 1.5mm;
 }
 .recipient-addr {
   font-size: 10pt;
   color: #3a3a3a;
   margin-top: 0.5mm;
+  line-height: 1.5;
 }
 .meta {
   font-size: 9.5pt;
-  border-left: 2px solid #e5e5e5;
-  padding-left: 5mm;
-  align-self: end;
+  background: #fafafa;
+  padding: 5mm 6mm;
+  border-radius: 1.5mm;
 }
 .meta-row {
   display: flex;
   justify-content: space-between;
-  gap: 4mm;
+  align-items: baseline;
+  gap: 6mm;
   padding: 1mm 0;
+}
+.meta-row + .meta-row {
+  border-top: 1px solid #ececec;
+  padding-top: 2mm;
+  margin-top: 1mm;
 }
 .meta-label {
   color: #6a6a6a;
+  font-size: 9pt;
+}
+.meta-value {
+  font-weight: 500;
+  text-align: right;
 }
 
 /* ── Title ───────────────────────────────────────────────────────────── */
 .title {
-  font-size: 22pt;
+  font-size: 26pt;
   font-weight: 700;
-  letter-spacing: -0.5pt;
+  letter-spacing: -0.8pt;
   margin: 0 0 1mm;
+  color: #0a0a0a;
 }
 .subtitle {
-  font-size: 11pt;
+  font-size: 11.5pt;
   color: #5a5a5a;
   margin: 0 0 10mm;
 }
@@ -115,76 +147,99 @@ html, body {
   font-weight: 600;
   font-size: 8.5pt;
   text-transform: uppercase;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.6pt;
   color: #6a6a6a;
-  padding: 3mm 2mm;
+  padding: 3mm 3mm;
+  background: #fafafa;
   border-bottom: 1.5px solid #1a1a1a;
 }
 .items tbody td {
-  padding: 3mm 2mm;
+  padding: 4mm 3mm;
   border-bottom: 1px solid #ececec;
   vertical-align: top;
 }
 .items tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1.5px solid #1a1a1a;
 }
 .col-pos {
   width: 10mm;
-  color: #7a7a7a;
+  color: #8a8a8a;
+  font-variant-numeric: tabular-nums;
 }
 .col-desc {
   width: auto;
 }
+.item-desc {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  word-break: break-word;
+}
 .col-qty {
-  width: 22mm;
+  width: 24mm;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .col-price {
   width: 28mm;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .col-total {
-  width: 28mm;
+  width: 30mm;
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* ── Totals ──────────────────────────────────────────────────────────── */
 .totals {
   margin-left: auto;
-  width: 70mm;
+  width: 75mm;
   font-size: 10pt;
   font-variant-numeric: tabular-nums;
+  margin-bottom: 6mm;
 }
 .totals-row {
   display: flex;
   justify-content: space-between;
-  padding: 1.5mm 2mm;
+  padding: 1.5mm 3mm;
 }
 .totals-final {
-  border-top: 1.5px solid #1a1a1a;
-  margin-top: 1mm;
+  border-top: 2px solid #1a1a1a;
+  margin-top: 2mm;
   padding-top: 3mm;
   font-weight: 700;
-  font-size: 11.5pt;
+  font-size: 12pt;
+  color: #0a0a0a;
 }
 
-/* ── Notes ───────────────────────────────────────────────────────────── */
+/* ── Kleinunternehmer hint ───────────────────────────────────────────── */
+.legal-hint {
+  font-size: 9.5pt;
+  color: #5a5a5a;
+  font-style: italic;
+  margin: 4mm 0 8mm;
+  padding: 3mm 4mm;
+  border-left: 2px solid #d0d0d0;
+  background: #fafafa;
+}
+
+/* ── Notes + Payment ─────────────────────────────────────────────────── */
 .notes,
 .payment {
-  margin-top: 10mm;
+  margin-top: 8mm;
   page-break-inside: avoid;
 }
 .notes-heading {
   font-size: 8.5pt;
   text-transform: uppercase;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.6pt;
   color: #6a6a6a;
   font-weight: 600;
-  margin: 0 0 2mm;
+  margin: 0 0 2.5mm;
 }
 .notes-text {
   font-size: 10pt;
@@ -196,33 +251,37 @@ html, body {
 /* ── Payment ─────────────────────────────────────────────────────────── */
 .bank-grid {
   display: grid;
-  grid-template-columns: 30mm 1fr;
+  grid-template-columns: 32mm 1fr;
   gap: 2mm 5mm;
   margin-top: 3mm;
   font-size: 10pt;
+  padding: 3mm 4mm;
+  background: #fafafa;
+  border-radius: 1.5mm;
 }
 .bank-label {
   color: #6a6a6a;
 }
 .mono {
   font-family: "JetBrains Mono", Menlo, Consolas, monospace;
-  letter-spacing: 0.2pt;
+  letter-spacing: 0.3pt;
+  font-size: 9.5pt;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .footer {
-  margin-top: 18mm;
+  margin-top: 14mm;
   padding-top: 4mm;
   border-top: 1px solid #e5e5e5;
   text-align: center;
   font-size: 8.5pt;
   color: #8a8a8a;
+  line-height: 1.6;
 }
-.footer > div {
+.footer-line {
   margin: 0.5mm 0;
 }
 
-/* Print-only: Hide print button if we add one later */
 @media print {
   body {
     margin: 0;

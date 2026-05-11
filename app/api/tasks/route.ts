@@ -79,8 +79,8 @@ export async function GET(request: NextRequest) {
         },
       },
       timeEntries: {
-        select: { id: true, duration: true, startedAt: true, stoppedAt: true, userId: true },
-        orderBy: { startedAt: "desc" },
+        select: { id: true, duration: true, startedAt: true, stoppedAt: true, userId: true, description: true },
+        orderBy: { startedAt: "asc" },
       },
       // Surfaced on kanban cards as small counter badges.
       // Clients only ever see full counts on fully-visible tasks (preview tasks

@@ -47,7 +47,13 @@ interface ImportExportMenuProps {
 }
 
 interface ImportResult {
-  created: { topLevel: number; subtasks: number };
+  created: {
+    topLevel: number;
+    subtasks: number;
+    checklist?: number;
+    timeEntries?: number;
+    comments?: number;
+  };
   skipped: { row: number; reason: string }[];
   warnings: { row: number; message: string }[];
   dryRun: boolean;
@@ -136,7 +142,12 @@ export function ImportExportMenu({ projectId, onImported, compact, autoOpen }: I
       } else {
         toast({
           title: "Import erfolgreich",
-          description: `${result.created.topLevel} Tasks + ${result.created.subtasks} Subtasks angelegt`,
+          description: [
+            `${result.created.topLevel} Tasks + ${result.created.subtasks} Subtasks`,
+            result.created.checklist ? `${result.created.checklist} Checklist-Items` : null,
+            result.created.timeEntries ? `${result.created.timeEntries} Zeit-Einträge` : null,
+            result.created.comments ? `${result.created.comments} Kommentare` : null,
+          ].filter(Boolean).join(", "),
           variant: "success",
         });
         setImportDialogOpen(false);
@@ -246,6 +257,15 @@ export function ImportExportMenu({ projectId, onImported, compact, autoOpen }: I
                       {dryRunResult.created.topLevel} Tasks + {dryRunResult.created.subtasks} Subtasks bereit
                     </span>
                   </div>
+                  {(dryRunResult.created.checklist || dryRunResult.created.timeEntries || dryRunResult.created.comments) ? (
+                    <div className="mt-1 text-xs text-muted-foreground pl-6">
+                      {[
+                        dryRunResult.created.checklist ? `${dryRunResult.created.checklist} Checklist-Items` : null,
+                        dryRunResult.created.timeEntries ? `${dryRunResult.created.timeEntries} Zeit-Einträge` : null,
+                        dryRunResult.created.comments ? `${dryRunResult.created.comments} Kommentare` : null,
+                      ].filter(Boolean).join(" · ")}
+                    </div>
+                  ) : null}
                 </div>
                 {dryRunResult.skipped.length > 0 && (
                   <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs">

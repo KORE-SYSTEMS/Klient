@@ -8,6 +8,15 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDuration } from "@/components/time-tracker";
+import { toast } from "@/hooks/use-toast";
+
+/** Robust int-parse für Number-Inputs: NaN/leer → 0, sonst clamped int. */
+function parseIntField(value: string, max: number): number {
+  if (value === "" || value === null) return 0;
+  const n = parseInt(value, 10);
+  if (Number.isNaN(n) || n < 0) return 0;
+  return Math.min(n, max);
+}
 
 interface TimeEntry {
   id: string;
@@ -55,13 +64,13 @@ function TimeEntryRow({
             <div className="flex items-center gap-1">
               <Input
                 type="number" min={0} max={99} value={editHours}
-                onChange={(e) => setEditHours(Number(e.target.value))}
+                onChange={(e) => setEditHours(parseIntField(e.target.value, 99))}
                 className="h-9 w-14 text-center text-sm"
               />
               <span className="text-muted-foreground text-xs">h</span>
               <Input
                 type="number" min={0} max={59} value={editMinutes}
-                onChange={(e) => setEditMinutes(Number(e.target.value))}
+                onChange={(e) => setEditMinutes(parseIntField(e.target.value, 59))}
                 className="h-9 w-14 text-center text-sm"
               />
               <span className="text-muted-foreground text-xs">min</span>
@@ -192,9 +201,13 @@ export function TimeEntriesSection({
     data: { hours: number; minutes: number; date: string; description: string },
   ) {
     const durationSec = data.hours * 3600 + data.minutes * 60;
+    if (durationSec <= 0) {
+      toast({ title: "Dauer muss > 0 sein", variant: "destructive" });
+      return;
+    }
     const startedAt = new Date(data.date + "T12:00:00");
     const stoppedAt = new Date(startedAt.getTime() + durationSec * 1000);
-    await fetch(`/api/time-entries/${id}`, {
+    const res = await fetch(`/api/time-entries/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -204,15 +217,22 @@ export function TimeEntriesSection({
         description: data.description,
       }),
     });
+    if (!res.ok) {
+      toast({ title: "Speichern fehlgeschlagen", variant: "destructive" });
+      return;
+    }
     fetchEntries();
     onUpdate();
   }
 
   async function addManualEntry() {
     const durationSec = addHours * 3600 + addMinutes * 60;
-    if (durationSec === 0) return;
+    if (durationSec <= 0) {
+      toast({ title: "Bitte Dauer angeben", description: "Stunden und Minuten dürfen nicht beide 0 sein.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
-    await fetch("/api/time-entries", {
+    const res = await fetch("/api/time-entries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -224,6 +244,10 @@ export function TimeEntriesSection({
       }),
     });
     setSaving(false);
+    if (!res.ok) {
+      toast({ title: "Eintragen fehlgeschlagen", variant: "destructive" });
+      return;
+    }
     setAdding(false);
     setAddDate(todayStr);
     setAddHours(0);
@@ -294,13 +318,13 @@ export function TimeEntriesSection({
               <div className="flex items-center gap-1">
                 <Input
                   type="number" min={0} max={99} value={addHours}
-                  onChange={(e) => setAddHours(Number(e.target.value))}
+                  onChange={(e) => setAddHours(parseIntField(e.target.value, 99))}
                   className="h-9 w-14 text-center text-sm"
                 />
                 <span className="text-muted-foreground text-xs">h</span>
                 <Input
                   type="number" min={0} max={59} value={addMinutes}
-                  onChange={(e) => setAddMinutes(Number(e.target.value))}
+                  onChange={(e) => setAddMinutes(parseIntField(e.target.value, 59))}
                   className="h-9 w-14 text-center text-sm"
                 />
                 <span className="text-muted-foreground text-xs">min</span>

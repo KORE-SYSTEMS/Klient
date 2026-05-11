@@ -24,6 +24,12 @@ function formatDate(d: Date | null | undefined): string {
   });
 }
 
+function formatPeriod(from: Date | null, to: Date | null): string {
+  if (!from) return "—";
+  if (!to || from.toDateString() === to.toDateString()) return formatDate(from);
+  return `${formatDate(from)} – ${formatDate(to)}`;
+}
+
 export default async function InvoicePrintPage({ params }: PageProps) {
   const session = await auth();
   if (!session?.user || session.user.role === "CLIENT") {
@@ -40,6 +46,15 @@ export default async function InvoicePrintPage({ params }: PageProps) {
           select: {
             id: true,
             name: true,
+            tasks: {
+              select: {
+                timeEntries: {
+                  select: { startedAt: true, stoppedAt: true },
+                  where: { stoppedAt: { not: null } },
+                  orderBy: { startedAt: "asc" },
+                },
+              },
+            },
             members: {
               include: {
                 user: {
@@ -65,42 +80,65 @@ export default async function InvoicePrintPage({ params }: PageProps) {
 
   const currency = workspace?.currency || "EUR";
   const taxRate = invoice.taxRate || 0;
+  const isKleinunternehmer = taxRate === 0;
   const netto = invoice.items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
   const mwst = netto * (taxRate / 100);
   const brutto = netto + mwst;
 
   const client = invoice.project?.members?.find((m) => m.user.role === "CLIENT")?.user;
 
-  // Bank info (IBAN auf BIC heuristisch konvertieren wäre Overkill — wir
-  // zeigen einfach was im Workspace gesetzt ist).
+  // Leistungszeitraum: min/max der Time-Entries im Projekt → fallback Rechnungsmonat
+  let periodFrom: Date | null = null;
+  let periodTo: Date | null = null;
+  for (const task of invoice.project?.tasks ?? []) {
+    for (const te of task.timeEntries) {
+      const s = new Date(te.startedAt);
+      const e = te.stoppedAt ? new Date(te.stoppedAt) : s;
+      if (!periodFrom || s < periodFrom) periodFrom = s;
+      if (!periodTo || e > periodTo) periodTo = e;
+    }
+  }
+  // Fallback: Rechnungsmonat
+  if (!periodFrom) {
+    const issued = new Date(invoice.issuedAt);
+    periodFrom = new Date(issued.getFullYear(), issued.getMonth(), 1);
+    periodTo = new Date(issued.getFullYear(), issued.getMonth() + 1, 0);
+  }
+
   const showBank = !!workspace?.companyIban;
+  const senderName = workspace?.companyName || workspace?.name || "—";
 
   return (
     <div className="invoice-page">
       <AutoPrint />
 
-      {/* Header: Sender (top) */}
-      <header className="sender">
-        {workspace?.logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={workspace.logo} alt="Logo" className="logo" />
-        )}
-        <div className="sender-name">{workspace?.companyName || workspace?.name || "—"}</div>
-        {workspace?.companyAddress && (
-          <div className="sender-addr">
-            {workspace.companyAddress.split("\n").map((line, i) => (
-              <div key={i}>{line}</div>
-            ))}
-          </div>
-        )}
-        {workspace?.companyTaxId && (
-          <div className="sender-meta">USt-IdNr.: {workspace.companyTaxId}</div>
-        )}
+      {/* Top stripe: Logo links + Absender rechts */}
+      <header className="top-stripe">
+        <div className="logo-block">
+          {workspace?.logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={workspace.logo} alt="Logo" className="logo" />
+          )}
+        </div>
+        <div className="sender-block">
+          <div className="sender-name">{senderName}</div>
+          {workspace?.companyAddress && (
+            <div className="sender-addr">
+              {workspace.companyAddress.split("\n").map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </div>
+          )}
+          {workspace?.companyTaxId && (
+            <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
+          )}
+        </div>
       </header>
 
-      {/* Recipient + Meta block */}
+      {/* Empfänger + Rechnungs-Meta */}
       <section className="recipient-block">
         <div className="recipient">
+          <div className="recipient-label">Rechnung an</div>
           {client ? (
             <>
               {client.company && <div className="recipient-line bold">{client.company}</div>}
@@ -122,19 +160,23 @@ export default async function InvoicePrintPage({ params }: PageProps) {
         </div>
         <div className="meta">
           <div className="meta-row">
-            <span className="meta-label">Rechnungsdatum:</span>
-            <span>{formatDate(invoice.issuedAt)}</span>
+            <span className="meta-label">Rechnungsnr.</span>
+            <span className="meta-value">{invoice.number}</span>
+          </div>
+          <div className="meta-row">
+            <span className="meta-label">Rechnungsdatum</span>
+            <span className="meta-value">{formatDate(invoice.issuedAt)}</span>
+          </div>
+          <div className="meta-row">
+            <span className="meta-label">Leistungszeitraum</span>
+            <span className="meta-value">{formatPeriod(periodFrom, periodTo)}</span>
           </div>
           {invoice.dueDate && (
             <div className="meta-row">
-              <span className="meta-label">Fällig bis:</span>
-              <span>{formatDate(invoice.dueDate)}</span>
+              <span className="meta-label">Fällig bis</span>
+              <span className="meta-value">{formatDate(invoice.dueDate)}</span>
             </div>
           )}
-          <div className="meta-row">
-            <span className="meta-label">Rechnungsnr.:</span>
-            <span>{invoice.number}</span>
-          </div>
         </div>
       </section>
 
@@ -157,9 +199,15 @@ export default async function InvoicePrintPage({ params }: PageProps) {
           {invoice.items.map((item, i) => (
             <tr key={item.id}>
               <td className="col-pos">{i + 1}</td>
-              <td className="col-desc">{item.description}</td>
+              <td className="col-desc">
+                <div className="item-desc">{item.description}</div>
+              </td>
               <td className="col-qty">
-                {item.quantity.toLocaleString("de-DE")} {item.unit}
+                {item.quantity.toLocaleString("de-DE", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                {item.unit}
               </td>
               <td className="col-price">{formatCurrency(item.unitPrice, currency)}</td>
               <td className="col-total">
@@ -172,14 +220,21 @@ export default async function InvoicePrintPage({ params }: PageProps) {
 
       {/* Totals */}
       <div className="totals">
-        <div className="totals-row">
-          <span>Zwischensumme (netto)</span>
-          <span>{formatCurrency(netto, currency)}</span>
-        </div>
-        {taxRate > 0 && (
+        {!isKleinunternehmer ? (
+          <>
+            <div className="totals-row">
+              <span>Zwischensumme (netto)</span>
+              <span>{formatCurrency(netto, currency)}</span>
+            </div>
+            <div className="totals-row">
+              <span>zzgl. {taxRate}% MwSt.</span>
+              <span>{formatCurrency(mwst, currency)}</span>
+            </div>
+          </>
+        ) : (
           <div className="totals-row">
-            <span>zzgl. {taxRate}% MwSt.</span>
-            <span>{formatCurrency(mwst, currency)}</span>
+            <span>Zwischensumme</span>
+            <span>{formatCurrency(netto, currency)}</span>
           </div>
         )}
         <div className="totals-row totals-final">
@@ -187,6 +242,13 @@ export default async function InvoicePrintPage({ params }: PageProps) {
           <span>{formatCurrency(brutto, currency)}</span>
         </div>
       </div>
+
+      {/* § 19 UStG hint */}
+      {isKleinunternehmer && (
+        <p className="legal-hint">
+          Gemäß § 19 UStG wird keine Umsatzsteuer erhoben (Kleinunternehmerregelung).
+        </p>
+      )}
 
       {/* Notes */}
       {invoice.notes && (
@@ -206,13 +268,14 @@ export default async function InvoicePrintPage({ params }: PageProps) {
             {workspace?.paymentTermsDays
               ? ` innerhalb von ${workspace.paymentTermsDays} Tagen `
               : " "}
-            an folgende Bankverbindung:
+            unter Angabe der Rechnungsnummer{" "}
+            <strong>{invoice.number}</strong> an folgende Bankverbindung:
           </p>
           <div className="bank-grid">
-            {workspace?.companyName && (
+            {senderName && (
               <>
                 <div className="bank-label">Kontoinhaber</div>
-                <div>{workspace.companyName}</div>
+                <div>{senderName}</div>
               </>
             )}
             <div className="bank-label">IBAN</div>
@@ -221,10 +284,17 @@ export default async function InvoicePrintPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Footer */}
+      {/* Footer mit Pflichtangaben */}
       <footer className="footer">
-        <div>{workspace?.companyName || workspace?.name}</div>
-        {workspace?.companyTaxId && <div>USt-IdNr.: {workspace.companyTaxId}</div>}
+        <div className="footer-line">
+          <strong>{senderName}</strong>
+          {workspace?.companyAddress && (
+            <> · {workspace.companyAddress.replace(/\n/g, ", ")}</>
+          )}
+        </div>
+        {workspace?.companyTaxId && (
+          <div className="footer-line">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
+        )}
       </footer>
     </div>
   );

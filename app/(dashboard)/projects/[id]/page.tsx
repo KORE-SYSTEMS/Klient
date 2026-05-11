@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckSquare,
+  Clock,
   FileIcon,
   MessageSquare,
   Users,
@@ -13,6 +14,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatDate, getInitials } from "@/lib/utils";
+
+function formatHours(seconds: number): string {
+  if (!seconds || seconds <= 0) return "0h";
+  const h = seconds / 3600;
+  if (h < 1) return `${Math.round(seconds / 60)}m`;
+  if (h < 10) return `${h.toFixed(1).replace(".0", "")}h`;
+  return `${Math.round(h)}h`;
+}
 
 interface Member {
   id: string;
@@ -51,6 +60,8 @@ export default function ProjectDetailPage() {
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [taskStats, setTaskStats] = useState<TaskStat[]>([]);
+  const [totalTime, setTotalTime] = useState(0);
+  const [doneTaskCount, setDoneTaskCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -68,10 +79,22 @@ export default function ProjectDetailPage() {
       const tasks = await tasksRes.json();
       const statuses = await statusesRes.json();
 
-      // Build status counts
+      // Set von Status-IDs deren category="DONE" ist — Vergleich auf
+      // hardcoded "DONE" wäre falsch weil status project-scoped cuid ist.
+      const doneStatusIds = new Set<string>(
+        statuses
+          .filter((s: { category?: string }) => s.category === "DONE")
+          .map((s: { id: string }) => s.id),
+      );
+
+      // Build status counts + Tracking-Zeit-Summe
       const counts = new Map<string, number>();
+      let totalSec = 0;
+      let done = 0;
       for (const task of tasks) {
         counts.set(task.status, (counts.get(task.status) || 0) + 1);
+        totalSec += task.totalTime ?? 0;
+        if (doneStatusIds.has(task.status)) done++;
       }
 
       const stats: TaskStat[] = [];
@@ -87,6 +110,8 @@ export default function ProjectDetailPage() {
         }
       }
       setTaskStats(stats);
+      setTotalTime(totalSec);
+      setDoneTaskCount(done);
     }
 
     setLoading(false);
@@ -115,17 +140,17 @@ export default function ProjectDetailPage() {
   }
 
   const totalTasks = taskStats.reduce((sum, s) => sum + s._count, 0);
-  const doneTasks = taskStats.find((s) => s.status === "DONE")?._count || 0;
-  const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const progress = totalTasks > 0 ? Math.round((doneTaskCount / totalTasks) * 100) : 0;
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
-          { icon: CheckSquare,    label: "Tasks gesamt", value: totalTasks },
-          { icon: FileIcon,       label: "Dateien",      value: project._count.files },
-          { icon: MessageSquare,  label: "Nachrichten",  value: project._count.messages },
+          { icon: CheckSquare,   label: "Tasks gesamt",  value: totalTasks },
+          { icon: FileIcon,      label: "Dateien",       value: project._count.files },
+          { icon: MessageSquare, label: "Nachrichten",   value: project._count.messages },
+          { icon: Clock,         label: "Tracked Zeit",  value: formatHours(totalTime) },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="rounded-xl border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -147,6 +172,9 @@ export default function ProjectDetailPage() {
               style={{ width: `${progress}%` }}
             />
           </div>
+          <p className="mt-1.5 text-meta text-muted-foreground tabular-nums">
+            {doneTaskCount}/{totalTasks} erledigt
+          </p>
         </div>
       </div>
 

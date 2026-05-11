@@ -192,31 +192,49 @@ export default function InvoicesPage() {
 
   function applyImport() {
     const chosen = importTasks.filter((t) => selectedIds.has(t.id));
+    const rate = defaults.defaultHourlyRate ?? 0;
     let newItems: InvoiceItem[];
 
     if (importMode === "epic") {
-      // Group by epic, one item per epic
-      const epicMap = new Map<string, { label: string; seconds: number }>();
+      const epicMap = new Map<string, { label: string; seconds: number; descs: string[] }>();
       for (const t of chosen) {
         const key = t.epic?.id ?? "__none__";
-        const label = t.epic?.title ?? "Ohne Epic";
         const ex = epicMap.get(key);
-        epicMap.set(key, { label, seconds: (ex?.seconds ?? 0) + (t.totalTime ?? 0) });
+        const taskDescs: string[] = [];
+        for (const te of (t.timeEntries ?? []) as Array<{ description: string | null; startedAt: string }>) {
+          if (te.description?.trim()) {
+            const d = new Date(te.startedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+            taskDescs.push(`${d}: ${te.description.trim()}`);
+          }
+        }
+        epicMap.set(key, {
+          label: t.epic?.title ?? "Ohne Epic",
+          seconds: (ex?.seconds ?? 0) + (t.totalTime ?? 0),
+          descs: [...(ex?.descs ?? []), ...taskDescs],
+        });
       }
-      newItems = Array.from(epicMap.values()).map(({ label, seconds }) => ({
-        description: label,
+      newItems = Array.from(epicMap.values()).map(({ label, seconds, descs }) => ({
+        description: descs.length ? `${label}\n${descs.map((d) => `• ${d}`).join("\n")}` : label,
         quantity: Math.round((seconds / 3600) * 100) / 100,
-        unitPrice: 0,
+        unitPrice: rate,
         unit: "Std.",
       }));
     } else {
-      // One item per task
-      newItems = chosen.map((t) => ({
-        description: t.title,
-        quantity: Math.round(((t.totalTime ?? 0) / 3600) * 100) / 100,
-        unitPrice: 0,
-        unit: "Std.",
-      }));
+      newItems = chosen.map((t) => {
+        const entries = (t.timeEntries ?? []) as Array<{ description: string | null; startedAt: string }>;
+        const descs = entries
+          .filter((te) => te.description?.trim())
+          .map((te) => {
+            const d = new Date(te.startedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+            return `• ${d}: ${te.description!.trim()}`;
+          });
+        return {
+          description: descs.length ? `${t.title}\n${descs.join("\n")}` : t.title,
+          quantity: Math.round(((t.totalTime ?? 0) / 3600) * 100) / 100,
+          unitPrice: rate,
+          unit: "Std.",
+        };
+      });
     }
 
     setFormItems((prev) => {
