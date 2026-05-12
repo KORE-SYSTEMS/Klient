@@ -148,7 +148,7 @@ export default function PublicProposalPage() {
                 <p className="text-white/70 text-xs uppercase tracking-wider font-semibold">Angebot</p>
                 <p className="text-white text-xl font-bold">{proposal.number}</p>
                 <span
-                  className="inline-block mt-1 rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+                  className="inline-flex items-center mt-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium text-white"
                   style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
                 >
                   {STATUS_LABELS[proposal.status] ?? proposal.status}

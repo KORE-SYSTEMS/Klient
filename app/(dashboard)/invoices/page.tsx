@@ -182,8 +182,8 @@ function StatusBadge({ status }: { status: string }) {
   const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-semibold", cfg.class)}>
-      <Icon className="h-3 w-3" />
+    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
+      <Icon className="h-2.5 w-2.5" />
       {cfg.label}
     </span>
   );
@@ -636,17 +636,17 @@ export default function GlobalInvoicesPage() {
                   {/* Number + title */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-caption text-muted-foreground shrink-0">#{inv.number}</span>
+                      <span className="font-mono text-[10px] leading-none text-muted-foreground shrink-0">#{inv.number}</span>
                       <span className="text-sm font-medium truncate">{inv.title}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-caption text-muted-foreground">
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] leading-none">
+                      <span className="text-muted-foreground tabular-nums">
                         {formatDate(inv.issuedAt)}
                       </span>
                       {inv.dueDate && (
                         <span className={cn(
-                          "text-caption",
-                          over ? "text-destructive font-medium" : "text-muted-foreground"
+                          "tabular-nums",
+                          over ? "text-destructive" : "text-muted-foreground"
                         )}>
                           · fällig {formatDate(inv.dueDate)}
                         </span>

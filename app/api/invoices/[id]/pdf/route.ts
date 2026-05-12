@@ -32,13 +32,13 @@ export async function GET(
 
   // Auth-Cookie kopieren damit die Print-Page (eigener Server-Component-Auth-Check)
   // den User erkennt. Wir geben Puppeteer denselben Session-Cookie weiter.
-  const cookieHeader = (await cookies()).getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
-
-  const baseUrl =
-    process.env.NEXTAUTH_URL ||
-    `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+  // Puppeteer läuft im SELBEN Container wie der Next.js Server.
+  // Daher zeigt baseUrl auf localhost — nicht auf die externe URL des Users.
+  // Cookies werden auch für localhost gesetzt (Domain muss matchen wo
+  // Puppeteer hingeht, nicht wo der User herkommt).
+  const port = process.env.PORT || "3000";
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const targetHost = "127.0.0.1";
   const targetUrl = `${baseUrl}/print/invoices/${id}?raw=1`;
 
   let puppeteer: typeof import("puppeteer");
@@ -67,13 +67,19 @@ export async function GET(
     });
     const page = await browser.newPage();
 
-    // Session-Cookie für die Auth-Prüfung der Print-Page setzen
-    if (cookieHeader) {
-      const cookieList = (await cookies()).getAll().map((c) => ({
+    // Session-Cookies für die Print-Page setzen.
+    // Wichtig: Cookie-Domain muss zum Ziel-Host matchen wohin Puppeteer
+    // geht (127.0.0.1), NICHT zum externen Host des Users. Der JWT-Inhalt
+    // ist hostunabhängig und wird vom Server-side auth() korrekt verifiziert.
+    const allCookies = (await cookies()).getAll();
+    if (allCookies.length > 0) {
+      const cookieList = allCookies.map((c) => ({
         name: c.name,
         value: c.value,
-        domain: request.nextUrl.hostname,
+        domain: targetHost,
         path: "/",
+        httpOnly: false,
+        secure: false,
       }));
       await page.setCookie(...cookieList);
     }

@@ -394,8 +394,8 @@ export default function ClientDetailPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {leadInfo && (
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-caption font-semibold", leadInfo.color)}>
-                <TrendingUp className="h-3 w-3" />
+              <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", leadInfo.color)}>
+                <TrendingUp className="h-2.5 w-2.5" />
                 {leadInfo.label}
               </span>
             )}
@@ -569,7 +569,7 @@ export default function ClientDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", statusColor)}>{project.status}</span>
+                    <span className={cn("inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium", statusColor)}>{project.status}</span>
                     {invoiceTotal > 0 && (
                       <span className="text-xs text-muted-foreground font-mono">{formatEur(invoiceTotal)}</span>
                     )}

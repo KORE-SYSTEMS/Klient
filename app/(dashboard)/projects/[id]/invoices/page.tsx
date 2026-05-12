@@ -93,8 +93,8 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.DRAFT;
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-semibold", cfg.class)}>
-      <Icon className="h-3 w-3" />
+    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
+      <Icon className="h-2.5 w-2.5" />
       {cfg.label}
     </span>
   );
@@ -502,11 +502,11 @@ export default function InvoicesPage() {
                 {/* Due date */}
                 <div className="w-[100px] shrink-0 text-center">
                   {invoice.dueDate ? (
-                    <span className={cn("text-xs", overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                    <span className={cn("text-[11px] tabular-nums", overdue ? "text-destructive" : "text-muted-foreground")}>
                       {formatDate(invoice.dueDate)}
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className="text-[11px] text-muted-foreground">—</span>
                   )}
                 </div>
 

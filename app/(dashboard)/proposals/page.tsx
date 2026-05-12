@@ -181,8 +181,8 @@ function StatusBadge({ status }: { status: string }) {
   const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-semibold", cfg.class)}>
-      <Icon className="h-3 w-3" />
+    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
+      <Icon className="h-2.5 w-2.5" />
       {cfg.label}
     </span>
   );
