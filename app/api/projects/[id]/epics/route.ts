@@ -24,7 +24,7 @@ export async function GET(
     where: { projectId },
     include: {
       _count: { select: { tasks: true } },
-      tasks: { select: { id: true, status: true, statusId: true } },
+      tasks: { select: { id: true, status: true } },
     },
     orderBy: { order: "asc" },
   });
@@ -37,7 +37,7 @@ export async function GET(
 
   const result = epics.map((e) => {
     const total = e.tasks.length;
-    const done = e.tasks.filter((t) => doneIds.has(t.statusId)).length;
+    const done = e.tasks.filter((t: { status: string }) => doneIds.has(t.status)).length;
     const { tasks: _tasks, ...rest } = e;
     return { ...rest, _tasksDone: done, _tasksTotal: total };
   });
