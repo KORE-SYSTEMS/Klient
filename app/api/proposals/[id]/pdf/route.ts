@@ -117,9 +117,9 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // 48mm Top-Margin → ~32mm sichtbare Lücke zwischen Header-Trennlinie
-      // und Body (auch auf Folgeseiten wo der Items-Thead wieder erscheint).
-      margin: { top: "48mm", right: "16mm", bottom: "32mm", left: "16mm" },
+      // 28mm Top-Margin → ~12mm sichtbare Lücke zwischen Header-Trennlinie
+      // und Body. Bottom 20mm für die Fußzeile.
+      margin: { top: "28mm", right: "16mm", bottom: "20mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
