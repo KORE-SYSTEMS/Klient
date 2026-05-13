@@ -94,7 +94,12 @@ export function KanbanColumn({
                 Abnahme
               </span>
             )}
-            <span className="text-xs text-muted-foreground font-medium">{tasks.length}</span>
+            <span
+              className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums"
+              style={{ backgroundColor: status.color + "20", color: status.color }}
+            >
+              {tasks.length}
+            </span>
           </div>
           <div className="flex items-center gap-0.5">
             {columnTotalTime > 0 && (

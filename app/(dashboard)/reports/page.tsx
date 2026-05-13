@@ -70,19 +70,16 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 }
 
-// Simple bar chart — no external dep
 function BarChart({ data, mode }: { data: DaySummary[]; mode: "daily" | "weekday" }) {
   if (data.length === 0) return null;
 
-  // Aggregation für Wochentag-Modus: Summe pro getDay() (0=Sonntag).
-  // Wir mappen so um dass Montag erster Wochentag ist (DE-Konvention).
   type Bar = { key: string; label: string; seconds: number };
   let bars: Bar[];
   if (mode === "weekday") {
     const DAYS_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-    const totals = [0, 0, 0, 0, 0, 0, 0]; // index 0=Mo ... 6=So
+    const totals = [0, 0, 0, 0, 0, 0, 0];
     for (const d of data) {
-      const day = new Date(d.date).getDay(); // 0=So, 1=Mo, ... 6=Sa
+      const day = new Date(d.date).getDay();
       const idx = day === 0 ? 6 : day - 1;
       totals[idx] += d.seconds;
     }
@@ -100,19 +97,58 @@ function BarChart({ data, mode }: { data: DaySummary[]; mode: "daily" | "weekday
   }
 
   const peak = Math.max(...bars.map((b) => b.seconds), 1);
+  const peakH = peak / 3600;
+
+  let step: number;
+  if (peakH <= 1) step = 0.5;
+  else if (peakH <= 4) step = 1;
+  else if (peakH <= 10) step = 2;
+  else if (peakH <= 24) step = 4;
+  else step = Math.ceil(peakH / 5);
+
+  const maxH = Math.max(Math.ceil(peakH / step) * step, step);
+  const maxSeconds = maxH * 3600;
+  const ticks: number[] = [];
+  for (let h = maxH; h >= 0; h -= step) {
+    ticks.push(Math.round(h * 100) / 100);
+  }
+
+  const fmtTick = (h: number) => (h === 0 ? "0" : `${h}h`);
+
   return (
-    <div className="flex items-end gap-1 h-24 mt-2">
-      {bars.map((b) => {
-        const pct = (b.seconds / peak) * 100;
-        return (
-          <div key={b.key} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${b.label}: ${fmtDuration(b.seconds)}`}>
-            <div className="w-full rounded-t-sm bg-primary/80 transition-all" style={{ height: `${pct}%`, minHeight: b.seconds > 0 ? 4 : 0 }} />
-            {(mode === "weekday" || bars.length <= 14) && (
-              <span className="text-micro text-muted-foreground leading-none">{b.label}</span>
-            )}
+    <div className="flex gap-2 mt-2">
+      <div
+        className="flex flex-col justify-between shrink-0 text-micro text-muted-foreground tabular-nums text-right"
+        style={{ height: "10rem" }}
+      >
+        {ticks.map((h) => (
+          <span key={h}>{fmtTick(h)}</span>
+        ))}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-end gap-px" style={{ height: "10rem" }}>
+          {bars.map((b) => {
+            const pct = (b.seconds / maxSeconds) * 100;
+            return (
+              <div
+                key={b.key}
+                className="flex-1 rounded-t-sm bg-primary/80 transition-all hover:bg-primary"
+                style={{ height: `${pct}%`, minHeight: b.seconds > 0 ? 4 : 0 }}
+                title={`${b.label}: ${fmtDuration(b.seconds)}`}
+              />
+            );
+          })}
+        </div>
+        {(mode === "weekday" || bars.length <= 14) && (
+          <div className="flex gap-px mt-1">
+            {bars.map((b) => (
+              <span key={b.key} className="flex-1 text-center text-micro text-muted-foreground leading-none">
+                {b.label}
+              </span>
+            ))}
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 }
@@ -212,8 +248,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
+      <div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Von</label>
@@ -288,8 +323,7 @@ export default function ReportsPage() {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {loading ? (
         <ReportSkeleton />

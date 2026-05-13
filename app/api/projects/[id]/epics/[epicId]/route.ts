@@ -28,6 +28,8 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description;
     if (body.color !== undefined) updateData.color = body.color;
     if (body.order !== undefined) updateData.order = body.order;
+    if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
+    if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
 
     const epic = await prisma.epic.update({
       where: { id: epicId },

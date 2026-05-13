@@ -22,11 +22,27 @@ export async function GET(
 
   const epics = await prisma.epic.findMany({
     where: { projectId },
-    include: { _count: { select: { tasks: true } } },
+    include: {
+      _count: { select: { tasks: true } },
+      tasks: { select: { id: true, status: true, statusId: true } },
+    },
     orderBy: { order: "asc" },
   });
 
-  return NextResponse.json(epics);
+  const statuses = await prisma.taskStatus.findMany({
+    where: { projectId },
+    select: { id: true, category: true },
+  });
+  const doneIds = new Set(statuses.filter((s) => s.category === "DONE").map((s) => s.id));
+
+  const result = epics.map((e) => {
+    const total = e.tasks.length;
+    const done = e.tasks.filter((t) => doneIds.has(t.statusId)).length;
+    const { tasks: _tasks, ...rest } = e;
+    return { ...rest, _tasksDone: done, _tasksTotal: total };
+  });
+
+  return NextResponse.json(result);
 }
 
 export async function POST(
@@ -49,7 +65,7 @@ export async function POST(
 
   try {
     const body = await request.json();
-    const { title, description, color } = body;
+    const { title, description, color, startDate, dueDate } = body;
 
     if (!title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -66,6 +82,8 @@ export async function POST(
         title,
         description: description || null,
         color: color || "#6366f1",
+        startDate: startDate ? new Date(startDate) : null,
+        dueDate: dueDate ? new Date(dueDate) : null,
         order: (maxOrder?.order ?? -1) + 1,
         projectId,
       },

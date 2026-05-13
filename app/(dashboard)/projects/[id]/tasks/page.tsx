@@ -83,6 +83,7 @@ import {
   PRIORITIES,
   PRIORITY_LABELS,
   LINK_TYPES,
+  getPriorityHex,
 } from "@/lib/task-meta";
 import { PriorityPill } from "@/components/task/priority-pill";
 import { ApprovalBadge } from "@/components/task/approval-badge";
@@ -164,6 +165,7 @@ export default function TasksPage() {
   const [formClientVisible, setFormClientVisible] = useState(false);
   const [formEpicId, setFormEpicId] = useState("none");
   const [formRecurrence, setFormRecurrence] = useState<string | null>(null);
+  const [formSubtaskTitles, setFormSubtaskTitles] = useState<string[]>([]);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [detailTab, setDetailTab] = useState<"details" | "comments" | "files" | "activity">("details");
 
@@ -308,6 +310,7 @@ export default function TasksPage() {
     setFormClientVisible(task?.clientVisible || false);
     setFormEpicId(task?.epicId || "none");
     setFormRecurrence(task?.recurrenceRule ?? null);
+    setFormSubtaskTitles([]);
     setDetailTab(isClient && task ? "comments" : "details");
     setTaskDialogOpen(true);
   }
@@ -366,7 +369,7 @@ export default function TasksPage() {
         // Create — if client assigned, auto-set visibility + pending approval
         setTaskDialogOpen(false);
         setEditTask(null);
-        await optimisticCreate({
+        const created = await optimisticCreate({
           ...patch,
           projectId,
           ...(isAssigningToClient && {
@@ -374,6 +377,26 @@ export default function TasksPage() {
             approvalStatus: "PENDING",
           }),
         });
+        // Create subtasks if any were added during creation
+        const subtitles = formSubtaskTitles.filter((t) => t.trim());
+        if (created?.id && subtitles.length > 0) {
+          await Promise.all(
+            subtitles.map((st) =>
+              fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: st.trim(),
+                  projectId,
+                  status: formStatus,
+                  priority: "MEDIUM",
+                  parentId: created.id,
+                }),
+              }),
+            ),
+          );
+          fetchTasks();
+        }
       }
     } finally { setFormSubmitting(false); }
   }
@@ -1128,7 +1151,13 @@ export default function TasksPage() {
                         )}
                         <div className="min-w-0">
                           {task.epic && (
-                            <span className="text-[10px] leading-none text-muted-foreground block mb-0.5">{task.epic.title}</span>
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none mb-0.5"
+                              style={{ backgroundColor: task.epic.color + "18", color: task.epic.color }}
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: task.epic.color }} />
+                              {task.epic.title}
+                            </span>
                           )}
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium truncate">{task.title}</span>
@@ -1513,6 +1542,49 @@ export default function TasksPage() {
                   }}
                 />
               )}
+              {/* Inline subtask titles during creation */}
+              {!editTask && !isClient && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    Subtasks
+                    <button
+                      type="button"
+                      onClick={() => setFormSubtaskTitles((p) => [...p, ""])}
+                      className="inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      <Plus className="h-3 w-3" />Hinzufügen
+                    </button>
+                  </Label>
+                  {formSubtaskTitles.map((st, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Circle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                      <Input
+                        value={st}
+                        onChange={(e) => {
+                          const next = [...formSubtaskTitles];
+                          next[idx] = e.target.value;
+                          setFormSubtaskTitles(next);
+                        }}
+                        placeholder="Subtask-Titel…"
+                        className="h-8 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            setFormSubtaskTitles((p) => [...p, ""]);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormSubtaskTitles((p) => p.filter((_, i) => i !== idx))}
+                        className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Status</Label>
@@ -1532,11 +1604,19 @@ export default function TasksPage() {
                 <div className="space-y-2">
                   <Label>Priorität</Label>
                   <Select value={formPriority} onValueChange={setFormPriority}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <span className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: getPriorityHex(formPriority) }} />
+                        {PRIORITY_LABELS[formPriority]}
+                      </span>
+                    </SelectTrigger>
                     <SelectContent>
                       {PRIORITIES.map((p) => (
                         <SelectItem key={p} value={p}>
-                          <PriorityPill priority={p} />
+                          <span className="flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: getPriorityHex(p) }} />
+                            <PriorityPill priority={p} />
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1555,6 +1635,7 @@ export default function TasksPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label>Wiederholung</Label>
                   <RecurrencePicker value={formRecurrence} onChange={setFormRecurrence} />
                 </div>
                 <div className="space-y-2">

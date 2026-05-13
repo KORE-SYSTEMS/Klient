@@ -3,7 +3,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  AlertCircle,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -18,7 +17,7 @@ import { describeRecurrence, parseRecurrence } from "@/lib/recurrence";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TaskCardTimer } from "@/components/time-tracker";
-import { getPriorityHex, PRIORITY_LABELS } from "@/lib/task-meta";
+import { getPriorityHex, getPriorityPillStyle, PRIORITY_LABELS } from "@/lib/task-meta";
 import { InlineTitle } from "./inline-title";
 import { getNextStatus } from "../_lib/dnd";
 import type { Task, TaskStatus } from "../_lib/types";
@@ -38,26 +37,10 @@ interface TaskCardProps {
   selected?: boolean;
   onSelect?: (taskId: string, mode: "toggle" | "range") => void;
   selectionActive?: boolean;
-  /** When true, renders as static drag-overlay copy (no useSortable, no interactivity). */
   isOverlay?: boolean;
-  /** Pixel height of the source card while dragging — used to size the placeholder accurately. */
   dragHeight?: number;
 }
 
-/**
- * Task-Card im Linear/Notion-Style:
- *
- *   ┌──────────────────────────────────────┐
- *   │ Title                  ◷ ⟳ 👁 ▶      │  ← top-right: subtle icon row
- *   │ Description (line-clamp-2)            │
- *   │                                       │
- *   │ ━━━━ Checklist 3/5 ━━━━━              │  ← optional progress bar
- *   │                                       │
- *   │ ● Hoch  ● Epic                        │  ← priority dot + epic dot
- *   │ ─────────────────────────────────     │
- *   │ KS  06.05.2026         💬 3  📎 1     │  ← bottom: avatar+date | counters
- *   └──────────────────────────────────────┘
- */
 export function TaskCard({
   task,
   onClick,
@@ -96,8 +79,6 @@ export function TaskCard({
     transition,
   };
 
-  const totalTime = task.totalTime || 0;
-
   if (isDragging && !task._isPreview && !isOverlay) {
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
@@ -109,7 +90,6 @@ export function TaskCard({
     );
   }
 
-  // Preview card — shown to clients for tasks they can't see details of
   if (task._isPreview) {
     return (
       <div ref={setNodeRef} style={style}>
@@ -127,7 +107,6 @@ export function TaskCard({
   const checkDone = task._count?.checklistDone ?? 0;
   const checkPct = checkTotal > 0 ? Math.round((checkDone / checkTotal) * 100) : 0;
   const recurrence = task.recurrenceRule ? parseRecurrence(task.recurrenceRule) : null;
-  const showPriority = task.priority && task.priority !== "MEDIUM";
   const overdue = !isDone && task.dueDate && new Date(task.dueDate) < new Date();
 
   return (
@@ -154,177 +133,169 @@ export function TaskCard({
         }}
       >
         <div className="p-3.5">
-          <div className="space-y-3">
+          <div className="space-y-2.5">
+            {/* Epic pill (top) */}
+            {task.epic && (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none"
+                style={{
+                  backgroundColor: task.epic.color + "18",
+                  color: task.epic.color,
+                }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: task.epic.color }} />
+                {task.epic.title}
+              </span>
+            )}
+
             {/* Title row */}
             <div className="flex items-start gap-2">
-                <div
-                  className={cn(
-                    "flex-1 min-w-0 text-sm font-semibold leading-snug",
-                    isDone && "line-through text-muted-foreground",
-                  )}
-                  data-no-click=""
-                >
-                  <InlineTitle
-                    value={task.title}
-                    onSave={(t) => onUpdateTitle?.(task.id, t)}
-                    disabled={isClient || !onUpdateTitle}
-                    inputClassName="text-sm font-semibold leading-snug"
-                  />
-                </div>
-
-                {/* Top-right: subtle icon cluster */}
-                <div className="flex items-center gap-0.5 shrink-0 -mt-0.5 -mr-1">
-                  {task.approvalStatus === "PENDING" && (
-                    <span
-                      className="flex h-5 w-5 items-center justify-center rounded text-warning"
-                      title="Wartet auf Abnahme"
-                    >
-                      <ClipboardCheck className="h-3 w-3" />
-                    </span>
-                  )}
-                  {recurrence && (
-                    <span
-                      className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50"
-                      title={describeRecurrence(recurrence)}
-                    >
-                      <Repeat className="h-3 w-3" />
-                    </span>
-                  )}
-                  {task.clientVisible && !isClient && (
-                    <span
-                      className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50"
-                      title="Für Kunden sichtbar"
-                    >
-                      <Eye className="h-3 w-3" />
-                    </span>
-                  )}
-                </div>
+              <div
+                className={cn(
+                  "flex-1 min-w-0 text-sm font-semibold leading-snug",
+                  isDone && "line-through text-muted-foreground",
+                )}
+                data-no-click=""
+              >
+                <InlineTitle
+                  value={task.title}
+                  onSave={(t) => onUpdateTitle?.(task.id, t)}
+                  disabled={isClient || !onUpdateTitle}
+                  inputClassName="text-sm font-semibold leading-snug"
+                />
               </div>
 
-              {/* Description (optional) */}
-              {task.description?.trim() && (
-                <p className="text-caption leading-relaxed text-muted-foreground line-clamp-2">
-                  {task.description}
-                </p>
-              )}
-
-              {/* Checklist progress bar */}
-              {checkTotal > 0 && (
-                <div className="space-y-1">
-                  <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all",
-                        checkPct === 100 ? "bg-success" : "bg-foreground/40",
-                      )}
-                      style={{ width: `${checkPct}%` }}
-                    />
-                  </div>
-                  <span className="text-meta tabular-nums text-muted-foreground">
-                    {checkDone}/{checkTotal} Subtasks
+              {/* Top-right icons */}
+              <div className="flex items-center gap-0.5 shrink-0 -mt-0.5 -mr-1">
+                {task.approvalStatus === "PENDING" && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded text-warning" title="Wartet auf Abnahme">
+                    <ClipboardCheck className="h-3 w-3" />
                   </span>
+                )}
+                {recurrence && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title={describeRecurrence(recurrence)}>
+                    <Repeat className="h-3 w-3" />
+                  </span>
+                )}
+                {task.clientVisible && !isClient && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title="Für Kunden sichtbar">
+                    <Eye className="h-3 w-3" />
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {task.description?.trim() && (
+              <p className="text-caption leading-relaxed text-muted-foreground line-clamp-2">
+                {task.description}
+              </p>
+            )}
+
+            {/* Checklist progress */}
+            {checkTotal > 0 && (
+              <div className="space-y-1">
+                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all", checkPct === 100 ? "bg-success" : "bg-foreground/40")}
+                    style={{ width: `${checkPct}%` }}
+                  />
                 </div>
+                <span className="text-meta tabular-nums text-muted-foreground">
+                  {checkDone}/{checkTotal} Subtasks
+                </span>
+              </div>
+            )}
+
+            {/* Pills row: Priority + Date */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Priority pill */}
+              <span className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none",
+                getPriorityPillStyle(task.priority),
+              )}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: getPriorityHex(task.priority) }} />
+                {PRIORITY_LABELS[task.priority]}
+              </span>
+
+              {/* Date pill */}
+              {task.dueDate && (
+                <span className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none",
+                  overdue
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-muted text-muted-foreground",
+                )}>
+                  <Calendar className="h-2.5 w-2.5" />
+                  {formatDate(task.dueDate)}
+                </span>
               )}
+            </div>
 
-              {/* Priority + Epic — small dot indicators */}
-              {(showPriority || task.epic) && (
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  {showPriority && (
-                    <span className="inline-flex items-center gap-1.5 text-meta font-medium text-muted-foreground">
-                      <span
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: getPriorityHex(task.priority) }}
-                      />
-                      {PRIORITY_LABELS[task.priority]}
-                    </span>
-                  )}
-                  {task.epic && (
-                    <span className="inline-flex items-center gap-1.5 text-meta font-medium text-muted-foreground truncate min-w-0">
-                      <span
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: task.epic.color }}
-                      />
-                      <span className="truncate">{task.epic.title}</span>
-                    </span>
-                  )}
-                </div>
-              )}
+            {/* Bottom: Avatar | Counters + Actions */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center gap-2 min-w-0">
+                {task.assignee ? (
+                  <Avatar className="h-5 w-5 shrink-0">
+                    <AvatarFallback className="text-micro font-semibold">
+                      {getInitials(task.assignee.name || task.assignee.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="h-5 w-5 shrink-0 rounded-full border border-dashed border-muted-foreground/30" />
+                )}
+                {task.assignee && (
+                  <span className="text-[10px] leading-none text-muted-foreground truncate">
+                    {task.assignee.name || task.assignee.email}
+                  </span>
+                )}
+              </div>
 
-              {/* Bottom: Avatar + Date | Counters + NextPhase */}
-              <div className="flex items-center justify-between gap-2 pt-2.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  {task.assignee ? (
-                    <Avatar className="h-5 w-5 shrink-0">
-                      <AvatarFallback className="text-micro font-semibold">
-                        {getInitials(task.assignee.name || task.assignee.email)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className="h-5 w-5 shrink-0 rounded-full border border-dashed border-muted-foreground/30" />
-                  )}
-                  {task.dueDate && (
-                    <span
-                      className={cn(
-                        "text-[10px] leading-none truncate tabular-nums",
-                        overdue ? "text-destructive" : "text-muted-foreground",
-                      )}
-                    >
-                      {formatDate(task.dueDate)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2.5 shrink-0 text-[10px] leading-none text-muted-foreground/70">
-                  {task._count?.subtasks ? (
-                    <span
-                      className="flex items-center gap-0.5 tabular-nums"
-                      title={`${task._count.subtasksDone ?? 0} von ${task._count.subtasks} Subtasks erledigt`}
-                    >
-                      <CheckCircle2 className="h-2.5 w-2.5" />
-                      {task._count.subtasksDone ?? 0}/{task._count.subtasks}
-                    </span>
-                  ) : null}
-                  {task._count?.comments ? (
-                    <span className="flex items-center gap-0.5">
-                      <MessageSquare className="h-2.5 w-2.5" />
-                      {task._count.comments}
-                    </span>
-                  ) : null}
-                  {task._count?.files ? (
-                    <span className="flex items-center gap-0.5">
-                      <Paperclip className="h-2.5 w-2.5" />
-                      {task._count.files}
-                    </span>
-                  ) : null}
-                  {!isClient && (
-                    <span data-no-click>
-                      <TaskCardTimer
-                        taskId={task.id}
-                        isActive={isTimerActive}
-                        elapsed={timerElapsed}
-                        onStart={onTimerStart}
-                        onStop={onTimerStop}
-                      />
-                    </span>
-                  )}
-                  {!isClient && nextStatus && onNextPhase && (
-                    <button
-                      data-no-click
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNextPhase(task);
-                      }}
-                      title={`→ ${nextStatus.name}`}
-                      className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 opacity-0 transition group-hover:opacity-100 hover:bg-accent hover:text-foreground"
-                    >
-                      <ArrowRight className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
+              <div className="flex items-center gap-2.5 shrink-0 text-[10px] leading-none text-muted-foreground/70">
+                {task._count?.subtasks ? (
+                  <span className="flex items-center gap-0.5 tabular-nums" title={`${task._count.subtasksDone ?? 0} von ${task._count.subtasks} Subtasks erledigt`}>
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                    {task._count.subtasksDone ?? 0}/{task._count.subtasks}
+                  </span>
+                ) : null}
+                {task._count?.comments ? (
+                  <span className="flex items-center gap-0.5">
+                    <MessageSquare className="h-2.5 w-2.5" />
+                    {task._count.comments}
+                  </span>
+                ) : null}
+                {task._count?.files ? (
+                  <span className="flex items-center gap-0.5">
+                    <Paperclip className="h-2.5 w-2.5" />
+                    {task._count.files}
+                  </span>
+                ) : null}
+                {!isClient && (
+                  <span data-no-click>
+                    <TaskCardTimer
+                      taskId={task.id}
+                      isActive={isTimerActive}
+                      elapsed={timerElapsed}
+                      onStart={onTimerStart}
+                      onStop={onTimerStop}
+                    />
+                  </span>
+                )}
+                {!isClient && nextStatus && onNextPhase && (
+                  <button
+                    data-no-click
+                    onClick={(e) => { e.stopPropagation(); onNextPhase(task); }}
+                    title={`→ ${nextStatus.name}`}
+                    className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 opacity-0 transition group-hover:opacity-100 hover:bg-accent hover:text-foreground"
+                  >
+                    <ArrowRight className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
   );
 }

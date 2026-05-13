@@ -268,7 +268,7 @@ export default function MyTasksPage() {
                 type="button"
                 onClick={() => setFilterDue(opt.value)}
                 className={cn(
-                  "rounded px-2 py-0.5 text-caption font-medium transition-colors whitespace-nowrap",
+                  "rounded px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
                   filterDue === opt.value
                     ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
