@@ -63,8 +63,9 @@ export async function PATCH(request: NextRequest) {
     if (body.companyName       !== undefined) updateData.companyName       = body.companyName;
     if (body.companyAddress    !== undefined) updateData.companyAddress    = body.companyAddress;
     if (body.companyTaxId      !== undefined) updateData.companyTaxId      = body.companyTaxId;
-    if (body.companyIban       !== undefined) updateData.companyIban       = body.companyIban;
-    if (body.companyEmail      !== undefined) updateData.companyEmail      = body.companyEmail   || null;
+    if (body.companyIban           !== undefined) updateData.companyIban           = body.companyIban;
+    if (body.companyAccountHolder  !== undefined) updateData.companyAccountHolder  = body.companyAccountHolder || null;
+    if (body.companyEmail          !== undefined) updateData.companyEmail          = body.companyEmail || null;
     if (body.companyPhone      !== undefined) updateData.companyPhone      = body.companyPhone   || null;
     if (body.companyWebsite    !== undefined) updateData.companyWebsite    = body.companyWebsite || null;
     if (body.currency          !== undefined) updateData.currency          = body.currency;

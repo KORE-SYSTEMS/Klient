@@ -35,6 +35,7 @@ interface BillingSettings {
   companyAddress: string;
   companyTaxId: string;
   companyIban: string;
+  companyAccountHolder: string;
   companyEmail: string;
   companyPhone: string;
   companyWebsite: string;
@@ -59,6 +60,7 @@ const DEFAULTS: BillingSettings = {
   companyAddress: "",
   companyTaxId: "",
   companyIban: "",
+  companyAccountHolder: "",
   companyEmail: "",
   companyPhone: "",
   companyWebsite: "",
@@ -125,6 +127,7 @@ export default function BillingSettingsPage() {
             companyAddress:    data.companyAddress    ?? "",
             companyTaxId:      data.companyTaxId      ?? "",
             companyIban:       data.companyIban       ?? "",
+            companyAccountHolder: data.companyAccountHolder ?? "",
             companyEmail:      data.companyEmail      ?? "",
             companyPhone:      data.companyPhone      ?? "",
             companyWebsite:    data.companyWebsite    ?? "",
@@ -157,6 +160,7 @@ export default function BillingSettingsPage() {
           companyAddress:    s.companyAddress,
           companyTaxId:      s.companyTaxId,
           companyIban:       s.companyIban,
+          companyAccountHolder: s.companyAccountHolder,
           companyEmail:      s.companyEmail,
           companyPhone:      s.companyPhone,
           companyWebsite:    s.companyWebsite,
@@ -284,6 +288,19 @@ export default function BillingSettingsPage() {
                     />
                   </FieldHint>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyAccountHolder">Kontoinhaber</Label>
+                <FieldHint hint="Optional. Nur ausfüllen wenn der Kontoinhaber vom Firmennamen abweicht. Sonst wird der Firmenname als Kontoinhaber auf der Rechnung verwendet.">
+                  <Input
+                    id="companyAccountHolder"
+                    value={s.companyAccountHolder}
+                    onChange={field("companyAccountHolder")}
+                    placeholder={s.companyName || "Max Mustermann"}
+                    className="pr-8"
+                  />
+                </FieldHint>
               </div>
 
               <div className="pt-2 border-t">

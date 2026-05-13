@@ -80,6 +80,7 @@ export default async function ProposalPrintPage({ params, searchParams }: PagePr
 
   const showBank = !!workspace?.companyIban;
   const senderName = workspace?.companyName || workspace?.name || "—";
+  const accountHolder = workspace?.companyAccountHolder || senderName;
 
   return (
     <div className="invoice-page">
@@ -244,10 +245,10 @@ export default async function ProposalPrintPage({ params, searchParams }: PagePr
         <section className="payment">
           <h2 className="notes-heading">Bankverbindung</h2>
           <div className="bank-grid">
-            {senderName && (
+            {accountHolder && (
               <>
                 <div className="bank-label">Kontoinhaber</div>
-                <div>{senderName}</div>
+                <div>{accountHolder}</div>
               </>
             )}
             <div className="bank-label">IBAN</div>

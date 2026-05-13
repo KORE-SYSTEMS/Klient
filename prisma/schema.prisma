@@ -469,6 +469,7 @@ model Workspace {
   companyAddress          String?
   companyTaxId            String?   // USt-IdNr.
   companyIban             String?
+  companyAccountHolder    String?   // Optional, falls abweichend vom Firmennamen
   companyEmail            String?
   companyPhone            String?
   companyWebsite          String?

@@ -113,6 +113,8 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
 
   const showBank = !!workspace?.companyIban;
   const senderName = workspace?.companyName || workspace?.name || "—";
+  // Kontoinhaber: explizit gesetzt > Firmenname (Fallback)
+  const accountHolder = workspace?.companyAccountHolder || senderName;
 
   return (
     <div className="invoice-page">
@@ -306,10 +308,10 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
             <strong>{invoice.number}</strong> an folgende Bankverbindung:
           </p>
           <div className="bank-grid">
-            {senderName && (
+            {accountHolder && (
               <>
                 <div className="bank-label">Kontoinhaber</div>
-                <div>{senderName}</div>
+                <div>{accountHolder}</div>
               </>
             )}
             <div className="bank-label">IBAN</div>

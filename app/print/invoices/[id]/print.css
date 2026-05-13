@@ -1,9 +1,15 @@
 /* A4 Print-Layout — bewusst NICHT Tailwind-abhängig damit es 1:1 in PDFs
    landet. Modernes deutsches Rechnungslayout mit allen Pflichtangaben. */
 
+/* WICHTIG: KEIN `margin` an @page!
+   Puppeteer setzt die Page-Margins via `page.pdf({ margin: { top, ... } })`
+   und reserviert dort Header/Footer-Templates. Ein `@page { margin }`
+   im CSS überschreibt das auf manchen Chromium-Versionen und zieht den
+   Body in den Header-Bereich rein — exakt das Symptom "Inhalt in der
+   Kopfzeile". Daher nur `size` setzen, Margins kommen ausschließlich
+   aus den Puppeteer-Optionen. */
 @page {
   size: A4;
-  margin: 18mm 16mm;
 }
 
 html, body {
