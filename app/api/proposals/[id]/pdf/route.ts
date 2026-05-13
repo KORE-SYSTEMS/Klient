@@ -117,9 +117,8 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // 28mm Top-Margin → ~12mm sichtbare Lücke zwischen Header-Trennlinie
-      // und Body. Bottom 20mm für die Fußzeile.
-      margin: { top: "28mm", right: "16mm", bottom: "20mm", left: "16mm" },
+      // Kompakte Page-Margins (analog zur Invoice-Route).
+      margin: { top: "18mm", right: "16mm", bottom: "14mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -134,7 +133,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 9mm 0 3mm;
+            padding: 4mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <div style="
@@ -170,7 +169,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 3mm 0 12mm;
+            padding: 3mm 0 6mm;
             border-top: 1px solid #e5e5e5;
           ">
             <span style="white-space: nowrap;">${footerLeft}</span>

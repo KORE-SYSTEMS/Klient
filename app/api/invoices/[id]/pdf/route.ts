@@ -144,11 +144,11 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Header sitzt im oberen ~16mm der Page-Margin (9mm Padding + Text +
-      // Border). Mit 28mm Top-Margin bleiben ca. 12mm sichtbare Lücke
-      // zwischen Header-Trennlinie und Body-Inhalt — sauber lesbar ohne
-      // verschenkte Fläche. Bottom analog 20mm für die Fußzeile.
-      margin: { top: "28mm", right: "16mm", bottom: "20mm", left: "16mm" },
+      // Kompakte Page-Margins: Header sitzt knapp am oberen Rand (4mm
+      // Padding-Top), Footer knapp am unteren Rand (6mm Padding-Bottom).
+      // Resultat: ca. 7-8mm sichtbare Lücke zwischen Header-Trennlinie
+      // und Body bzw. Footer-Trennlinie.
+      margin: { top: "18mm", right: "16mm", bottom: "14mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -163,7 +163,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 9mm 0 3mm;
+            padding: 4mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <div style="
@@ -199,7 +199,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 3mm 0 12mm;
+            padding: 3mm 0 6mm;
             border-top: 1px solid #e5e5e5;
           ">
             <span style="white-space: nowrap;">${footerLeft}</span>
