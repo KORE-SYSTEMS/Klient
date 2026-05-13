@@ -1362,8 +1362,9 @@ export default function TasksPage() {
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Priorität</Label>
-                    <div className="mt-1">
-                      <PriorityPill priority={editTask.priority} />
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getPriorityHex(editTask.priority) }} />
+                      <span className="text-sm">{PRIORITY_LABELS[editTask.priority] || editTask.priority}</span>
                     </div>
                   </div>
                   {editTask.dueDate && (
@@ -1675,10 +1676,10 @@ export default function TasksPage() {
                   })()}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="clientVisible" checked={formClientVisible}
-                  onChange={(e) => setFormClientVisible(e.target.checked)} className="rounded-sm" />
+              <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="clientVisible">Für Kunden sichtbar</Label>
+                <Switch id="clientVisible" checked={formClientVisible}
+                  onCheckedChange={setFormClientVisible} />
               </div>
               {editTask && (
                 <div className="border-t mt-4 pt-5">

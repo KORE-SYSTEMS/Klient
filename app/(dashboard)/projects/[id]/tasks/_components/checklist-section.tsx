@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { CheckCircle2, Circle, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -182,13 +182,18 @@ export function ChecklistSection({
               key={item.id}
               className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40"
             >
-              <input
-                type="checkbox"
-                checked={item.done}
+              <button
+                type="button"
                 disabled={!canToggle && !canEdit}
-                onChange={() => toggleDone(item)}
-                className="h-3.5 w-3.5 shrink-0 rounded accent-primary"
-              />
+                onClick={() => toggleDone(item)}
+                className={cn(
+                  "shrink-0 transition-colors",
+                  item.done ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground",
+                  (!canToggle && !canEdit) && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                {item.done ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+              </button>
               {isEditing ? (
                 <Input
                   value={editingTitle}

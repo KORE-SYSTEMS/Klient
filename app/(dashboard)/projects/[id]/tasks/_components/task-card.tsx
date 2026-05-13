@@ -134,55 +134,57 @@ export function TaskCard({
       >
         <div className="p-3.5">
           <div className="space-y-2.5">
-            {/* Epic pill (top) */}
-            {task.epic && (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none"
-                style={{
-                  backgroundColor: task.epic.color + "18",
-                  color: task.epic.color,
-                }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: task.epic.color }} />
-                {task.epic.title}
-              </span>
+            {/* Epic pill + top-right icons row */}
+            {(task.epic || (task.clientVisible && !isClient) || task.approvalStatus === "PENDING" || recurrence) && (
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  {task.epic && (
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none"
+                      style={{
+                        backgroundColor: task.epic.color + "18",
+                        color: task.epic.color,
+                      }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: task.epic.color }} />
+                      {task.epic.title}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0 -mr-1">
+                  {task.approvalStatus === "PENDING" && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded text-warning" title="Wartet auf Abnahme">
+                      <ClipboardCheck className="h-3 w-3" />
+                    </span>
+                  )}
+                  {recurrence && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title={describeRecurrence(recurrence)}>
+                      <Repeat className="h-3 w-3" />
+                    </span>
+                  )}
+                  {task.clientVisible && !isClient && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title="Für Kunden sichtbar">
+                      <Eye className="h-3 w-3" />
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
 
-            {/* Title row */}
-            <div className="flex items-start gap-2">
-              <div
-                className={cn(
-                  "flex-1 min-w-0 text-sm font-semibold leading-snug",
-                  isDone && "line-through text-muted-foreground",
-                )}
-                data-no-click=""
-              >
-                <InlineTitle
-                  value={task.title}
-                  onSave={(t) => onUpdateTitle?.(task.id, t)}
-                  disabled={isClient || !onUpdateTitle}
-                  inputClassName="text-sm font-semibold leading-snug"
-                />
-              </div>
-
-              {/* Top-right icons */}
-              <div className="flex items-center gap-0.5 shrink-0 -mt-0.5 -mr-1">
-                {task.approvalStatus === "PENDING" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded text-warning" title="Wartet auf Abnahme">
-                    <ClipboardCheck className="h-3 w-3" />
-                  </span>
-                )}
-                {recurrence && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title={describeRecurrence(recurrence)}>
-                    <Repeat className="h-3 w-3" />
-                  </span>
-                )}
-                {task.clientVisible && !isClient && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50" title="Für Kunden sichtbar">
-                    <Eye className="h-3 w-3" />
-                  </span>
-                )}
-              </div>
+            {/* Title */}
+            <div
+              className={cn(
+                "text-sm font-semibold leading-snug",
+                isDone && "line-through text-muted-foreground",
+              )}
+              data-no-click=""
+            >
+              <InlineTitle
+                value={task.title}
+                onSave={(t) => onUpdateTitle?.(task.id, t)}
+                disabled={isClient || !onUpdateTitle}
+                inputClassName="text-sm font-semibold leading-snug"
+              />
             </div>
 
             {/* Description */}
@@ -202,7 +204,7 @@ export function TaskCard({
                   />
                 </div>
                 <span className="text-meta tabular-nums text-muted-foreground">
-                  {checkDone}/{checkTotal} Subtasks
+                  {checkDone}/{checkTotal} Checkliste
                 </span>
               </div>
             )}
