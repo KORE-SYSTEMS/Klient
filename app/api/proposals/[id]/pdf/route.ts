@@ -32,7 +32,7 @@ export async function GET(
   const [proposal, workspace] = await Promise.all([
     prisma.proposal.findUnique({
       where: { id },
-      select: { number: true },
+      select: { number: true, title: true },
     }),
     prisma.workspace.findFirst({
       select: { companyName: true, name: true },
@@ -85,43 +85,67 @@ export async function GET(
 
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
 
-    const headerText = escapeHtml(`Angebot ${proposal.number}`);
+    // Header: Titel des Angebots links, Belegnummer rechts. Trennlinie
+    // sitzt auf einem inneren Container mit Content-Breite, damit sie
+    // nicht über die ganze A4-Breite läuft.
+    const proposalTitle = proposal.title ? escapeHtml(proposal.title) : "";
+    const proposalNumber = escapeHtml(`Angebot ${proposal.number}`);
     const footerLeft = escapeHtml(senderName);
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      margin: { top: "22mm", right: "16mm", bottom: "18mm", left: "16mm" },
+      // Großzügige top/bottom Margins gegen angeschnittene Section-Headings.
+      margin: { top: "28mm", right: "16mm", bottom: "24mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
-          padding: 8mm 16mm 0;
+          padding: 0 16mm;
+          box-sizing: border-box;
           font-size: 8pt;
           font-family: 'Inter', -apple-system, sans-serif;
           color: #6a6a6a;
-          display: flex;
-          justify-content: flex-end;
-          border-bottom: 1px solid #e5e5e5;
-          padding-bottom: 2mm;
         ">
-          <span>${headerText}</span>
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8mm;
+            padding: 10mm 0 2mm;
+            border-bottom: 1px solid #e5e5e5;
+          ">
+            <span style="
+              color: #3a3a3a;
+              font-weight: 500;
+              max-width: 110mm;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            ">${proposalTitle}</span>
+            <span style="white-space: nowrap;">${proposalNumber}</span>
+          </div>
         </div>
       `,
       footerTemplate: `
         <div style="
           width: 100%;
-          padding: 0 16mm 8mm;
+          padding: 0 16mm;
+          box-sizing: border-box;
           font-size: 8pt;
           font-family: 'Inter', -apple-system, sans-serif;
           color: #8a8a8a;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 1px solid #e5e5e5;
-          padding-top: 2mm;
         ">
-          <span>${footerLeft}</span>
-          <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8mm;
+            padding: 2mm 0 8mm;
+            border-top: 1px solid #e5e5e5;
+          ">
+            <span>${footerLeft}</span>
+            <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+          </div>
         </div>
       `,
     });

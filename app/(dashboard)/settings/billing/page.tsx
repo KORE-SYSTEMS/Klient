@@ -35,6 +35,9 @@ interface BillingSettings {
   companyAddress: string;
   companyTaxId: string;
   companyIban: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyWebsite: string;
   // Tab: Abrechnung
   defaultHourlyRate: string;
   defaultTaxRate: string;
@@ -56,6 +59,9 @@ const DEFAULTS: BillingSettings = {
   companyAddress: "",
   companyTaxId: "",
   companyIban: "",
+  companyEmail: "",
+  companyPhone: "",
+  companyWebsite: "",
   defaultHourlyRate: "",
   defaultTaxRate: "19",
   paymentTermsDays: "14",
@@ -119,6 +125,9 @@ export default function BillingSettingsPage() {
             companyAddress:    data.companyAddress    ?? "",
             companyTaxId:      data.companyTaxId      ?? "",
             companyIban:       data.companyIban       ?? "",
+            companyEmail:      data.companyEmail      ?? "",
+            companyPhone:      data.companyPhone      ?? "",
+            companyWebsite:    data.companyWebsite    ?? "",
             defaultHourlyRate: data.defaultHourlyRate != null ? String(data.defaultHourlyRate) : "",
             defaultTaxRate:    data.defaultTaxRate    != null ? String(data.defaultTaxRate)    : "19",
             paymentTermsDays:  data.paymentTermsDays  != null ? String(data.paymentTermsDays)  : "14",
@@ -148,6 +157,9 @@ export default function BillingSettingsPage() {
           companyAddress:    s.companyAddress,
           companyTaxId:      s.companyTaxId,
           companyIban:       s.companyIban,
+          companyEmail:      s.companyEmail,
+          companyPhone:      s.companyPhone,
+          companyWebsite:    s.companyWebsite,
           defaultHourlyRate: s.defaultHourlyRate,
           defaultTaxRate:    s.defaultTaxRate,
           paymentTermsDays:  s.paymentTermsDays,
@@ -271,6 +283,46 @@ export default function BillingSettingsPage() {
                       className="pr-8"
                     />
                   </FieldHint>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Kontaktangaben (erscheinen kompakt im Rechnungskopf)
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyEmail">E-Mail</Label>
+                    <Input
+                      id="companyEmail"
+                      type="email"
+                      value={s.companyEmail}
+                      onChange={field("companyEmail")}
+                      placeholder="hallo@example.de"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="companyPhone">Telefon</Label>
+                    <Input
+                      id="companyPhone"
+                      type="tel"
+                      value={s.companyPhone}
+                      onChange={field("companyPhone")}
+                      placeholder="+49 123 456789"
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="companyWebsite">Website</Label>
+                    <Input
+                      id="companyWebsite"
+                      type="url"
+                      value={s.companyWebsite}
+                      onChange={field("companyWebsite")}
+                      placeholder="https://example.de"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

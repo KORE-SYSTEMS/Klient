@@ -101,6 +101,15 @@ export default async function ProposalPrintPage({ params, searchParams }: PagePr
               ))}
             </div>
           )}
+          {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
+            <div className="sender-contact">
+              {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
+              {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
+              {workspace?.companyWebsite && (
+                <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
+              )}
+            </div>
+          )}
           {workspace?.companyTaxId && (
             <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
           )}

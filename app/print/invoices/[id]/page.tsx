@@ -118,7 +118,10 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
     <div className="invoice-page">
       {!rawMode && <AutoPrint />}
 
-      {/* Top stripe: Logo links + Absender rechts */}
+      {/* Top stripe: Logo links + Absender rechts.
+          Bewusst kompakt gehalten — Kontaktangaben (Mail/Tel/Web) erscheinen
+          als dezente Meta-Zeile darunter, USt-IdNr. ist mit drin damit der
+          Block nicht aufgebläht wird. */}
       <header className="top-stripe">
         <div className="logo-block">
           {workspace?.logo && (
@@ -133,6 +136,15 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
               {workspace.companyAddress.split("\n").map((line, i) => (
                 <div key={i}>{line}</div>
               ))}
+            </div>
+          )}
+          {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
+            <div className="sender-contact">
+              {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
+              {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
+              {workspace?.companyWebsite && (
+                <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
+              )}
             </div>
           )}
           {workspace?.companyTaxId && (

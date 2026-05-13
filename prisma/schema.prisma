@@ -469,6 +469,9 @@ model Workspace {
   companyAddress          String?
   companyTaxId            String?   // USt-IdNr.
   companyIban             String?
+  companyEmail            String?
+  companyPhone            String?
+  companyWebsite          String?
   currency                String  @default("EUR")
   defaultHourlyRate       Float?
   defaultTaxRate          Int     @default(19)  // MwSt. %

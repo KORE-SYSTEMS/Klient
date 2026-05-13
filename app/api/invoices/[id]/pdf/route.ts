@@ -36,7 +36,7 @@ export async function GET(
   const [invoice, workspace] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id },
-      select: { number: true },
+      select: { number: true, title: true },
     }),
     prisma.workspace.findFirst({
       select: { companyName: true, name: true },
@@ -106,43 +106,70 @@ export async function GET(
     // NICHT, weil unsere CSS @page Margin auf 18mm steht und das mit dem
     // Header-Bereich kollidieren würde — stattdessen geben wir die Margin
     // explizit hier vor und der Print-Page CSS @page wird ignoriert.
-    const headerText = escapeHtml(`Rechnung ${invoice.number}`);
+    // Header: Titel der Rechnung links, Belegnummer rechts. Trennlinie ist
+    // NICHT am äußeren div (sonst läuft sie über die ganze A4-Breite),
+    // sondern an einem inneren Container, der die gleiche Content-Breite
+    // hat wie der Body (210mm − 2×16mm Margin = 178mm).
+    const invoiceTitle = invoice.title ? escapeHtml(invoice.title) : "";
+    const invoiceNumber = escapeHtml(`Rechnung ${invoice.number}`);
     const footerLeft = escapeHtml(senderName);
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      margin: { top: "22mm", right: "16mm", bottom: "18mm", left: "16mm" },
+      // Großzügige top/bottom Margins, damit Header und Footer nicht in
+      // den Body-Content laufen (insb. wichtig für Section-Überschriften
+      // wie "Zahlungsinformation", die sonst halb angeschnitten würden).
+      margin: { top: "28mm", right: "16mm", bottom: "24mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
-          padding: 8mm 16mm 0;
+          padding: 0 16mm;
+          box-sizing: border-box;
           font-size: 8pt;
           font-family: 'Inter', -apple-system, sans-serif;
           color: #6a6a6a;
-          display: flex;
-          justify-content: flex-end;
-          border-bottom: 1px solid #e5e5e5;
-          padding-bottom: 2mm;
         ">
-          <span>${headerText}</span>
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8mm;
+            padding: 10mm 0 2mm;
+            border-bottom: 1px solid #e5e5e5;
+          ">
+            <span style="
+              color: #3a3a3a;
+              font-weight: 500;
+              max-width: 110mm;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            ">${invoiceTitle}</span>
+            <span style="white-space: nowrap;">${invoiceNumber}</span>
+          </div>
         </div>
       `,
       footerTemplate: `
         <div style="
           width: 100%;
-          padding: 0 16mm 8mm;
+          padding: 0 16mm;
+          box-sizing: border-box;
           font-size: 8pt;
           font-family: 'Inter', -apple-system, sans-serif;
           color: #8a8a8a;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 1px solid #e5e5e5;
-          padding-top: 2mm;
         ">
-          <span>${footerLeft}</span>
-          <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8mm;
+            padding: 2mm 0 8mm;
+            border-top: 1px solid #e5e5e5;
+          ">
+            <span>${footerLeft}</span>
+            <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+          </div>
         </div>
       `,
     });
