@@ -117,7 +117,9 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      margin: { top: "40mm", right: "16mm", bottom: "30mm", left: "16mm" },
+      // 48mm Top-Margin → ~32mm sichtbare Lücke zwischen Header-Trennlinie
+      // und Body (auch auf Folgeseiten wo der Items-Thead wieder erscheint).
+      margin: { top: "48mm", right: "16mm", bottom: "32mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -132,7 +134,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 12mm 0 3mm;
+            padding: 9mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <div style="

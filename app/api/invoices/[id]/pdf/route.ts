@@ -144,9 +144,12 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Großzügiger Top-Margin (40mm), damit zwischen Header-Trennlinie und
-      // erstem Body-Inhalt klar Luft bleibt. Bottom 30mm analog dazu.
-      margin: { top: "40mm", right: "16mm", bottom: "30mm", left: "16mm" },
+      // Margin definiert die Höhe des Header-/Footer-Bereichs in Puppeteer.
+      // Header-Content (Logo + Titel) sitzt im oberen Drittel, danach folgt
+      // großzügig leerer Margin-Raum bis zum Body — das ist der "Abstand
+      // zur Kopfzeile" den der User sieht. 48mm top → ca. 32mm sichtbare
+      // Lücke zwischen Header-Trennlinie und Body-Inhalt.
+      margin: { top: "48mm", right: "16mm", bottom: "32mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -161,7 +164,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 12mm 0 3mm;
+            padding: 9mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <div style="
