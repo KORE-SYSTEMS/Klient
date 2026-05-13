@@ -39,7 +39,7 @@ export async function GET(
       select: { number: true, title: true },
     }),
     prisma.workspace.findFirst({
-      select: { companyName: true, name: true },
+      select: { companyName: true, name: true, logo: true, companyEmail: true },
     }),
   ]);
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -106,23 +106,47 @@ export async function GET(
     // NICHT, weil unsere CSS @page Margin auf 18mm steht und das mit dem
     // Header-Bereich kollidieren würde — stattdessen geben wir die Margin
     // explizit hier vor und der Print-Page CSS @page wird ignoriert.
-    // Header: Titel der Rechnung links, Belegnummer rechts. Trennlinie ist
-    // NICHT am äußeren div (sonst läuft sie über die ganze A4-Breite),
-    // sondern an einem inneren Container, der die gleiche Content-Breite
-    // hat wie der Body (210mm − 2×16mm Margin = 178mm).
+    // Logo als Data-URI in den Header einbetten — Puppeteer-Header-Templates
+    // laufen in einem isolierten Kontext und können URL-Resourcen oft nicht
+    // zuverlässig laden. Server-seitig holen + base64-inlinen ist robust.
+    let logoDataUri: string | null = null;
+    if (workspace?.logo) {
+      try {
+        const logoSrc = workspace.logo;
+        const logoUrl = logoSrc.startsWith("http")
+          ? logoSrc
+          : `${baseUrl}${logoSrc.startsWith("/") ? "" : "/"}${logoSrc}`;
+        const r = await fetch(logoUrl);
+        if (r.ok) {
+          const buf = Buffer.from(await r.arrayBuffer());
+          const mime = r.headers.get("content-type") || "image/png";
+          logoDataUri = `data:${mime};base64,${buf.toString("base64")}`;
+        }
+      } catch { /* logo bleibt null — Header zeigt nur Text */ }
+    }
+
+    // Header: kleines Logo + Titel der Rechnung links, Belegnummer rechts.
+    // Logo-Höhe ~5mm = etwa Höhe einer Zeile Header-Text. Trennlinie sitzt
+    // auf einem inneren Container mit Content-Breite (178mm).
     const invoiceTitle = invoice.title ? escapeHtml(invoice.title) : "";
     const invoiceNumber = escapeHtml(`Rechnung ${invoice.number}`);
-    const footerLeft = escapeHtml(senderName);
+    const headerLogoHtml = logoDataUri
+      ? `<img src="${logoDataUri}" style="height: 5mm; width: auto; max-width: 35mm; object-fit: contain;" />`
+      : "";
+
+    // Footer: Firmenname + (optional) E-Mail in einer Zeile links,
+    // Seitenzahlen rechts.
+    const footerLeftParts = [senderName, workspace?.companyEmail || ""]
+      .filter(Boolean)
+      .map(escapeHtml);
+    const footerLeft = footerLeftParts.join(' <span style="color:#c5c5c5;margin:0 4pt;">·</span> ');
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Großzügige Margins: oben/unten je ~32-28mm, damit zwischen
-      // Header-Trennlinie und Body-Content sowie Body-Content und
-      // Footer-Trennlinie eindeutig Luft bleibt. Verhindert dass
-      // Section-Headings wie "Zahlungsinformation" oder die Totals-Box
-      // direkt unter der Header-Linie kleben.
-      margin: { top: "34mm", right: "16mm", bottom: "28mm", left: "16mm" },
+      // Großzügiger Top-Margin (40mm), damit zwischen Header-Trennlinie und
+      // erstem Body-Inhalt klar Luft bleibt. Bottom 30mm analog dazu.
+      margin: { top: "40mm", right: "16mm", bottom: "30mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -135,19 +159,26 @@ export async function GET(
           <div style="
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
             gap: 8mm;
-            padding: 10mm 0 2.5mm;
+            padding: 12mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
-            <span style="
-              color: #3a3a3a;
-              font-weight: 500;
-              max-width: 110mm;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            ">${invoiceTitle}</span>
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 4mm;
+              min-width: 0;
+            ">
+              ${headerLogoHtml}
+              <span style="
+                color: #3a3a3a;
+                font-weight: 500;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              ">${invoiceTitle}</span>
+            </div>
             <span style="white-space: nowrap;">${invoiceNumber}</span>
           </div>
         </div>
@@ -166,11 +197,11 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 2.5mm 0 10mm;
+            padding: 3mm 0 12mm;
             border-top: 1px solid #e5e5e5;
           ">
-            <span>${footerLeft}</span>
-            <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+            <span style="white-space: nowrap;">${footerLeft}</span>
+            <span style="white-space: nowrap;">Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
           </div>
         </div>
       `,

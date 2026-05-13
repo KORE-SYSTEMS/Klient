@@ -118,37 +118,37 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
     <div className="invoice-page">
       {!rawMode && <AutoPrint />}
 
-      {/* Top stripe:
-          Links: Logo + (Name/Adresse/USt-IdNr.) direkt daneben, vertikal
-                 zur Logo-Höhe zentriert.
-          Rechts: einzeilige Kontaktzeile (Mail · Tel · Web), vertikal mittig
-                  zum Logo. Trennlinie schließt den Kopfbereich ab. */}
+      {/* Top stripe – 3-Spalten-Grid:
+            [Logo]  Firmenname (eine Zeile, nowrap)
+            [Logo]  Adresse Zeile 1                 Mail
+            [Logo]  Adresse Zeile 2                 Telefon
+            [Logo]  USt-IdNr.                       Webseite
+          Logo vertikal mittig über beide Zeilen, Kontaktangaben rechts
+          beginnen exakt auf Adress-Höhe. */}
       <header className="top-stripe">
-        <div className="brand-left">
-          {workspace?.logo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={workspace.logo} alt="Logo" className="logo" />
+        {workspace?.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={workspace.logo} alt="Logo" className="logo" />
+        )}
+        <div className="sender-name">{senderName}</div>
+        <div className="brand-meta">
+          {workspace?.companyAddress && (
+            <div className="sender-addr">
+              {workspace.companyAddress.split("\n").map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </div>
           )}
-          <div className="brand-text">
-            <div className="sender-name">{senderName}</div>
-            {workspace?.companyAddress && (
-              <div className="sender-addr">
-                {workspace.companyAddress.split("\n").map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </div>
-            )}
-            {workspace?.companyTaxId && (
-              <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
-            )}
-          </div>
+          {workspace?.companyTaxId && (
+            <div className="sender-tax">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
+          )}
         </div>
         {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
           <div className="sender-contact">
-            {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
-            {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
+            {workspace?.companyEmail && <div>{workspace.companyEmail}</div>}
+            {workspace?.companyPhone && <div>{workspace.companyPhone}</div>}
             {workspace?.companyWebsite && (
-              <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
+              <div>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</div>
             )}
           </div>
         )}

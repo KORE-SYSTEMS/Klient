@@ -35,7 +35,7 @@ export async function GET(
       select: { number: true, title: true },
     }),
     prisma.workspace.findFirst({
-      select: { companyName: true, name: true },
+      select: { companyName: true, name: true, logo: true, companyEmail: true },
     }),
   ]);
   if (!proposal) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -85,19 +85,39 @@ export async function GET(
 
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
 
-    // Header: Titel des Angebots links, Belegnummer rechts. Trennlinie
-    // sitzt auf einem inneren Container mit Content-Breite, damit sie
-    // nicht über die ganze A4-Breite läuft.
+    // Logo als Data-URI in den Header einbetten (siehe Invoice-Route).
+    let logoDataUri: string | null = null;
+    if (workspace?.logo) {
+      try {
+        const logoSrc = workspace.logo;
+        const logoUrl = logoSrc.startsWith("http")
+          ? logoSrc
+          : `${baseUrl}${logoSrc.startsWith("/") ? "" : "/"}${logoSrc}`;
+        const r = await fetch(logoUrl);
+        if (r.ok) {
+          const buf = Buffer.from(await r.arrayBuffer());
+          const mime = r.headers.get("content-type") || "image/png";
+          logoDataUri = `data:${mime};base64,${buf.toString("base64")}`;
+        }
+      } catch { /* logo bleibt null */ }
+    }
+
     const proposalTitle = proposal.title ? escapeHtml(proposal.title) : "";
     const proposalNumber = escapeHtml(`Angebot ${proposal.number}`);
-    const footerLeft = escapeHtml(senderName);
+    const headerLogoHtml = logoDataUri
+      ? `<img src="${logoDataUri}" style="height: 5mm; width: auto; max-width: 35mm; object-fit: contain;" />`
+      : "";
+
+    const footerLeftParts = [senderName, workspace?.companyEmail || ""]
+      .filter(Boolean)
+      .map(escapeHtml);
+    const footerLeft = footerLeftParts.join(' <span style="color:#c5c5c5;margin:0 4pt;">·</span> ');
+
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Großzügige Margins gegen angeschnittene Section-Headings und
-      // damit Totals-Box & Co. nicht direkt unter der Header-Linie kleben.
-      margin: { top: "34mm", right: "16mm", bottom: "28mm", left: "16mm" },
+      margin: { top: "40mm", right: "16mm", bottom: "30mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -110,19 +130,26 @@ export async function GET(
           <div style="
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
             gap: 8mm;
-            padding: 10mm 0 2.5mm;
+            padding: 12mm 0 3mm;
             border-bottom: 1px solid #e5e5e5;
           ">
-            <span style="
-              color: #3a3a3a;
-              font-weight: 500;
-              max-width: 110mm;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            ">${proposalTitle}</span>
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 4mm;
+              min-width: 0;
+            ">
+              ${headerLogoHtml}
+              <span style="
+                color: #3a3a3a;
+                font-weight: 500;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              ">${proposalTitle}</span>
+            </div>
             <span style="white-space: nowrap;">${proposalNumber}</span>
           </div>
         </div>
@@ -141,11 +168,11 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 2.5mm 0 10mm;
+            padding: 3mm 0 12mm;
             border-top: 1px solid #e5e5e5;
           ">
-            <span>${footerLeft}</span>
-            <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+            <span style="white-space: nowrap;">${footerLeft}</span>
+            <span style="white-space: nowrap;">Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
           </div>
         </div>
       `,
