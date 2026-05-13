@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { AutoPrint } from "./auto-print";
-import "./print.css";
+import "../../invoices/[id]/print.css";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,10 +10,7 @@ interface PageProps {
 }
 
 function formatCurrency(n: number, currency: string): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency,
-  }).format(n);
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(n);
 }
 
 function formatDate(d: Date | null | undefined): string {
@@ -25,13 +22,7 @@ function formatDate(d: Date | null | undefined): string {
   });
 }
 
-function formatPeriod(from: Date | null, to: Date | null): string {
-  if (!from) return "—";
-  if (!to || from.toDateString() === to.toDateString()) return formatDate(from);
-  return `${formatDate(from)} – ${formatDate(to)}`;
-}
-
-export default async function InvoicePrintPage({ params, searchParams }: PageProps) {
+export default async function ProposalPrintPage({ params, searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user || session.user.role === "CLIENT") {
     redirect("/login");
@@ -39,38 +30,28 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
 
   const { id } = await params;
   const sp = await searchParams;
-  // `?raw=1` deaktiviert AutoPrint — wird vom Puppeteer-Renderer benutzt,
-  // damit er nicht den Print-Dialog triggert sondern die Page ruhig zu PDF
-  // konvertiert.
   const rawMode = sp.raw === "1";
-  const [invoice, workspace] = await Promise.all([
-    prisma.invoice.findUnique({
+
+  const [proposal, workspace] = await Promise.all([
+    prisma.proposal.findUnique({
       where: { id },
       include: {
         items: { orderBy: { order: "asc" } },
+        client: {
+          select: {
+            id: true, name: true, email: true,
+            company: true, address: true, role: true,
+          },
+        },
         project: {
           select: {
-            id: true,
-            name: true,
-            tasks: {
-              select: {
-                timeEntries: {
-                  select: { startedAt: true, stoppedAt: true },
-                  where: { stoppedAt: { not: null } },
-                  orderBy: { startedAt: "asc" },
-                },
-              },
-            },
+            id: true, name: true,
             members: {
               include: {
                 user: {
                   select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    company: true,
-                    address: true,
-                    role: true,
+                    id: true, name: true, email: true,
+                    company: true, address: true, role: true,
                   },
                 },
               },
@@ -82,34 +63,20 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
     prisma.workspace.findFirst(),
   ]);
 
-  if (!invoice) notFound();
+  if (!proposal) notFound();
 
   const currency = workspace?.currency || "EUR";
-  const taxRate = invoice.taxRate || 0;
+  const taxRate = proposal.taxRate || 0;
   const isKleinunternehmer = taxRate === 0;
-  const netto = invoice.items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
+  const netto = proposal.items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
   const mwst = netto * (taxRate / 100);
   const brutto = netto + mwst;
 
-  const client = invoice.project?.members?.find((m) => m.user.role === "CLIENT")?.user;
-
-  // Leistungszeitraum: min/max der Time-Entries im Projekt → fallback Rechnungsmonat
-  let periodFrom: Date | null = null;
-  let periodTo: Date | null = null;
-  for (const task of invoice.project?.tasks ?? []) {
-    for (const te of task.timeEntries) {
-      const s = new Date(te.startedAt);
-      const e = te.stoppedAt ? new Date(te.stoppedAt) : s;
-      if (!periodFrom || s < periodFrom) periodFrom = s;
-      if (!periodTo || e > periodTo) periodTo = e;
-    }
-  }
-  // Fallback: Rechnungsmonat
-  if (!periodFrom) {
-    const issued = new Date(invoice.issuedAt);
-    periodFrom = new Date(issued.getFullYear(), issued.getMonth(), 1);
-    periodTo = new Date(issued.getFullYear(), issued.getMonth() + 1, 0);
-  }
+  // Empfänger: direkter Client > Project-Member mit Role CLIENT
+  const client =
+    proposal.client ??
+    proposal.project?.members?.find((m) => m.user.role === "CLIENT")?.user ??
+    null;
 
   const showBank = !!workspace?.companyIban;
   const senderName = workspace?.companyName || workspace?.name || "—";
@@ -118,7 +85,6 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
     <div className="invoice-page">
       {!rawMode && <AutoPrint />}
 
-      {/* Top stripe: Logo links + Absender rechts */}
       <header className="top-stripe">
         <div className="logo-block">
           {workspace?.logo && (
@@ -141,10 +107,9 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </div>
       </header>
 
-      {/* Empfänger + Rechnungs-Meta */}
       <section className="recipient-block">
         <div className="recipient">
-          <div className="recipient-label">Rechnung an</div>
+          <div className="recipient-label">Angebot an</div>
           {client ? (
             <>
               {client.company && <div className="recipient-line bold">{client.company}</div>}
@@ -166,32 +131,26 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </div>
         <div className="meta">
           <div className="meta-row">
-            <span className="meta-label">Rechnungsnr.</span>
-            <span className="meta-value">{invoice.number}</span>
+            <span className="meta-label">Angebotsnr.</span>
+            <span className="meta-value">{proposal.number}</span>
           </div>
           <div className="meta-row">
-            <span className="meta-label">Rechnungsdatum</span>
-            <span className="meta-value">{formatDate(invoice.issuedAt)}</span>
+            <span className="meta-label">Angebotsdatum</span>
+            <span className="meta-value">{formatDate(proposal.issuedAt)}</span>
           </div>
-          <div className="meta-row">
-            <span className="meta-label">Leistungszeitraum</span>
-            <span className="meta-value">{formatPeriod(periodFrom, periodTo)}</span>
-          </div>
-          {invoice.dueDate && (
+          {proposal.validUntil && (
             <div className="meta-row">
-              <span className="meta-label">Fällig bis</span>
-              <span className="meta-value">{formatDate(invoice.dueDate)}</span>
+              <span className="meta-label">Gültig bis</span>
+              <span className="meta-value">{formatDate(proposal.validUntil)}</span>
             </div>
           )}
         </div>
       </section>
 
-      {/* Title */}
-      <h1 className="title">Rechnung</h1>
-      {invoice.title && <p className="subtitle">{invoice.title}</p>}
-      {invoice.intro && <p className="intro-text">{invoice.intro}</p>}
+      <h1 className="title">Angebot</h1>
+      {proposal.title && <p className="subtitle">{proposal.title}</p>}
+      {proposal.intro && <p className="intro-text">{proposal.intro}</p>}
 
-      {/* Items table */}
       <table className="items">
         <thead>
           <tr>
@@ -203,8 +162,7 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
           </tr>
         </thead>
         <tbody>
-          {invoice.items.map((item, i) => {
-            // Erste Zeile = Titel (bold), Rest = Zeit-Tracking-Notizen (dezent)
+          {proposal.items.map((item, i) => {
             const lines = (item.description || "").split("\n");
             const titleLine = lines[0] || "";
             const subLines = lines.slice(1)
@@ -240,7 +198,6 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </tbody>
       </table>
 
-      {/* Totals */}
       <div className="totals">
         {!isKleinunternehmer ? (
           <>
@@ -265,11 +222,8 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </div>
       </div>
 
-      {/* Notes: invoice-eigene Notizen oder Fallback auf Workspace-Default
-          aus den Abrechnungseinstellungen (für ältere Rechnungen, die noch
-          ohne Default-Notes erstellt wurden). */}
       {(() => {
-        const notes = invoice.notes || workspace?.defaultInvoiceNotes || "";
+        const notes = proposal.notes || workspace?.defaultProposalNotes || "";
         if (!notes.trim()) return null;
         return (
           <section className="notes">
@@ -279,19 +233,9 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         );
       })()}
 
-      {/* Payment */}
       {showBank && (
         <section className="payment">
-          <h2 className="notes-heading">Zahlungsinformation</h2>
-          <p className="notes-text">
-            Bitte überweisen Sie den Gesamtbetrag von{" "}
-            <strong>{formatCurrency(brutto, currency)}</strong>
-            {workspace?.paymentTermsDays
-              ? ` innerhalb von ${workspace.paymentTermsDays} Tagen `
-              : " "}
-            unter Angabe der Rechnungsnummer{" "}
-            <strong>{invoice.number}</strong> an folgende Bankverbindung:
-          </p>
+          <h2 className="notes-heading">Bankverbindung</h2>
           <div className="bank-grid">
             {senderName && (
               <>
@@ -305,7 +249,6 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </section>
       )}
 
-      {/* Footer mit Pflichtangaben */}
       <footer className="footer">
         <div className="footer-line">
           <strong>{senderName}</strong>

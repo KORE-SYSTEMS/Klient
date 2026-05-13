@@ -693,6 +693,9 @@ export default function ProposalsPage() {
                           <ExternalLink className="h-3.5 w-3.5 mr-2" /> Angebot öffnen
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => window.open(`/api/proposals/${p.id}/pdf`, "_blank")}>
+                        <FileText className="h-3.5 w-3.5 mr-2" /> Als PDF öffnen
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => sendProposal(p)}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,19 +71,44 @@ function fmtTime(iso: string) {
 }
 
 // Simple bar chart — no external dep
-function BarChart({ data, maxSeconds }: { data: DaySummary[]; maxSeconds: number }) {
+function BarChart({ data, mode }: { data: DaySummary[]; mode: "daily" | "weekday" }) {
   if (data.length === 0) return null;
-  const peak = Math.max(...data.map((d) => d.seconds), 1);
+
+  // Aggregation für Wochentag-Modus: Summe pro getDay() (0=Sonntag).
+  // Wir mappen so um dass Montag erster Wochentag ist (DE-Konvention).
+  type Bar = { key: string; label: string; seconds: number };
+  let bars: Bar[];
+  if (mode === "weekday") {
+    const DAYS_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+    const totals = [0, 0, 0, 0, 0, 0, 0]; // index 0=Mo ... 6=So
+    for (const d of data) {
+      const day = new Date(d.date).getDay(); // 0=So, 1=Mo, ... 6=Sa
+      const idx = day === 0 ? 6 : day - 1;
+      totals[idx] += d.seconds;
+    }
+    bars = totals.map((seconds, i) => ({
+      key: DAYS_DE[i],
+      label: DAYS_DE[i],
+      seconds,
+    }));
+  } else {
+    bars = data.map((d) => ({
+      key: d.date,
+      label: new Date(d.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
+      seconds: d.seconds,
+    }));
+  }
+
+  const peak = Math.max(...bars.map((b) => b.seconds), 1);
   return (
     <div className="flex items-end gap-1 h-24 mt-2">
-      {data.map((d) => {
-        const pct = (d.seconds / peak) * 100;
-        const label = new Date(d.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+      {bars.map((b) => {
+        const pct = (b.seconds / peak) * 100;
         return (
-          <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${label}: ${fmtDuration(d.seconds)}`}>
-            <div className="w-full rounded-t-sm bg-primary/80 transition-all" style={{ height: `${pct}%`, minHeight: pct > 0 ? 4 : 0 }} />
-            {data.length <= 14 && (
-              <span className="text-micro text-muted-foreground rotate-0 leading-none">{label}</span>
+          <div key={b.key} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${b.label}: ${fmtDuration(b.seconds)}`}>
+            <div className="w-full rounded-t-sm bg-primary/80 transition-all" style={{ height: `${pct}%`, minHeight: b.seconds > 0 ? 4 : 0 }} />
+            {(mode === "weekday" || bars.length <= 14) && (
+              <span className="text-micro text-muted-foreground leading-none">{b.label}</span>
             )}
           </div>
         );
@@ -126,6 +152,7 @@ export default function ReportsPage() {
   // Filters
   const [projectId, setProjectId] = useState("all");
   const [userId, setUserId] = useState("all");
+  const [chartMode, setChartMode] = useState<"daily" | "weekday">("daily");
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -190,11 +217,11 @@ export default function ReportsPage() {
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Von</label>
-              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-36" />
+              <DatePicker value={dateFrom} onChange={(v) => setDateFrom(v ?? "")} className="w-40" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Bis</label>
-              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36" />
+              <DatePicker value={dateTo} onChange={(v) => setDateTo(v ?? "")} className="w-40" />
             </div>
             <div className="space-y-1.5 min-w-[160px]">
               <label className="text-xs text-muted-foreground font-medium">Projekt</label>
@@ -244,6 +271,21 @@ export default function ReportsPage() {
                   {q.label}
                 </Button>
               ))}
+              <Button
+                variant="outline" size="sm" className="h-9 text-xs"
+                onClick={async () => {
+                  const params = new URLSearchParams();
+                  if (projectId !== "all") params.set("projectId", projectId);
+                  if (userId !== "all") params.set("userId", userId);
+                  const res = await fetch(`/api/reports/time-entries/range?${params}`);
+                  if (!res.ok) return;
+                  const range = await res.json();
+                  if (range.from) setDateFrom(range.from);
+                  if (range.to) setDateTo(range.to);
+                }}
+              >
+                Gesamter Zeitraum
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -289,16 +331,44 @@ export default function ReportsPage() {
 
           {/* Chart + breakdowns */}
           <div className="grid gap-4 lg:grid-cols-3">
-            {/* Daily chart */}
+            {/* Chart */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  Zeitverlauf
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    Zeitverlauf
+                  </CardTitle>
+                  <div className="flex items-center rounded-md border overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setChartMode("daily")}
+                      className={cn(
+                        "px-2.5 py-1 transition-colors",
+                        chartMode === "daily"
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:bg-accent/50",
+                      )}
+                    >
+                      Tage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChartMode("weekday")}
+                      className={cn(
+                        "px-2.5 py-1 transition-colors border-l",
+                        chartMode === "weekday"
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:bg-accent/50",
+                      )}
+                    >
+                      Wochentage
+                    </button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <BarChart data={data.byDay} maxSeconds={data.totalSeconds} />
+                <BarChart data={data.byDay} mode={chartMode} />
               </CardContent>
             </Card>
 
