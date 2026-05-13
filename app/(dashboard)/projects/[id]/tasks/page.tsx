@@ -85,7 +85,7 @@ import {
   LINK_TYPES,
   getPriorityHex,
 } from "@/lib/task-meta";
-import { PriorityPill } from "@/components/task/priority-pill";
+
 import { ApprovalBadge } from "@/components/task/approval-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
@@ -1202,8 +1202,9 @@ export default function TasksPage() {
                       </div>
 
                       {/* Priority */}
-                      <div className="w-[90px] shrink-0">
-                        <PriorityPill priority={task.priority} />
+                      <div className="w-[90px] shrink-0 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getPriorityHex(task.priority) }} />
+                        <span className="text-sm">{PRIORITY_LABELS[task.priority] || task.priority}</span>
                       </div>
 
                       {/* Status */}
@@ -1616,7 +1617,7 @@ export default function TasksPage() {
                         <SelectItem key={p} value={p}>
                           <span className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: getPriorityHex(p) }} />
-                            <PriorityPill priority={p} />
+                            <span className="text-sm">{PRIORITY_LABELS[p]}</span>
                           </span>
                         </SelectItem>
                       ))}
