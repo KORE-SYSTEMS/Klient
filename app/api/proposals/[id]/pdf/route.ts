@@ -95,8 +95,9 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Großzügige top/bottom Margins gegen angeschnittene Section-Headings.
-      margin: { top: "28mm", right: "16mm", bottom: "24mm", left: "16mm" },
+      // Großzügige Margins gegen angeschnittene Section-Headings und
+      // damit Totals-Box & Co. nicht direkt unter der Header-Linie kleben.
+      margin: { top: "34mm", right: "16mm", bottom: "28mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -111,7 +112,7 @@ export async function GET(
             justify-content: space-between;
             align-items: baseline;
             gap: 8mm;
-            padding: 10mm 0 2mm;
+            padding: 10mm 0 2.5mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <span style="
@@ -140,7 +141,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 2mm 0 8mm;
+            padding: 2.5mm 0 10mm;
             border-top: 1px solid #e5e5e5;
           ">
             <span>${footerLeft}</span>

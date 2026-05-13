@@ -118,39 +118,40 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
     <div className="invoice-page">
       {!rawMode && <AutoPrint />}
 
-      {/* Top stripe: Logo links + Absender rechts.
-          Bewusst kompakt gehalten — Kontaktangaben (Mail/Tel/Web) erscheinen
-          als dezente Meta-Zeile darunter, USt-IdNr. ist mit drin damit der
-          Block nicht aufgebläht wird. */}
+      {/* Top stripe:
+          Links: Logo + (Name/Adresse/USt-IdNr.) direkt daneben, vertikal
+                 zur Logo-Höhe zentriert.
+          Rechts: einzeilige Kontaktzeile (Mail · Tel · Web), vertikal mittig
+                  zum Logo. Trennlinie schließt den Kopfbereich ab. */}
       <header className="top-stripe">
-        <div className="logo-block">
+        <div className="brand-left">
           {workspace?.logo && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={workspace.logo} alt="Logo" className="logo" />
           )}
+          <div className="brand-text">
+            <div className="sender-name">{senderName}</div>
+            {workspace?.companyAddress && (
+              <div className="sender-addr">
+                {workspace.companyAddress.split("\n").map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            )}
+            {workspace?.companyTaxId && (
+              <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
+            )}
+          </div>
         </div>
-        <div className="sender-block">
-          <div className="sender-name">{senderName}</div>
-          {workspace?.companyAddress && (
-            <div className="sender-addr">
-              {workspace.companyAddress.split("\n").map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
-            </div>
-          )}
-          {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
-            <div className="sender-contact">
-              {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
-              {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
-              {workspace?.companyWebsite && (
-                <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
-              )}
-            </div>
-          )}
-          {workspace?.companyTaxId && (
-            <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
-          )}
-        </div>
+        {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
+          <div className="sender-contact">
+            {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
+            {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
+            {workspace?.companyWebsite && (
+              <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Empfänger + Rechnungs-Meta */}
@@ -317,18 +318,9 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
         </section>
       )}
 
-      {/* Footer mit Pflichtangaben */}
-      <footer className="footer">
-        <div className="footer-line">
-          <strong>{senderName}</strong>
-          {workspace?.companyAddress && (
-            <> · {workspace.companyAddress.replace(/\n/g, ", ")}</>
-          )}
-        </div>
-        {workspace?.companyTaxId && (
-          <div className="footer-line">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
-        )}
-      </footer>
+      {/* Body-Footer entfällt: Die Pflichtangaben (Firmenname + USt-IdNr.)
+          stehen bereits im Kopfbereich, und die wiederkehrende Fußzeile
+          mit Seitenzahlen wird von Puppeteer über jedes PDF gelegt. */}
     </div>
   );
 }

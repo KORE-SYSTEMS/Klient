@@ -117,10 +117,12 @@ export async function GET(
       format: "A4",
       printBackground: true,
       displayHeaderFooter: true,
-      // Großzügige top/bottom Margins, damit Header und Footer nicht in
-      // den Body-Content laufen (insb. wichtig für Section-Überschriften
-      // wie "Zahlungsinformation", die sonst halb angeschnitten würden).
-      margin: { top: "28mm", right: "16mm", bottom: "24mm", left: "16mm" },
+      // Großzügige Margins: oben/unten je ~32-28mm, damit zwischen
+      // Header-Trennlinie und Body-Content sowie Body-Content und
+      // Footer-Trennlinie eindeutig Luft bleibt. Verhindert dass
+      // Section-Headings wie "Zahlungsinformation" oder die Totals-Box
+      // direkt unter der Header-Linie kleben.
+      margin: { top: "34mm", right: "16mm", bottom: "28mm", left: "16mm" },
       headerTemplate: `
         <div style="
           width: 100%;
@@ -135,7 +137,7 @@ export async function GET(
             justify-content: space-between;
             align-items: baseline;
             gap: 8mm;
-            padding: 10mm 0 2mm;
+            padding: 10mm 0 2.5mm;
             border-bottom: 1px solid #e5e5e5;
           ">
             <span style="
@@ -164,7 +166,7 @@ export async function GET(
             justify-content: space-between;
             align-items: center;
             gap: 8mm;
-            padding: 2mm 0 8mm;
+            padding: 2.5mm 0 10mm;
             border-top: 1px solid #e5e5e5;
           ">
             <span>${footerLeft}</span>

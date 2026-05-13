@@ -23,35 +23,38 @@ html, body {
   color: #1a1a1a;
 }
 
-/* ── Top stripe: Logo links + Absender rechts ───────────────────────── */
-/* Bewusst kompakt: Logo etwas kleiner, Absender-Block in dezenter Größe,
-   damit Platz für Kontaktangaben (Mail/Tel/Web) bleibt ohne den Kopf
-   visuell zu erschlagen. */
+/* ── Top stripe ──────────────────────────────────────────────────────── */
+/* Layout:
+     [Logo][Name/Addr/USt-IdNr.]              [Mail · Tel · Web]
+     ───────────────────────────────────────────────────────────
+   Links: Logo + Brand-Text horizontal, beide vertikal mittig.
+   Rechts: einzeilige Kontaktzeile, vertikal mittig zum Logo. */
 .top-stripe {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10mm;
-  padding-bottom: 6mm;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8mm;
+  padding-bottom: 5mm;
   border-bottom: 1px solid #e5e5e5;
   margin-bottom: 10mm;
 }
-.logo-block {
+.brand-left {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 6mm;
 }
 .logo {
   max-height: 18mm;
-  max-width: 60mm;
+  max-width: 55mm;
   object-fit: contain;
+  flex-shrink: 0;
 }
-.sender-block {
-  text-align: right;
-  font-size: 8.5pt;
-  line-height: 1.45;
+.brand-text {
+  line-height: 1.4;
 }
 .sender-name {
   font-weight: 600;
-  font-size: 9.5pt;
+  font-size: 10pt;
   color: #0a0a0a;
   letter-spacing: 0.1pt;
 }
@@ -60,24 +63,21 @@ html, body {
   margin-top: 0.5mm;
   font-size: 8.5pt;
 }
-.sender-contact {
-  color: #5a5a5a;
-  margin-top: 1.5mm;
-  font-size: 8pt;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0 6pt;
-}
-.sender-contact span + span::before {
-  content: "·";
-  color: #b5b5b5;
-  margin-right: 6pt;
-}
 .sender-meta {
   color: #7a7a7a;
   margin-top: 1mm;
   font-size: 7.5pt;
+}
+.sender-contact {
+  justify-self: end;
+  color: #5a5a5a;
+  font-size: 8.5pt;
+  white-space: nowrap;
+}
+.sender-contact span + span::before {
+  content: "·";
+  color: #b5b5b5;
+  margin: 0 6pt;
 }
 
 /* ── Empfänger + Rechnungs-Meta ──────────────────────────────────────── */
@@ -246,12 +246,16 @@ html, body {
 }
 
 /* ── Totals ──────────────────────────────────────────────────────────── */
+/* Niemals zwischen Zwischensumme und Gesamtbetrag umbrechen — die Summen-
+   Box wird immer als Einheit auf eine Seite gezogen. */
 .totals {
   margin-left: auto;
   width: 75mm;
   font-size: 10pt;
   font-variant-numeric: tabular-nums;
   margin-bottom: 6mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 .totals-row {
   display: flex;
@@ -318,19 +322,9 @@ html, body {
   font-size: 9.5pt;
 }
 
-/* ── Footer ──────────────────────────────────────────────────────────── */
-.footer {
-  margin-top: 14mm;
-  padding-top: 4mm;
-  border-top: 1px solid #e5e5e5;
-  text-align: center;
-  font-size: 8.5pt;
-  color: #8a8a8a;
-  line-height: 1.6;
-}
-.footer-line {
-  margin: 0.5mm 0;
-}
+/* Body-Footer entfällt — siehe Print-Pages: die Pflichtangaben stehen
+   im Kopf, die wiederkehrende Fußzeile mit Seitenzahlen kommt aus dem
+   Puppeteer-Footer-Template. */
 
 @media print {
   body {

@@ -86,34 +86,34 @@ export default async function ProposalPrintPage({ params, searchParams }: PagePr
       {!rawMode && <AutoPrint />}
 
       <header className="top-stripe">
-        <div className="logo-block">
+        <div className="brand-left">
           {workspace?.logo && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={workspace.logo} alt="Logo" className="logo" />
           )}
+          <div className="brand-text">
+            <div className="sender-name">{senderName}</div>
+            {workspace?.companyAddress && (
+              <div className="sender-addr">
+                {workspace.companyAddress.split("\n").map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            )}
+            {workspace?.companyTaxId && (
+              <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
+            )}
+          </div>
         </div>
-        <div className="sender-block">
-          <div className="sender-name">{senderName}</div>
-          {workspace?.companyAddress && (
-            <div className="sender-addr">
-              {workspace.companyAddress.split("\n").map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
-            </div>
-          )}
-          {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
-            <div className="sender-contact">
-              {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
-              {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
-              {workspace?.companyWebsite && (
-                <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
-              )}
-            </div>
-          )}
-          {workspace?.companyTaxId && (
-            <div className="sender-meta">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
-          )}
-        </div>
+        {(workspace?.companyEmail || workspace?.companyPhone || workspace?.companyWebsite) && (
+          <div className="sender-contact">
+            {workspace?.companyEmail && <span>{workspace.companyEmail}</span>}
+            {workspace?.companyPhone && <span>{workspace.companyPhone}</span>}
+            {workspace?.companyWebsite && (
+              <span>{workspace.companyWebsite.replace(/^https?:\/\//, "")}</span>
+            )}
+          </div>
+        )}
       </header>
 
       <section className="recipient-block">
@@ -258,17 +258,8 @@ export default async function ProposalPrintPage({ params, searchParams }: PagePr
         </section>
       )}
 
-      <footer className="footer">
-        <div className="footer-line">
-          <strong>{senderName}</strong>
-          {workspace?.companyAddress && (
-            <> · {workspace.companyAddress.replace(/\n/g, ", ")}</>
-          )}
-        </div>
-        {workspace?.companyTaxId && (
-          <div className="footer-line">USt-IdNr./Steuer-Nr.: {workspace.companyTaxId}</div>
-        )}
-      </footer>
+      {/* Body-Footer entfällt: Pflichtangaben stehen oben, Seitenzahlen
+          kommen aus dem Puppeteer-Footer-Template. */}
     </div>
   );
 }
