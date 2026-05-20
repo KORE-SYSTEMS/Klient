@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PriorityPill } from "@/components/task/priority-pill";
 import { api, run } from "@/lib/api";
 import { tasksApi } from "@/lib/api/tasks";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 interface MyTask {
   id: string;
@@ -83,14 +84,8 @@ export default function MyDayPage() {
 
   useEffect(() => {
     fetchTasks();
-    const onVisible = () => { if (!document.hidden) fetchTasks(); };
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", fetchTasks);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", fetchTasks);
-    };
   }, [fetchTasks]);
+  useRefetchOnFocus(fetchTasks);
 
   const buckets = useMemo<BucketData[]>(() => {
     const now = new Date();

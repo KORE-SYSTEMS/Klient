@@ -142,7 +142,7 @@ export function CommandPalette() {
         setResults(data.results || { projects: [], tasks: [], files: [], clients: [] });
         setActiveIndex(0);
       } catch (e) {
-        if ((e as any)?.name !== "AbortError") {
+        if (!(e instanceof DOMException) || e.name !== "AbortError") {
           setResults({ projects: [], tasks: [], files: [], clients: [] });
         }
       } finally {
@@ -257,7 +257,8 @@ export function CommandPalette() {
         hit.onRun();
         return;
       }
-      const href = (hit as any).href as string | undefined;
+      // All non-action variants have href; action's href is optional.
+      const href = "href" in hit ? hit.href : undefined;
       if (href) router.push(href);
     },
     [router]
@@ -356,8 +357,8 @@ export function CommandPalette() {
                         <div className="truncate text-xs text-muted-foreground">{hit.subtitle}</div>
                       )}
                     </div>
-                    {hit.type === "task" && (hit as any).priority && (
-                      <PriorityDot priority={(hit as any).priority} />
+                    {hit.type === "task" && hit.priority && (
+                      <PriorityDot priority={hit.priority} />
                     )}
                     {active && (
                       <CornerDownLeft className="h-3.5 w-3.5 text-muted-foreground" />

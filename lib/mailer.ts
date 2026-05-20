@@ -93,14 +93,12 @@ export async function sendInvitationEmail({
     name: name || "",
   };
 
-  const ws = workspace as any;
-
   const subject = renderTemplate(
-    ws.inviteEmailSubject || DEFAULT_INVITE_SUBJECT,
+    workspace.inviteEmailSubject || DEFAULT_INVITE_SUBJECT,
     vars
   );
   const html = renderTemplate(
-    ws.inviteEmailTemplate || DEFAULT_INVITE_TEMPLATE,
+    workspace.inviteEmailTemplate || DEFAULT_INVITE_TEMPLATE,
     vars
   );
 

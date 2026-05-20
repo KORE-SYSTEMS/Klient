@@ -119,6 +119,9 @@ import { ImportExportMenu } from "./_components/import-export-menu";
 import { CalendarView } from "./_components/calendar-view";
 import { TimelineView } from "./_components/timeline-view";
 import { RecurrencePicker } from "./_components/recurrence-picker";
+import { ColumnDialog } from "./_components/column-dialog";
+import { EpicDialog } from "./_components/epic-dialog";
+import { LinkDialog } from "./_components/link-dialog";
 import { useUrlFilters } from "./_lib/use-url-filters";
 import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
@@ -237,15 +240,24 @@ export default function TasksPage() {
     if (res.ok) setEpics(await res.json());
   }, [projectId]);
 
-  useEffect(() => {
-    Promise.all([fetchTasks(), fetchStatuses(), fetchEpics()]).then(() => setLoading(false));
-    fetch(`/api/projects/${projectId}`).then((r) => r.json()).then((data) => {
-      if (data.members) setMembers(data.members.map((m: any) => m.user));
-    });
-  }, [fetchTasks, fetchStatuses, fetchEpics, projectId]);
+  const fetchMembers = useCallback(async () => {
+    const res = await fetch(`/api/projects/${projectId}`);
+    if (!res.ok) return;
+    const data: { members?: { user: { id: string; name: string; email: string; role?: string } }[] } = await res.json();
+    if (data.members) setMembers(data.members.map((m) => m.user));
+  }, [projectId]);
 
   useEffect(() => {
-    setOnChange(() => fetchTasks);
+    // All four bootstraps in parallel; loading flips once the slowest finishes.
+    Promise.all([fetchTasks(), fetchStatuses(), fetchEpics(), fetchMembers()])
+      .finally(() => setLoading(false));
+  }, [fetchTasks, fetchStatuses, fetchEpics, fetchMembers]);
+
+  useEffect(() => {
+    // Pass fetchTasks itself, not a wrapper — the timer's onChangeRef calls
+    // current() expecting it to trigger the refetch (previously `() => fetchTasks`
+    // stored a getter that returned the function without invoking it).
+    setOnChange(fetchTasks);
     return () => setOnChange(null);
   }, [setOnChange, fetchTasks]);
 
@@ -288,7 +300,7 @@ export default function TasksPage() {
 
   // --- Inline title update ---
   async function handleUpdateTitle(taskId: string, title: string) {
-    await optimisticUpdate(taskId, { title } as any);
+    await optimisticUpdate(taskId, { title });
   }
 
   // --- Timer ---
@@ -491,7 +503,7 @@ export default function TasksPage() {
       setHandoffDialogOpen(true);
       return;
     }
-    await optimisticUpdate(task.id, { status: next.id } as any);
+    await optimisticUpdate(task.id, { status: next.id });
   }
 
   // --- Drag & Drop ---
@@ -533,7 +545,7 @@ export default function TasksPage() {
         setHandoffClientId(clientMembers[0]?.id || "");
         setHandoffDialogOpen(true);
       } else {
-        await optimisticUpdate(taskId, { status: targetColumn.id } as any);
+        await optimisticUpdate(taskId, { status: targetColumn.id });
       }
       return;
     }
@@ -550,7 +562,7 @@ export default function TasksPage() {
         setHandoffClientId(clientMembers[0]?.id || "");
         setHandoffDialogOpen(true);
       } else {
-        await optimisticUpdate(taskId, { status: targetTask.status } as any);
+        await optimisticUpdate(taskId, { status: targetTask.status });
       }
       return;
     }
@@ -1770,42 +1782,18 @@ export default function TasksPage() {
       </Dialog>
 
       {/* Column Dialog */}
-      <Dialog open={columnDialogOpen} onOpenChange={setColumnDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editColumn ? "Spalte bearbeiten" : "Neue Spalte"}</DialogTitle></DialogHeader>
-          <form onSubmit={saveColumn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="colName">Name</Label>
-              <Input id="colName" value={colName} onChange={(e) => setColName(e.target.value)} required placeholder="z.B. QA, Staging..." />
-            </div>
-            <div className="space-y-2">
-              <Label>Farbe</Label>
-              <div className="flex flex-wrap gap-2">
-                {COLORS.map((c) => (
-                  <button key={c} type="button" onClick={() => setColColor(c)}
-                    className={cn("h-7 w-7 rounded-full border-2 transition-transform hover:scale-110",
-                      colColor === c ? "border-foreground scale-110" : "border-transparent"
-                    )} style={{ backgroundColor: c }} />
-                ))}
-              </div>
-            </div>
-            {/* Approval toggle */}
-            <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium flex items-center gap-1.5">
-                  <ClipboardCheck className="h-3.5 w-3.5 text-warning" />
-                  Abnahme-Spalte
-                </Label>
-                <p className="text-caption text-muted-foreground leading-snug">
-                  Tasks müssen vom Kunden genehmigt werden, bevor sie in diese Spalte verschoben werden können.
-                </p>
-              </div>
-              <Switch checked={colIsApproval} onCheckedChange={setColIsApproval} />
-            </div>
-            <DialogFooter><Button type="submit" disabled={!colName.trim()}>{editColumn ? "Speichern" : "Erstellen"}</Button></DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ColumnDialog
+        open={columnDialogOpen}
+        onOpenChange={setColumnDialogOpen}
+        editColumn={editColumn}
+        name={colName}
+        setName={setColName}
+        color={colColor}
+        setColor={setColColor}
+        isApproval={colIsApproval}
+        setIsApproval={setColIsApproval}
+        onSubmit={saveColumn}
+      />
 
       {/* Handoff Dialog — shown when staff moves task to approval column */}
       <Dialog open={handoffDialogOpen} onOpenChange={(o) => {
@@ -1896,62 +1884,32 @@ export default function TasksPage() {
       </Dialog>
 
       {/* Epic Dialog */}
-      <Dialog open={epicDialogOpen} onOpenChange={setEpicDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editEpic ? "Epic bearbeiten" : "Neues Epic"}</DialogTitle></DialogHeader>
-          <form onSubmit={saveEpic} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="epicTitle">Titel</Label>
-              <Input id="epicTitle" value={epicTitle} onChange={(e) => setEpicTitle(e.target.value)} required placeholder="z.B. User Authentication, Dashboard..." />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="epicDesc">Beschreibung</Label>
-              <Textarea id="epicDesc" value={epicDescription} onChange={(e) => setEpicDescription(e.target.value)} rows={2} />
-            </div>
-            <div className="space-y-2">
-              <Label>Farbe</Label>
-              <div className="flex flex-wrap gap-2">
-                {COLORS.map((c) => (
-                  <button key={c} type="button" onClick={() => setEpicColor(c)}
-                    className={cn("h-7 w-7 rounded-full border-2 transition-transform hover:scale-110",
-                      epicColor === c ? "border-foreground scale-110" : "border-transparent"
-                    )} style={{ backgroundColor: c }} />
-                ))}
-              </div>
-            </div>
-            <DialogFooter>
-              {editEpic && <Button type="button" variant="destructive" onClick={() => deleteEpic(editEpic)}>Löschen</Button>}
-              <Button type="submit" disabled={!epicTitle.trim()}>{editEpic ? "Speichern" : "Erstellen"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <EpicDialog
+        open={epicDialogOpen}
+        onOpenChange={setEpicDialogOpen}
+        editEpic={editEpic}
+        title={epicTitle}
+        setTitle={setEpicTitle}
+        description={epicDescription}
+        setDescription={setEpicDescription}
+        color={epicColor}
+        setColor={setEpicColor}
+        onSubmit={saveEpic}
+        onDelete={deleteEpic}
+      />
 
       {/* Link Dialog */}
-      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Task verknüpfen</DialogTitle></DialogHeader>
-          <form onSubmit={saveLink} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Typ</Label>
-              <Select value={linkType} onValueChange={setLinkType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{LINK_TYPES.map((lt) => (<SelectItem key={lt.value} value={lt.value}>{lt.label}</SelectItem>))}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Ziel-Task</Label>
-              <Select value={linkTargetId} onValueChange={setLinkTargetId}>
-                <SelectTrigger><SelectValue placeholder="Task auswählen..." /></SelectTrigger>
-                <SelectContent>
-                  {tasks.filter((t) => t.id !== linkSourceId).map((t) => (<SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter><Button type="submit" disabled={!linkTargetId}>Verknüpfen</Button></DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <LinkDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        sourceTaskId={linkSourceId}
+        type={linkType}
+        setType={setLinkType}
+        targetId={linkTargetId}
+        setTargetId={setLinkTargetId}
+        tasks={tasks}
+        onSubmit={saveLink}
+      />
 
       {/* Floating bulk-action toolbar — appears when tasks are selected */}
       {!isClient && (

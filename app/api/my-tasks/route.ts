@@ -33,26 +33,20 @@ export async function GET(request: NextRequest) {
   if (dueFilter === "week")    dueDateFilter = { gte: today, lt: weekLater };
   if (dueFilter === "none")    dueDateFilter = { equals: null };
 
-  // When filtering for overdue, exclude tasks in DONE-category statuses
-  let doneExcludeFilter: Record<string, unknown> = {};
-  if (dueFilter === "overdue") {
-    const doneStatusRows = await prisma.taskStatus.findMany({
-      where: { category: "DONE" },
-      select: { id: true },
-    });
-    if (doneStatusRows.length > 0) {
-      doneExcludeFilter = { status: { notIn: doneStatusRows.map((s) => s.id) } };
-    }
-  }
+  // Build base task-where. We resolve DONE statuses AFTER the initial fetch
+  // so the filter scopes naturally to the user's projects (no global lookup).
+  const taskWhere = {
+    assigneeId: userId,
+    project: isClient ? { members: { some: { userId } } } : undefined,
+    ...(isClient ? { clientVisible: true } : {}),
+    ...(Object.keys(dueDateFilter).length ? { dueDate: dueDateFilter } : {}),
+  };
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      assigneeId: userId,
-      project: isClient ? { members: { some: { userId } } } : undefined,
-      ...(isClient ? { clientVisible: true } : {}),
-      ...(Object.keys(dueDateFilter).length ? { dueDate: dueDateFilter } : {}),
-      ...doneExcludeFilter,
-    },
+  // For "overdue" we need to exclude DONE-category tasks. Strategy: fetch
+  // tasks, then filter client-side by status category. Avoids a global
+  // TaskStatus lookup across all projects in the system.
+  let tasks = await prisma.task.findMany({
+    where: taskWhere,
     include: {
       project:  { select: { id: true, name: true, color: true } },
       assignee: { select: { id: true, name: true, email: true, image: true } },
@@ -65,28 +59,38 @@ export async function GET(request: NextRequest) {
     ],
   });
 
-  // Resolve status names from TaskStatus (tasks span multiple projects)
+  // Resolve status names + DONE-category info in ONE query per scope:
+  // - statusIds:   status IDs actually referenced by the user's tasks
+  // - projectIds:  projects the user has tasks in (for the doneStatusId lookup)
+  // Both queries are scoped to data the user can already see — no global scan.
   const statusIds = Array.from(new Set(tasks.map((t) => t.status)));
-  const statuses  = statusIds.length
-    ? await prisma.taskStatus.findMany({
-        where: { id: { in: statusIds } },
-        select: { id: true, name: true, color: true, category: true, projectId: true },
-      })
-    : [];
-  const statusMap = Object.fromEntries(statuses.map((s) => [s.id, s]));
-
-  // Pro Projekt: ersten DONE-Category Status finden (für "Als erledigt markieren" Quick-Action)
   const projectIds = Array.from(new Set(tasks.map((t) => t.project.id)));
-  const doneStatuses = projectIds.length
-    ? await prisma.taskStatus.findMany({
-        where: { projectId: { in: projectIds }, category: "DONE" },
-        select: { id: true, projectId: true, order: true },
-        orderBy: { order: "asc" },
-      })
-    : [];
+
+  const [statuses, doneStatuses] = await Promise.all([
+    statusIds.length
+      ? prisma.taskStatus.findMany({
+          where: { id: { in: statusIds } },
+          select: { id: true, name: true, color: true, category: true, projectId: true },
+        })
+      : Promise.resolve([]),
+    projectIds.length
+      ? prisma.taskStatus.findMany({
+          where: { projectId: { in: projectIds }, category: "DONE" },
+          select: { id: true, projectId: true, order: true },
+          orderBy: { order: "asc" },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const statusMap = Object.fromEntries(statuses.map((s) => [s.id, s]));
   const doneByProject: Record<string, string> = {};
   for (const s of doneStatuses) {
     if (!doneByProject[s.projectId]) doneByProject[s.projectId] = s.id;
+  }
+
+  // Apply overdue's DONE-exclusion in memory (cheap — list is already user-scoped)
+  if (dueFilter === "overdue") {
+    tasks = tasks.filter((t) => statusMap[t.status]?.category !== "DONE");
   }
 
   const enriched = tasks.map((t) => ({

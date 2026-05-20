@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, MessageSquare } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { EmptyState } from "@/components/empty-state";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 interface Message {
   id: string;
@@ -54,18 +55,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetchMessages();
-    // Refetch when the tab regains focus instead of polling — saves background
-    // requests when nobody is looking. Real-time will move to SSE in P5.
-    function onVisible() {
-      if (document.visibilityState === "visible") fetchMessages();
-    }
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", fetchMessages);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", fetchMessages);
-    };
   }, [fetchMessages]);
+  // Refetch when the tab regains focus instead of polling — saves background
+  // requests when nobody is looking. Real-time will move to SSE in P5.
+  useRefetchOnFocus(fetchMessages);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

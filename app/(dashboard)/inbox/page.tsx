@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { api, run } from "@/lib/api";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 interface Notification {
   id: string;
@@ -108,14 +109,8 @@ export default function InboxPage() {
   useEffect(() => {
     setLoading(true);
     fetchData();
-    function onVisible() { if (!document.hidden) fetchData(); }
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", fetchData);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", fetchData);
-    };
   }, [fetchData]);
+  useRefetchOnFocus(fetchData);
 
   // Reset selection when the visible list changes shape
   useEffect(() => { setSelected(new Set()); }, [filter, filterTypes]);

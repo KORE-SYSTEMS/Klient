@@ -378,7 +378,8 @@ export default function ProjectsPage() {
               new Date(project.dueDate) < new Date() &&
               !project.archived &&
               project.status !== "DONE" &&
-              project.status !== "COMPLETED";
+              project.status !== "COMPLETED" &&
+              pct < 100;
 
             return (
               <Link key={project.id} href={`/projects/${project.id}`}>

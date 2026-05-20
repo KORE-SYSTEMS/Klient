@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatDate, getInitials } from "@/lib/utils";
+import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 function formatHours(seconds: number): string {
   if (!seconds || seconds <= 0) return "0h";
@@ -119,17 +120,9 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     fetchData();
-    // Refetch on tab focus instead of polling. SSE in P5 replaces this.
-    function handleVisibility() {
-      if (document.visibilityState === "visible") fetchData();
-    }
-    document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("focus", fetchData);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("focus", fetchData);
-    };
   }, [fetchData]);
+  // Refetch on tab focus instead of polling. SSE in P5 replaces this.
+  useRefetchOnFocus(fetchData);
 
   if (loading || !project) {
     return (

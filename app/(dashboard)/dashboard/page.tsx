@@ -46,30 +46,26 @@ export default async function DashboardPage() {
     ? { members: { some: { userId } }, archived: false }
     : { archived: false };
 
-  const safeProjectWhere = isClient
-    ? { members: { some: { userId } }, archived: false }
-    : { archived: false };
+  const projectAccessForTasks = isClient ? { members: { some: { userId } } } : {};
+  const clientVisibleFilter = isClient ? { clientVisible: true } : {};
 
-  // Alle DONE-Category Status-IDs (project-scoped) — werden gebraucht damit
-  // erledigte Tasks NICHT als überfällig gefärbt/gezählt werden.
-  const doneStatusRows = await prisma.taskStatus.findMany({
-    where: { category: "DONE" },
-    select: { id: true },
-  });
-  const doneStatusIds = new Set(doneStatusRows.map((s) => s.id));
-
-  // ── parallel queries ───────────────────────────────────────────────────────
+  // Phase 1: alle Queries die NICHT von doneStatusIds abhängen + die
+  // DONE-Status-Lookup selbst — laufen voll parallel.
   const [
+    doneStatusRows,
     projects,
     myTasks,
-    upcomingTasks,
     pendingApprovals,
     projectCount,
-    overdueCount,
   ] = await Promise.all([
+    prisma.taskStatus.findMany({
+      where: { category: "DONE" },
+      select: { id: true },
+    }),
+
     // Recent projects
     prisma.project.findMany({
-      where: safeProjectWhere,
+      where: projectWhere,
       include: {
         members: { include: { user: { select: { id: true, name: true, email: true } } } },
         _count:  { select: { tasks: true } },
@@ -82,31 +78,14 @@ export default async function DashboardPage() {
     prisma.task.findMany({
       where: {
         assigneeId: userId,
-        project:    { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
-        ...(isClient ? { clientVisible: true } : {}),
+        project:    { archived: false, ...projectAccessForTasks },
+        ...clientVisibleFilter,
       },
       include: {
         project: { select: { id: true, name: true, color: true } },
         epic:    { select: { id: true, title: true, color: true } },
       },
       orderBy: [{ dueDate: "asc" }, { updatedAt: "desc" }],
-      take: 8,
-    }),
-
-    // Upcoming + overdue (has a due date, not null, and date <= 7 days from now)
-    // Exclude DONE tasks so completed work doesn't show as overdue
-    prisma.task.findMany({
-      where: {
-        project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
-        ...(isClient ? { clientVisible: true } : {}),
-        dueDate:  { not: null, lte: weekLater },
-        status:   doneStatusIds.size > 0 ? { notIn: Array.from(doneStatusIds) } : undefined,
-      },
-      include: {
-        project:  { select: { id: true, name: true, color: true } },
-        assignee: { select: { id: true, name: true, email: true } },
-      },
-      orderBy: { dueDate: "asc" },
       take: 8,
     }),
 
@@ -124,15 +103,40 @@ export default async function DashboardPage() {
     }),
 
     // Total project count
-    prisma.project.count({ where: safeProjectWhere }),
+    prisma.project.count({ where: projectWhere }),
+  ]);
+
+  const doneStatusIds = new Set(doneStatusRows.map((s) => s.id));
+  const doneFilter = doneStatusIds.size > 0
+    ? { status: { notIn: Array.from(doneStatusIds) } }
+    : {};
+
+  // Phase 2: Queries die doneStatusIds brauchen — auch parallel zueinander.
+  const [upcomingTasks, overdueCount] = await Promise.all([
+    // Upcoming + overdue (has a due date, not null, and date <= 7 days from now)
+    // Exclude DONE tasks so completed work doesn't show as overdue
+    prisma.task.findMany({
+      where: {
+        project:  { archived: false, ...projectAccessForTasks },
+        ...clientVisibleFilter,
+        dueDate:  { not: null, lte: weekLater },
+        ...doneFilter,
+      },
+      include: {
+        project:  { select: { id: true, name: true, color: true } },
+        assignee: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 8,
+    }),
 
     // Overdue task count — exkl. erledigter Tasks
     prisma.task.count({
       where: {
-        project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
-        ...(isClient ? { clientVisible: true } : {}),
+        project:  { archived: false, ...projectAccessForTasks },
+        ...clientVisibleFilter,
         dueDate:  { not: null, lt: now },
-        status:   doneStatusIds.size > 0 ? { notIn: Array.from(doneStatusIds) } : undefined,
+        ...doneFilter,
       },
     }),
   ]);
@@ -383,7 +387,8 @@ export default async function DashboardPage() {
                   const memberCount = project.members.length;
                   const taskCount = project._count.tasks;
                   const projectDue = project.dueDate ? new Date(project.dueDate) : null;
-                  const projectOverdue = projectDue && projectDue < now;
+                  const projectOverdue = projectDue && projectDue < now
+                    && project.status !== "DONE" && project.status !== "COMPLETED";
 
                   return (
                     <Link

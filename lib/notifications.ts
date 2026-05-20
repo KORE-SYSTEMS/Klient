@@ -66,8 +66,12 @@ export async function notify(input: CreateNotificationInput) {
   try {
     const settings = await getOrCreateNotificationSettings(userId);
     const keys = getSettingKeys(type);
-    const inAppEnabled = (settings as any)[keys.inApp] as boolean;
-    const emailEnabled = (settings as any)[keys.email] as boolean;
+    // Dynamic property lookup on the NotificationSettings row — keys are
+    // derived from the notification type at runtime. We index via a typed
+    // accessor instead of `as any` to keep the boolean narrowing.
+    const flags = settings as unknown as Record<string, boolean>;
+    const inAppEnabled = flags[keys.inApp];
+    const emailEnabled = flags[keys.email];
 
     if (inAppEnabled) {
       await prisma.notification.create({

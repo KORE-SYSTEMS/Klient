@@ -33,10 +33,11 @@ export async function POST(
     }
   }
 
-  const body = await request.json().catch(() => ({} as any));
-  const templateId = body?.templateId;
-  const strategy: "replace" | "append" = body?.strategy === "append" ? "append" : "replace";
+  const body: { templateId?: string; strategy?: string } = await request.json().catch(() => ({}));
+  const templateId = body.templateId;
+  const strategy: "replace" | "append" = body.strategy === "append" ? "append" : "replace";
 
+  if (!templateId) return NextResponse.json({ error: "templateId required" }, { status: 400 });
   const tpl = getTemplate(templateId);
   if (!tpl) return NextResponse.json({ error: "Unknown template" }, { status: 400 });
 

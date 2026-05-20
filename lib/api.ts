@@ -18,10 +18,51 @@ interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   /** When true, returns the raw Response (e.g. for blobs/streams). */
   raw?: boolean;
+  /**
+   * Opt-out of in-flight GET deduplication. Set when you really need a fresh
+   * roundtrip even if another identical GET is currently pending.
+   */
+  noDedupe?: boolean;
+}
+
+// ── In-flight GET deduplication ─────────────────────────────────────────────
+// Background: multiple components on the same screen (e.g. dashboard + sidebar
+// + bell) fire identical GETs back-to-back. Each costs a network round-trip
+// and a Prisma transaction. We coalesce concurrent identical GETs to a single
+// Promise — readers all await the same response.
+//
+// Why only GET: GETs are idempotent and safe to share. POST/PATCH/DELETE
+// always go through.
+//
+// Why no TTL cache: we'd have to invalidate on every mutation and keep
+// per-path rules. Keeping it strictly "in-flight only" gives us the network
+// savings of dedup without the stale-data risk of a cache. The Promise
+// resolves, gets removed from the map, and the next GET hits the server.
+const inflightGets = new Map<string, Promise<unknown>>();
+
+function isPlainGet(opts: ApiOptions): boolean {
+  const method = (opts.method || "GET").toUpperCase();
+  return method === "GET" && !opts.body && !opts.raw && !opts.noDedupe;
 }
 
 export async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const { body, raw, headers, ...rest } = opts;
+  // Deduplicate concurrent identical GETs — see comment above.
+  if (isPlainGet(opts)) {
+    const existing = inflightGets.get(path);
+    if (existing) return existing as Promise<T>;
+
+    const promise = doFetch<T>(path, opts).finally(() => {
+      inflightGets.delete(path);
+    });
+    inflightGets.set(path, promise);
+    return promise;
+  }
+
+  return doFetch<T>(path, opts);
+}
+
+async function doFetch<T>(path: string, opts: ApiOptions): Promise<T> {
+  const { body, raw, headers, noDedupe: _noDedupe, ...rest } = opts;
 
   const init: RequestInit = {
     ...rest,

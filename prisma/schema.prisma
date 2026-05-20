@@ -40,6 +40,9 @@ model User {
   clientActivities ClientActivity[] @relation("clientActivities")
   proposals        Proposal[]       @relation("clientProposals")
   fileVersions     FileVersion[]    @relation("fileVersionUploader")
+
+  @@index([role])
+  @@index([leadStatus])
 }
 
 model ClientNote {
@@ -52,6 +55,9 @@ model ClientNote {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([clientId, createdAt])
+  @@index([authorId])
 }
 
 model ClientActivity {
@@ -66,6 +72,9 @@ model ClientActivity {
   clientId    String
   authorId    String
   createdAt   DateTime @default(now())
+
+  @@index([clientId, date])
+  @@index([authorId])
 }
 
 model Notification {
@@ -115,6 +124,9 @@ model Invitation {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([used, expiresAt])
 }
 
 model Project {
@@ -140,6 +152,9 @@ model Project {
   invoices    Invoice[]
   proposals   Proposal[]
   taskTemplates TaskTemplate[]
+
+  @@index([archived, updatedAt])
+  @@index([status])
 }
 
 model ProjectMember {
@@ -149,6 +164,7 @@ model ProjectMember {
   projectId String
 
   @@id([userId, projectId])
+  @@index([projectId])
 }
 
 model TaskStatus {
@@ -162,6 +178,9 @@ model TaskStatus {
   category   String  @default("IN_PROGRESS")
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId  String
+
+  @@index([projectId, order])
+  @@index([projectId, category])
 }
 
 model Epic {
@@ -177,6 +196,8 @@ model Epic {
   tasks       Task[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([projectId, order])
 }
 
 /// Task-Vorlagen pro Projekt — Schnell-Anlegen häufig wiederholter Tasks.
@@ -209,6 +230,9 @@ model TaskLink {
   targetTask   Task     @relation("targetLinks", fields: [targetTaskId], references: [id], onDelete: Cascade)
   targetTaskId String
   createdAt    DateTime @default(now())
+
+  @@index([sourceTaskId])
+  @@index([targetTaskId])
 }
 
 model Task {
@@ -255,6 +279,14 @@ model Task {
   recurrenceRule  String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([projectId, parentId, order])
+  @@index([projectId, status])
+  @@index([assigneeId])
+  @@index([epicId])
+  @@index([parentId])
+  @@index([dueDate])
+  @@index([approvalStatus])
 }
 
 model TimeEntry {
@@ -269,6 +301,9 @@ model TimeEntry {
   duration      Int           @default(0) // in seconds, computed on stop
   createdAt     DateTime      @default(now())
   invoiceItems  InvoiceItem[]
+
+  @@index([taskId, startedAt])
+  @@index([userId, stoppedAt])
 }
 
 model FileFolder {
@@ -282,6 +317,8 @@ model FileFolder {
   files       File[]
   createdById String
   createdAt   DateTime     @default(now())
+
+  @@index([projectId, parentId])
 }
 
 model File {
@@ -301,6 +338,10 @@ model File {
   uploadedById  String
   versions      FileVersion[]
   createdAt     DateTime    @default(now())
+
+  @@index([projectId, folderId])
+  @@index([taskId])
+  @@index([uploadedById])
 }
 
 model FileVersion {
@@ -316,6 +357,7 @@ model FileVersion {
   createdAt    DateTime @default(now())
 
   @@unique([fileId, version])
+  @@index([uploadedById])
 }
 
 model Update {
@@ -327,6 +369,9 @@ model Update {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
   createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([authorId])
 }
 
 model Message {
@@ -339,6 +384,9 @@ model Message {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
   createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([authorId])
 }
 
 model TaskComment {
@@ -351,6 +399,9 @@ model TaskComment {
   mentions  String   @default("[]") // JSON array of user IDs
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([taskId, createdAt])
+  @@index([authorId])
 }
 
 /// Lightweight checklist items ("sub-tasks") attached to a Task.
@@ -381,6 +432,9 @@ model TaskActivity {
   newValue  String?
   metadata  String?  // JSON for extra info
   createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
+  @@index([userId])
 }
 
 model Invoice {
@@ -400,6 +454,9 @@ model Invoice {
   items       InvoiceItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([status, dueDate])
 }
 
 model Proposal {
@@ -420,6 +477,10 @@ model Proposal {
   items       ProposalItem[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
 }
 
 model ProposalItem {
@@ -432,6 +493,8 @@ model ProposalItem {
   proposalId  String
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+
+  @@index([proposalId, order])
 }
 
 model InvoiceItem {
@@ -446,6 +509,9 @@ model InvoiceItem {
   timeEntryId String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+
+  @@index([invoiceId, order])
+  @@index([timeEntryId])
 }
 
 model Workspace {

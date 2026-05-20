@@ -194,7 +194,24 @@ const DEFAULT_UPDATE_HTML = `<!DOCTYPE html>
 
 // ─── Template definitions ─────────────────────────────────────────────────────
 
-const TEMPLATES = [
+// Keys constrained to string-valued MailSettings fields so `s[tpl.subjectKey]`
+// is type-safe. (MailSettings is declared below — TypeScript's hoisting of
+// interface types makes this forward-reference valid.)
+type StringKeysOf<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];
+interface TemplateDef {
+  key: string;
+  label: string;
+  icon: typeof Mail;
+  description: string;
+  subjectKey: StringKeysOf<MailSettings>;
+  templateKey: StringKeysOf<MailSettings>;
+  defaultSubject: string;
+  defaultHtml: string;
+  variables: { name: string; desc: string }[];
+  preview: Record<string, string>;
+}
+
+const TEMPLATES: TemplateDef[] = [
   {
     key: "invite",
     label: "Einladung",
@@ -544,7 +561,7 @@ export default function MailSettingsPage() {
                   <Label>Betreff</Label>
                   <FieldHint hint="Leer lassen, um den Standard-Betreff zu verwenden.">
                     <Input
-                      value={(s as any)[activeTemplate.subjectKey] || ""}
+                      value={s[activeTemplate.subjectKey] || ""}
                       onChange={(e) => setS({ ...s, [activeTemplate.subjectKey]: e.target.value })}
                       placeholder={activeTemplate.defaultSubject}
                       className="pr-8"
@@ -555,14 +572,14 @@ export default function MailSettingsPage() {
                 <div className="space-y-2">
                   <Label>HTML-Template</Label>
                   <textarea
-                    value={(s as any)[activeTemplate.templateKey] || ""}
+                    value={s[activeTemplate.templateKey] || ""}
                     onChange={(e) => setS({ ...s, [activeTemplate.templateKey]: e.target.value })}
                     rows={22}
                     placeholder="Leer lassen für das Standard-Template…"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
                     spellCheck={false}
                   />
-                  {(s as any)[activeTemplate.templateKey] && (
+                  {s[activeTemplate.templateKey] && (
                     <button
                       type="button"
                       onClick={() => setS({ ...s, [activeTemplate.templateKey]: "" })}
@@ -576,7 +593,7 @@ export default function MailSettingsPage() {
             </Card>
 
             {/* Default template hint */}
-            {!(s as any)[activeTemplate.templateKey] && (
+            {!s[activeTemplate.templateKey] && (
               <div className="rounded-lg border border-dashed px-4 py-3 flex items-start gap-3">
                 <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
                 <div>
@@ -609,7 +626,7 @@ export default function MailSettingsPage() {
       {/* ── Preview modal ── */}
       {preview && (() => {
         const tpl = TEMPLATES.find((t) => t.key === preview)!;
-        const html = (s as any)[tpl.templateKey] || tpl.defaultHtml;
+        const html = s[tpl.templateKey] || tpl.defaultHtml;
         const vars = {
           ...tpl.preview,
           workspace:    s.name || tpl.preview.workspace,
