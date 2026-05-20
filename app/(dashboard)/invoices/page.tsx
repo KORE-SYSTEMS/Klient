@@ -684,7 +684,7 @@ export default function GlobalInvoicesPage() {
                   </div>
 
                   {/* Status */}
-                  <StatusBadge status={eff} />
+                  <div><StatusBadge status={eff} /></div>
 
                   {/* Actions */}
                   {isReadOnly ? (

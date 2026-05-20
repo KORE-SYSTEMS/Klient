@@ -32,7 +32,11 @@ export async function GET(
   const [proposal, workspace] = await Promise.all([
     prisma.proposal.findUnique({
       where: { id },
-      select: { number: true, title: true },
+      select: {
+        number: true,
+        title: true,
+        client: { select: { name: true, company: true } },
+      },
     }),
     prisma.workspace.findFirst({
       select: { companyName: true, name: true, logo: true, companyEmail: true },
@@ -40,6 +44,7 @@ export async function GET(
   ]);
   if (!proposal) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const senderName = workspace?.companyName || workspace?.name || "";
+  const clientName = proposal.client?.company || proposal.client?.name || "";
 
   const port = process.env.PORT || "3000";
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -84,6 +89,9 @@ export async function GET(
     }
 
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
+
+    const pdfTitle = [clientName, `Angebot ${proposal.number}`].filter(Boolean).join(" – ");
+    await page.evaluate((t) => { document.title = t; }, pdfTitle);
 
     // Logo als Data-URI in den Header einbetten (siehe Invoice-Route).
     let logoDataUri: string | null = null;
@@ -182,7 +190,9 @@ export async function GET(
     await browser.close();
     browser = null;
 
-    const fileName = `Angebot-${proposal.number.replace(/[^a-zA-Z0-9-]/g, "_")}.pdf`;
+    const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9äöüÄÖÜß -]/g, "_").trim();
+    const namePart = clientName ? `${sanitize(clientName)}_` : "";
+    const fileName = `Angebot-${namePart}${proposal.number.replace(/[^a-zA-Z0-9-]/g, "_")}.pdf`;
 
     return new NextResponse(Buffer.from(pdfBuffer), {
       headers: {

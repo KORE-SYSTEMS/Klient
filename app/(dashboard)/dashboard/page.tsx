@@ -94,11 +94,13 @@ export default async function DashboardPage() {
     }),
 
     // Upcoming + overdue (has a due date, not null, and date <= 7 days from now)
+    // Exclude DONE tasks so completed work doesn't show as overdue
     prisma.task.findMany({
       where: {
         project:  { archived: false, ...(isClient ? { members: { some: { userId } } } : {}) },
         ...(isClient ? { clientVisible: true } : {}),
         dueDate:  { not: null, lte: weekLater },
+        status:   doneStatusIds.size > 0 ? { notIn: Array.from(doneStatusIds) } : undefined,
       },
       include: {
         project:  { select: { id: true, name: true, color: true } },
@@ -402,7 +404,7 @@ export default async function DashboardPage() {
                             <Users className="h-3 w-3" />{memberCount}
                           </span>
                           {projectDue && (
-                            <span className={cn("flex items-center gap-1 text-caption", projectOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                            <span className={cn("flex items-center gap-1 text-caption", projectOverdue ? "text-destructive" : "text-muted-foreground")}>
                               <CalendarDays className="h-3 w-3" />
                               {formatDate(project.dueDate!.toString())}
                             </span>

@@ -44,6 +44,8 @@ interface CalendarViewProps {
   onTaskClick: (task: Task) => void;
   /** Persists a new dueDate (or null to remove). Optimistic update happens here. */
   onDueDateChange: (taskId: string, newDate: string | null) => void;
+  /** Status IDs whose category is DONE — used to suppress overdue styling for completed tasks. */
+  doneStatusIds?: Set<string>;
 }
 
 const WEEK_DAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"] as const;
@@ -61,6 +63,7 @@ export function CalendarView({
   isClient,
   onTaskClick,
   onDueDateChange,
+  doneStatusIds,
 }: CalendarViewProps) {
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -187,6 +190,7 @@ export function CalendarView({
                 isClient={isClient}
                 draggingId={draggingId}
                 onTaskClick={onTaskClick}
+                doneStatusIds={doneStatusIds}
               />
             );
           })}
@@ -224,6 +228,7 @@ function CalendarDay({
   isClient,
   draggingId,
   onTaskClick,
+  doneStatusIds,
 }: {
   day: Date;
   cursor: Date;
@@ -231,6 +236,7 @@ function CalendarDay({
   isClient: boolean;
   draggingId: string | null;
   onTaskClick: (task: Task) => void;
+  doneStatusIds?: Set<string>;
 }) {
   const id = `day-${format(day, "yyyy-MM-dd")}`;
   const { setNodeRef, isOver } = useDroppable({ id, disabled: isClient });
@@ -269,6 +275,7 @@ function CalendarDay({
             isClient={isClient}
             hidden={draggingId === t.id}
             onClick={() => onTaskClick(t)}
+            isDone={!!doneStatusIds?.has(t.status)}
           />
         ))}
         {tasks.length > 4 && (
@@ -297,11 +304,13 @@ function DraggableTaskChip({
   isClient,
   hidden,
   onClick,
+  isDone,
 }: {
   task: Task;
   isClient: boolean;
   hidden: boolean;
   onClick: () => void;
+  isDone?: boolean;
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: task.id,
@@ -315,6 +324,7 @@ function DraggableTaskChip({
   }
 
   const isOverdue =
+    !isDone &&
     task.dueDate &&
     new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
 

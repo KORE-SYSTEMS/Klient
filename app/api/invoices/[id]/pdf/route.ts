@@ -36,7 +36,19 @@ export async function GET(
   const [invoice, workspace] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id },
-      select: { number: true, title: true },
+      select: {
+        number: true,
+        title: true,
+        project: {
+          select: {
+            members: {
+              include: {
+                user: { select: { name: true, company: true, role: true } },
+              },
+            },
+          },
+        },
+      },
     }),
     prisma.workspace.findFirst({
       select: { companyName: true, name: true, logo: true, companyEmail: true },
@@ -44,6 +56,8 @@ export async function GET(
   ]);
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const senderName = workspace?.companyName || workspace?.name || "";
+  const clientMember = invoice.project?.members?.find((m) => m.user.role === "CLIENT");
+  const clientName = clientMember?.user.company || clientMember?.user.name || "";
 
   // Auth-Cookie kopieren damit die Print-Page (eigener Server-Component-Auth-Check)
   // den User erkennt. Wir geben Puppeteer denselben Session-Cookie weiter.
@@ -100,6 +114,9 @@ export async function GET(
     }
 
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
+
+    const pdfTitle = [clientName, `Rechnung ${invoice.number}`].filter(Boolean).join(" – ");
+    await page.evaluate((t) => { document.title = t; }, pdfTitle);
 
     // Kopf- und Fußzeile als HTML-Templates. Puppeteer rendert die für JEDE
     // Seite — perfekt für mehrseitige Rechnungen. Wir setzen preferCSSPageSize
@@ -212,7 +229,9 @@ export async function GET(
     await browser.close();
     browser = null;
 
-    const fileName = `Rechnung-${invoice.number.replace(/[^a-zA-Z0-9-]/g, "_")}.pdf`;
+    const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9äöüÄÖÜß -]/g, "_").trim();
+    const namePart = clientName ? `${sanitize(clientName)}_` : "";
+    const fileName = `Rechnung-${namePart}${invoice.number.replace(/[^a-zA-Z0-9-]/g, "_")}.pdf`;
 
     return new NextResponse(Buffer.from(pdfBuffer), {
       headers: {

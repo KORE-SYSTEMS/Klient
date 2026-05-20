@@ -33,12 +33,25 @@ export async function GET(request: NextRequest) {
   if (dueFilter === "week")    dueDateFilter = { gte: today, lt: weekLater };
   if (dueFilter === "none")    dueDateFilter = { equals: null };
 
+  // When filtering for overdue, exclude tasks in DONE-category statuses
+  let doneExcludeFilter: Record<string, unknown> = {};
+  if (dueFilter === "overdue") {
+    const doneStatusRows = await prisma.taskStatus.findMany({
+      where: { category: "DONE" },
+      select: { id: true },
+    });
+    if (doneStatusRows.length > 0) {
+      doneExcludeFilter = { status: { notIn: doneStatusRows.map((s) => s.id) } };
+    }
+  }
+
   const tasks = await prisma.task.findMany({
     where: {
       assigneeId: userId,
       project: isClient ? { members: { some: { userId } } } : undefined,
       ...(isClient ? { clientVisible: true } : {}),
       ...(Object.keys(dueDateFilter).length ? { dueDate: dueDateFilter } : {}),
+      ...doneExcludeFilter,
     },
     include: {
       project:  { select: { id: true, name: true, color: true } },

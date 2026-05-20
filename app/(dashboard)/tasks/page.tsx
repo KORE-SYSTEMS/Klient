@@ -120,7 +120,7 @@ export default function MyTasksPage() {
       const weekEnd  = new Date(today.getTime() + 7 * 86_400_000);
 
       const buckets: { key: string; label: string; color: string; filter: (t: Task) => boolean }[] = [
-        { key: "overdue", label: "Überfällig",     color: "#ef4444", filter: (t) => !!t.dueDate && new Date(t.dueDate) < today },
+        { key: "overdue", label: "Überfällig",     color: "#ef4444", filter: (t) => !t.isDone && !!t.dueDate && new Date(t.dueDate) < today },
         { key: "today",   label: "Heute fällig",   color: "#f97316", filter: (t) => !!t.dueDate && new Date(t.dueDate) >= today && new Date(t.dueDate) < tomorrow },
         { key: "week",    label: "Diese Woche",    color: "#eab308", filter: (t) => !!t.dueDate && new Date(t.dueDate) >= tomorrow && new Date(t.dueDate) < weekEnd },
         { key: "later",   label: "Später",         color: "#6b7280", filter: (t) => !!t.dueDate && new Date(t.dueDate) >= weekEnd },

@@ -703,6 +703,10 @@ export default function TasksPage() {
 
   // --- Multi-select for bulk actions ---
   const selection = useSelection();
+  const doneStatusIds = useMemo(
+    () => new Set(statuses.filter((s) => s.category === "DONE").map((s) => s.id)),
+    [statuses],
+  );
   const orderedTaskIds = useMemo(() => filteredTasks.map((t) => t.id), [filteredTasks]);
   const handleSelect = useCallback(
     (taskId: string, mode: "toggle" | "range") => {
@@ -1006,6 +1010,7 @@ export default function TasksPage() {
         <CalendarView
           tasks={filteredTasks}
           isClient={isClient}
+          doneStatusIds={doneStatusIds}
           onTaskClick={(t) => openTaskDialog(t)}
           onDueDateChange={async (taskId, newDate) => {
             // Optimistic update — Server-PATCH kommt direkt hinterher

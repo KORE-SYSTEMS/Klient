@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,10 +33,12 @@ import {
   Pencil,
   Trash2,
   Calendar,
-  CheckCircle2,
-  ListTodo,
+  ChevronDown,
+  ChevronRight,
+  Circle,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
+import { PriorityPill } from "@/components/task/priority-pill";
 
 interface Epic {
   id: string;
@@ -48,6 +51,23 @@ interface Epic {
   _count?: { tasks: number };
   _tasksDone: number;
   _tasksTotal: number;
+}
+
+interface TaskInfo {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  dueDate?: string | null;
+  epicId?: string | null;
+  assignee?: { id: string; name: string; email: string } | null;
+}
+
+interface StatusInfo {
+  id: string;
+  name: string;
+  color: string;
+  category?: string;
 }
 
 const COLORS = [
@@ -63,6 +83,12 @@ export default function MilestonesPage() {
 
   const [epics, setEpics] = useState<Epic[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Expanded epics (show tasks)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [tasksByEpic, setTasksByEpic] = useState<Record<string, TaskInfo[]>>({});
+  const [statusMap, setStatusMap] = useState<Record<string, StatusInfo>>({});
+  const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set());
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -82,6 +108,52 @@ export default function MilestonesPage() {
   useEffect(() => {
     fetchEpics().finally(() => setLoading(false));
   }, [fetchEpics]);
+
+  // Fetch statuses once
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/statuses`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((statuses: StatusInfo[]) => {
+        const map: Record<string, StatusInfo> = {};
+        for (const s of statuses) map[s.id] = s;
+        setStatusMap(map);
+      });
+  }, [projectId]);
+
+  async function toggleExpand(epicId: string) {
+    const next = new Set(expanded);
+    if (next.has(epicId)) {
+      next.delete(epicId);
+      setExpanded(next);
+      return;
+    }
+    next.add(epicId);
+    setExpanded(next);
+
+    if (!tasksByEpic[epicId]) {
+      setLoadingTasks((prev) => new Set(prev).add(epicId));
+      try {
+        const res = await fetch(`/api/tasks?projectId=${projectId}`);
+        if (res.ok) {
+          const allTasks: TaskInfo[] = await res.json();
+          const grouped: Record<string, TaskInfo[]> = {};
+          for (const t of allTasks) {
+            if (t.epicId) {
+              if (!grouped[t.epicId]) grouped[t.epicId] = [];
+              grouped[t.epicId].push(t);
+            }
+          }
+          setTasksByEpic((prev) => ({ ...prev, ...grouped }));
+        }
+      } finally {
+        setLoadingTasks((prev) => {
+          const s = new Set(prev);
+          s.delete(epicId);
+          return s;
+        });
+      }
+    }
+  }
 
   function openCreate() {
     setEditEpic(null);
@@ -194,38 +266,57 @@ export default function MilestonesPage() {
             const pct = epic._tasksTotal > 0 ? Math.round((epic._tasksDone / epic._tasksTotal) * 100) : 0;
             const isComplete = epic._tasksTotal > 0 && epic._tasksDone === epic._tasksTotal;
             const isOverdue = epic.dueDate && new Date(epic.dueDate) < new Date() && !isComplete;
+            const isOpen = expanded.has(epic.id);
+            const epicTasks = tasksByEpic[epic.id] ?? [];
+            const isLoadingTasks = loadingTasks.has(epic.id);
 
             return (
               <Card
                 key={epic.id}
                 className={cn(
-                  "p-4 transition-colors hover:bg-muted/30 cursor-pointer",
+                  "transition-colors",
                   isComplete && "opacity-70",
                 )}
-                onClick={() => !isClient && openEdit(epic)}
               >
-                <div className="flex items-start gap-4">
-                  {/* Color indicator */}
-                  <div className="flex flex-col items-center gap-1 pt-0.5">
-                    <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: epic.color }} />
-                    {isComplete && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
-                  </div>
+                {/* Main row */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  {/* Chevron */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(epic.id)}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={isOpen ? "Zuklappen" : "Aufklappen"}
+                  >
+                    {isOpen
+                      ? <ChevronDown className="h-4 w-4" />
+                      : <ChevronRight className="h-4 w-4" />
+                    }
+                  </button>
+
+                  {/* Color dot — centered with title */}
+                  <div
+                    className="h-3 w-3 rounded-full shrink-0"
+                    style={{ backgroundColor: epic.color }}
+                  />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2">
                       <span className="font-medium text-sm truncate">{epic.title}</span>
                       {isOverdue && <Badge variant="destructive" className="text-micro px-1.5 py-0">Überfällig</Badge>}
                       {isComplete && <Badge className="text-micro px-1.5 py-0 bg-green-500/10 text-green-600 border-green-500/20">Abgeschlossen</Badge>}
                     </div>
 
                     {epic.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{epic.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{epic.description}</p>
                     )}
+                  </div>
 
+                  {/* Progress + meta — right side */}
+                  <div className="flex items-center gap-4 shrink-0">
                     {/* Progress bar */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 max-w-xs">
+                    <div className="hidden sm:flex items-center gap-2.5">
+                      <div className="w-24">
                         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
@@ -236,58 +327,111 @@ export default function MilestonesPage() {
                           />
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {epic._tasksDone}/{epic._tasksTotal} Tasks
+                      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        {epic._tasksDone}/{epic._tasksTotal}
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         {pct}%
                       </span>
                     </div>
 
                     {/* Dates */}
-                    {(epic.startDate || epic.dueDate) && (
-                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    {epic.dueDate && (
+                      <span className={cn(
+                        "hidden md:flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap",
+                        isOverdue && "text-destructive",
+                      )}>
                         <Calendar className="h-3 w-3 shrink-0" />
-                        {epic.startDate && <span>{formatDate(epic.startDate)}</span>}
-                        {epic.startDate && epic.dueDate && <span>→</span>}
-                        {epic.dueDate && (
-                          <span className={cn(isOverdue && "text-destructive font-medium")}>
-                            {formatDate(epic.dueDate)}
-                          </span>
-                        )}
+                        {formatDate(epic.dueDate)}
+                      </span>
+                    )}
+
+                    {/* Actions — centered */}
+                    {!isClient && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(epic); }}>
+                            <Pencil className="mr-2 h-3.5 w-3.5" />
+                            Bearbeiten
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(epic); }}
+                          >
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                            Löschen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded: task list */}
+                {isOpen && (
+                  <div className="border-t">
+                    {isLoadingTasks ? (
+                      <div className="px-4 py-3 space-y-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-8 w-full" />
+                        ))}
+                      </div>
+                    ) : epicTasks.length === 0 ? (
+                      <div className="px-4 py-4 text-xs text-muted-foreground text-center">
+                        Keine Tasks in diesem Meilenstein
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {epicTasks.map((task) => {
+                          const st = statusMap[task.status];
+                          const isDone = st?.category === "DONE";
+                          return (
+                            <Link
+                              key={task.id}
+                              href={`/projects/${projectId}/tasks?task=${task.id}`}
+                              className="group flex items-center gap-3 px-4 py-2.5 hover:bg-accent/40 transition-colors"
+                            >
+                              <Circle className={cn(
+                                "h-3 w-3 shrink-0",
+                                isDone ? "text-green-500 fill-green-500" : "text-muted-foreground/40",
+                              )} />
+                              <span className={cn(
+                                "text-sm truncate flex-1",
+                                isDone && "line-through text-muted-foreground",
+                              )}>
+                                {task.title}
+                              </span>
+                              <PriorityPill priority={task.priority} />
+                              {task.dueDate && (
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {formatDate(task.dueDate)}
+                                </span>
+                              )}
+                              {st && (
+                                <span
+                                  className="inline-flex items-center rounded-full h-5 px-2 text-[10px] leading-none font-medium whitespace-nowrap"
+                                  style={{ backgroundColor: (st.color || "#6b7280") + "20", color: st.color || "#6b7280" }}
+                                >
+                                  {st.name}
+                                </span>
+                              )}
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-
-                  {/* Actions */}
-                  {!isClient && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEdit(epic); }}>
-                          <Pencil className="mr-2 h-3.5 w-3.5" />
-                          Bearbeiten
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(epic); }}
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" />
-                          Löschen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
+                )}
               </Card>
             );
           })}
