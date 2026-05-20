@@ -116,7 +116,7 @@ export async function GET(
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
 
     const pdfTitle = [clientName, `Rechnung ${invoice.number}`].filter(Boolean).join(" – ");
-    await page.evaluate((t) => { document.title = t; }, pdfTitle);
+    await (page as any).evaluate((t: string) => { document.title = t; }, pdfTitle);
 
     // Kopf- und Fußzeile als HTML-Templates. Puppeteer rendert die für JEDE
     // Seite — perfekt für mehrseitige Rechnungen. Wir setzen preferCSSPageSize

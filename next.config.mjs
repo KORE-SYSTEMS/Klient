@@ -19,9 +19,15 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    serverComponentsExternalPackages: ["puppeteer", "puppeteer-core"],
   },
-  // Puppeteer darf nicht von Webpack gebundelt werden (binäre Chromium-Files).
-  serverExternalPackages: ["puppeteer", "puppeteer-core"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push("puppeteer", "puppeteer-core");
+    }
+    return config;
+  },
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_GITHUB_REPO: "KORE-SYSTEMS/Klient",

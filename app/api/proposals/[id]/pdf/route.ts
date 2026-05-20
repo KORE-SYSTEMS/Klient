@@ -91,7 +91,7 @@ export async function GET(
     await page.goto(targetUrl, { waitUntil: "networkidle0", timeout: 30000 });
 
     const pdfTitle = [clientName, `Angebot ${proposal.number}`].filter(Boolean).join(" – ");
-    await page.evaluate((t) => { document.title = t; }, pdfTitle);
+    await (page as any).evaluate((t: string) => { document.title = t; }, pdfTitle);
 
     // Logo als Data-URI in den Header einbetten (siehe Invoice-Route).
     let logoDataUri: string | null = null;
