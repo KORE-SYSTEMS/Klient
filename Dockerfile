@@ -1,4 +1,5 @@
-FROM node:20-alpine AS base
+ARG NODE_IMAGE=node:20-alpine
+FROM ${NODE_IMAGE} AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 

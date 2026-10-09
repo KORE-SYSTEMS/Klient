@@ -60,5 +60,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             APP_VERSION=${{ steps.version.outputs.value }}
+            NODE_IMAGE=mirror.gcr.io/library/node:20-alpine
           cache-from: type=gha
           cache-to: type=gha,mode=max
