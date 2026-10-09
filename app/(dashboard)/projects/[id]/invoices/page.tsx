@@ -54,6 +54,9 @@ import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { DatePicker } from "@/components/ui/date-picker";
+import { confirmDialog } from "@/components/confirm-dialog";
+import { BillingDefaults, FALLBACK_DEFAULTS, UNITS, formatCurrency, addDays } from "@/lib/billing";
+import { StatusBadge as BaseStatusBadge } from "@/components/billing/status-badge";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,59 +95,14 @@ const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.DRAFT;
-  const Icon = cfg.icon;
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
-      <Icon className="h-2.5 w-2.5" />
-      {cfg.label}
-    </span>
-  );
+  return <BaseStatusBadge status={status} config={STATUS_CONFIG} />;
 }
 
 function calcTotal(items: InvoiceItem[]): number {
   return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 }
 
-function formatCurrency(amount: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount);
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-const UNITS = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
-
 const EMPTY_ITEM = (unitPrice = 0): InvoiceItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
-
-interface BillingDefaults {
-  currency:             string;
-  defaultHourlyRate:    number | null;
-  defaultTaxRate:       number;
-  invoicePrefix:        string;
-  proposalPrefix:       string;
-  paymentTermsDays:     number;
-  defaultInvoiceNotes:  string;
-  defaultProposalNotes: string;
-  defaultInvoiceIntro:  string;
-  defaultProposalIntro: string;
-}
-
-const FALLBACK_DEFAULTS: BillingDefaults = {
-  currency: "EUR",
-  defaultHourlyRate: null,
-  defaultTaxRate: 19,
-  invoicePrefix: "RE",
-  proposalPrefix: "AN",
-  paymentTermsDays: 14,
-  defaultInvoiceNotes: "",
-  defaultProposalNotes: "",
-  defaultInvoiceIntro: "",
-  defaultProposalIntro: "",
-};
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -369,7 +327,7 @@ export default function InvoicesPage() {
   }
 
   async function deleteInvoice(id: string) {
-    if (!confirm("Rechnung wirklich löschen?")) return;
+    if (!(await confirmDialog({ title: "Rechnung löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
     const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
     if (res.ok) {
       await fetchInvoices();

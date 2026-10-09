@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Edit2, X, Plus, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 interface Project {
   id: string;
@@ -98,7 +99,7 @@ export function EditClientDialog({ client }: { client: ClientProps }) {
   }
 
   async function handleDelete() {
-    if (!confirm("Kunde wirklich löschen?")) return;
+    if (!(await confirmDialog({ title: "Kunde löschen?", description: "Der Kunde wird endgültig gelöscht." }))) return;
     setLoading(true);
     await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
     setLoading(false);

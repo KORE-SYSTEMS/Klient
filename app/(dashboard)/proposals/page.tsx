@@ -53,6 +53,10 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { confirmDialog } from "@/components/confirm-dialog";
+import { ClientUser, ProjectMemberWithUser, BillingDefaults, FALLBACK_DEFAULTS, UNITS, formatCurrency } from "@/lib/billing";
+import { StatusBadge as BaseStatusBadge } from "@/components/billing/status-badge";
+import { StatCard } from "@/components/billing/stat-card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,18 +67,6 @@ interface ProposalItem {
   unitPrice: number;
   unit: string;
   order?: number;
-}
-
-interface ClientUser {
-  id: string;
-  name: string | null;
-  email: string;
-  company: string | null;
-  role: string;
-}
-
-interface ProjectMemberWithUser {
-  user: ClientUser;
 }
 
 interface ProposalProject {
@@ -119,36 +111,9 @@ const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.
 };
 
 const ALL_STATUSES = ["DRAFT", "SENT", "ACCEPTED", "DECLINED", "EXPIRED"];
-const UNITS        = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
 const EMPTY_ITEM   = (unitPrice = 0): ProposalItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
 
 const TAX_RATES = [0, 7, 19];
-
-interface BillingDefaults {
-  currency:             string;
-  defaultHourlyRate:    number | null;
-  defaultTaxRate:       number;
-  invoicePrefix:        string;
-  proposalPrefix:       string;
-  paymentTermsDays:     number;
-  defaultInvoiceNotes:  string;
-  defaultProposalNotes: string;
-  defaultInvoiceIntro:  string;
-  defaultProposalIntro: string;
-}
-
-const FALLBACK_DEFAULTS: BillingDefaults = {
-  currency: "EUR",
-  defaultHourlyRate: null,
-  defaultTaxRate: 19,
-  invoicePrefix: "RE",
-  proposalPrefix: "AN",
-  paymentTermsDays: 14,
-  defaultInvoiceNotes: "",
-  defaultProposalNotes: "",
-  defaultInvoiceIntro: "",
-  defaultProposalIntro: "",
-};
 
 function calcNetto(items: ProposalItem[]): number {
   return items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
@@ -157,10 +122,6 @@ function calcNetto(items: ProposalItem[]): number {
 function calcBrutto(items: ProposalItem[], taxRate: number): number {
   const netto = calcNetto(items);
   return netto + netto * taxRate / 100;
-}
-
-function formatCurrency(n: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(n);
 }
 
 function isExpired(p: Proposal): boolean {
@@ -178,32 +139,7 @@ function getProposalClient(p: Proposal): ClientUser | null {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
-  const Icon = cfg.icon;
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
-      <Icon className="h-2.5 w-2.5" />
-      {cfg.label}
-    </span>
-  );
-}
-
-function StatCard({
-  label, value, icon: Icon, iconClass, accent,
-}: {
-  label: string; value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  iconClass?: string; accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-        <Icon className={cn("h-3.5 w-3.5", iconClass)} />
-        <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
-      </div>
-      <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
-    </div>
-  );
+  return <BaseStatusBadge status={status} config={STATUS_CONFIG} />;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -449,7 +385,7 @@ export default function ProposalsPage() {
       toast({ title: "Kein Projekt zugeordnet – Konvertierung nicht möglich", variant: "destructive" });
       return;
     }
-    if (!confirm(`Angebot "${p.title}" in eine Rechnung konvertieren?`)) return;
+    if (!(await confirmDialog({ title: "In Rechnung konvertieren?", description: `Aus dem Angebot „${p.title}“ wird eine Rechnung erstellt.`, confirmLabel: "Konvertieren", destructive: false }))) return;
     setConverting(p.id);
     try {
       const res = await fetch(`/api/proposals/${p.id}/convert`, { method: "POST" });
@@ -475,7 +411,7 @@ export default function ProposalsPage() {
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   async function deleteProposal(id: string) {
-    if (!confirm("Angebot wirklich löschen?")) return;
+    if (!(await confirmDialog({ title: "Angebot löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
     const res = await fetch(`/api/proposals/${id}`, { method: "DELETE" });
     if (res.ok) {
       setProposals((prev) => prev.filter((p) => p.id !== id));

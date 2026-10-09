@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { StatusPill } from "@/components/status-pill";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 interface ProjectMember {
   user: {
@@ -130,9 +131,12 @@ export default function ProjectsPage() {
   async function permanentDelete(project: Project, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const ok = window.confirm(
-      `"${project.name}" und alle Daten (Tasks, Zeit-Einträge, Kommentare, Dateien, Rechnungen) ENDGÜLTIG löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`,
-    );
+    const ok = await confirmDialog({
+      title: `„${project.name}“ endgültig löschen?`,
+      description:
+        "Alle Daten (Tasks, Zeit-Einträge, Kommentare, Dateien, Rechnungen) werden gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      confirmLabel: "Endgültig löschen",
+    });
     if (!ok) return;
     const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     if (res.ok) fetchProjects();

@@ -11,6 +11,7 @@ import { PriorityPill } from "@/components/task/priority-pill";
 import { api, run } from "@/lib/api";
 import { tasksApi } from "@/lib/api/tasks";
 import type { Task, TaskStatus } from "../_lib/types";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 interface SubtasksSectionProps {
   parentTask: Task;
@@ -104,7 +105,7 @@ export function SubtasksSection({
   }
 
   async function removeSubtask(sub: Task) {
-    if (!confirm(`Subtask "${sub.title}" löschen?`)) return;
+    if (!(await confirmDialog({ title: `Subtask „${sub.title}“ löschen?` }))) return;
     setSubtasks((prev) => prev.filter((t) => t.id !== sub.id));
     const ok = await run(tasksApi.remove(sub.id), {
       error: "Subtask konnte nicht gelöscht werden",

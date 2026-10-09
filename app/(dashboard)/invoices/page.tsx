@@ -56,6 +56,10 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { confirmDialog } from "@/components/confirm-dialog";
+import { ClientUser, ProjectMemberWithUser, BillingDefaults, FALLBACK_DEFAULTS, UNITS, formatCurrency, addDays } from "@/lib/billing";
+import { StatusBadge as BaseStatusBadge } from "@/components/billing/status-badge";
+import { StatCard } from "@/components/billing/stat-card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,18 +71,6 @@ interface InvoiceItem {
   unit: string;
   order?: number;
   timeEntryId?: string | null;
-}
-
-interface ClientUser {
-  id: string;
-  name: string | null;
-  email: string;
-  company: string | null;
-  role: string;
-}
-
-interface ProjectMemberWithUser {
-  user: ClientUser;
 }
 
 interface InvoiceProject {
@@ -124,47 +116,10 @@ const STATUS_CONFIG: Record<string, { label: string; class: string; icon: React.
 };
 
 const ALL_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
-const UNITS        = ["Std.", "Stk.", "Pauschal", "Tag", "Monat", "%"];
 const EMPTY_ITEM   = (unitPrice = 0): InvoiceItem => ({ description: "", quantity: 1, unitPrice, unit: "Std." });
-
-interface BillingDefaults {
-  currency:             string;
-  defaultHourlyRate:    number | null;
-  defaultTaxRate:       number;
-  invoicePrefix:        string;
-  proposalPrefix:       string;
-  paymentTermsDays:     number;
-  defaultInvoiceNotes:  string;
-  defaultProposalNotes: string;
-  defaultInvoiceIntro:  string;
-  defaultProposalIntro: string;
-}
-
-const FALLBACK_DEFAULTS: BillingDefaults = {
-  currency: "EUR",
-  defaultHourlyRate: null,
-  defaultTaxRate: 19,
-  invoicePrefix: "RE",
-  proposalPrefix: "AN",
-  paymentTermsDays: 14,
-  defaultInvoiceNotes: "",
-  defaultProposalNotes: "",
-  defaultInvoiceIntro: "",
-  defaultProposalIntro: "",
-};
 
 function calcTotal(items: InvoiceItem[]): number {
   return items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-}
-
-function formatCurrency(n: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(n);
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
 }
 
 function isOverdue(inv: Invoice): boolean {
@@ -181,32 +136,7 @@ function getClient(inv: Invoice): ClientUser | null {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
-  const Icon = cfg.icon;
-  return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full h-5 px-2 text-[10px] leading-none font-medium", cfg.class)}>
-      <Icon className="h-2.5 w-2.5" />
-      {cfg.label}
-    </span>
-  );
-}
-
-function StatCard({
-  label, value, icon: Icon, iconClass, accent,
-}: {
-  label: string; value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  iconClass?: string; accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-        <Icon className={cn("h-3.5 w-3.5", iconClass)} />
-        <span className="text-caption uppercase tracking-wider font-medium">{label}</span>
-      </div>
-      <div className={cn("text-2xl font-bold tabular-nums", accent)}>{value}</div>
-    </div>
-  );
+  return <BaseStatusBadge status={status} config={STATUS_CONFIG} />;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -495,7 +425,7 @@ export default function GlobalInvoicesPage() {
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   async function deleteInvoice(id: string) {
-    if (!confirm("Rechnung wirklich löschen?")) return;
+    if (!(await confirmDialog({ title: "Rechnung löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
     const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
     if (res.ok) {
       setInvoices((prev) => prev.filter((i) => i.id !== id));

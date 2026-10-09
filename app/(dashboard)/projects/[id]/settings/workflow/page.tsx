@@ -54,6 +54,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 type Category = "TODO" | "IN_PROGRESS" | "DONE";
 
@@ -173,7 +174,7 @@ export default function WorkflowSettingsPage() {
   };
 
   const deleteStatus = async (s: TaskStatus) => {
-    if (!confirm(`Phase "${s.name}" wirklich löschen?`)) return;
+    if (!(await confirmDialog({ title: `Phase „${s.name}“ löschen?` }))) return;
     const res = await fetch(`/api/projects/${projectId}/statuses/${s.id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);

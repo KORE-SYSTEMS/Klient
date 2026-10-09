@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ConfirmHost } from "@/components/confirm-dialog";
 import { prisma } from "@/lib/prisma";
 
 const publicSans = localFont({
@@ -73,6 +74,7 @@ export default async function RootLayout({
       >
         {children}
         <Toaster />
+        <ConfirmHost />
       </body>
     </html>
   );

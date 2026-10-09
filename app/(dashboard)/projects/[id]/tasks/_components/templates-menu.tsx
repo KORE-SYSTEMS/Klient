@@ -43,6 +43,7 @@ import { run } from "@/lib/api";
 import { projectsApi } from "@/lib/api/projects";
 import { tasksApi } from "@/lib/api/tasks";
 import type { Epic, TaskStatus, TaskTemplate } from "../_lib/types";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 interface TemplatesMenuProps {
   projectId: string;
@@ -146,7 +147,7 @@ export function TemplatesMenu({
   }
 
   async function deleteTemplate(t: TaskTemplate) {
-    if (!confirm(`Vorlage "${t.name}" löschen?`)) return;
+    if (!(await confirmDialog({ title: `Vorlage „${t.name}“ löschen?` }))) return;
     const ok = await run(projectsApi.removeTaskTemplate(projectId, t.id), {
       success: "Vorlage gelöscht",
     });

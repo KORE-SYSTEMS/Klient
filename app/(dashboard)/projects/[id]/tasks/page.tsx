@@ -127,6 +127,7 @@ import { useSelection } from "./_lib/use-selection";
 import { useSavedViews } from "./_lib/use-saved-views";
 import { NEW_TASK_EVENT_NAME } from "@/components/keyboard-shortcut-overlay";
 import { api } from "@/lib/api";
+import { confirmDialog } from "@/components/confirm-dialog";
 // --- Main Page ---
 
 export default function TasksPage() {
@@ -446,7 +447,7 @@ export default function TasksPage() {
 
   async function deleteColumn(status: TaskStatus) {
     const tasksInColumn = tasks.filter((t) => t.status === status.id);
-    if (tasksInColumn.length > 0) { alert(`Spalte "${status.name}" hat noch ${tasksInColumn.length} Task(s). Verschiebe die Tasks zuerst.`); return; }
+    if (tasksInColumn.length > 0) { toast({ title: "Spalte nicht leer", description: `„${status.name}“ hat noch ${tasksInColumn.length} Task(s). Verschiebe die Tasks zuerst.`, variant: "destructive" }); return; }
     await fetch(`/api/projects/${projectId}/statuses/${status.id}`, { method: "DELETE" });
     fetchStatuses();
   }
@@ -764,7 +765,7 @@ export default function TasksPage() {
   async function bulkDelete() {
     const ids = selection.selectedIds;
     if (ids.length === 0) return;
-    if (!confirm(`${ids.length} ${ids.length === 1 ? "Task" : "Tasks"} wirklich löschen?`)) return;
+    if (!(await confirmDialog({ title: `${ids.length} ${ids.length === 1 ? "Task" : "Tasks"} löschen?` }))) return;
     const idSet = new Set(ids);
     setTasks((prev) => prev.filter((t) => !idSet.has(t.id)));
     selection.clear();

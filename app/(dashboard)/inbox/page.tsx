@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { api, run } from "@/lib/api";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
+import { confirmDialog } from "@/components/confirm-dialog";
 
 interface Notification {
   id: string;
@@ -163,7 +164,7 @@ export default function InboxPage() {
   }
 
   async function deleteRead() {
-    if (!confirm("Alle gelesenen Benachrichtigungen löschen?")) return;
+    if (!(await confirmDialog({ title: "Gelesene Benachrichtigungen löschen?", description: "Alle bereits gelesenen Benachrichtigungen werden entfernt." }))) return;
     await run(api("/api/notifications", { method: "DELETE" }), {
       success: "Gelesene gelöscht",
     });
