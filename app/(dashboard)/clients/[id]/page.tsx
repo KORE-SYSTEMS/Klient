@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, getInitials, formatDate } from "@/lib/utils";
+import { api, run } from "@/lib/api";
 import {
   ArrowLeft,
   Building2,
@@ -267,52 +268,64 @@ export default function ClientDetailPage() {
   const [savingAct, setSavingAct] = useState(false);
 
   const load = useCallback(async () => {
-    const [clientRes, notesRes, activitiesRes] = await Promise.all([
-      fetch(`/api/clients/${id}`),
-      fetch(`/api/clients/${id}/notes`),
-      fetch(`/api/clients/${id}/activities`),
-    ]);
-    if (!clientRes.ok) { router.push("/clients"); return; }
-    const [c, n, a] = await Promise.all([clientRes.json(), notesRes.json(), activitiesRes.json()]);
-    setClient(c);
-    setNotes(Array.isArray(n) ? n : []);
-    setActivities(Array.isArray(a) ? a : []);
-    setLoading(false);
+    try {
+      const [c, n, a] = await Promise.all([
+        api<Client>(`/api/clients/${id}`),
+        api<ClientNote[]>(`/api/clients/${id}/notes`).catch(() => []),
+        api<ClientActivity[]>(`/api/clients/${id}/activities`).catch(() => []),
+      ]);
+      setClient(c);
+      setNotes(Array.isArray(n) ? n : []);
+      setActivities(Array.isArray(a) ? a : []);
+      setLoading(false);
+    } catch {
+      router.push("/clients");
+    }
   }, [id, router]);
 
   useEffect(() => { load(); }, [load]);
 
   async function patchClient(data: Record<string, unknown>) {
-    await fetch(`/api/clients/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    const ok = await run(
+      api(`/api/clients/${id}`, { method: "PATCH", body: data }),
+      { error: "Änderung konnte nicht gespeichert werden" },
+    );
+    if (ok === null) return;
     setClient((c) => c ? { ...c, ...data } as Client : c);
   }
 
   async function saveNote() {
     if (!noteContent.trim()) return;
     setSavingNote(true);
-    const res = await fetch(`/api/clients/${id}/notes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: noteTitle, content: noteContent }),
-    });
-    const n = await res.json();
-    setNotes((prev) => [n, ...prev]);
-    setNoteContent("");
-    setNoteTitle("");
-    setSavingNote(false);
+    try {
+      const n = await run(
+        api<ClientNote>(`/api/clients/${id}/notes`, { method: "POST", body: { title: noteTitle, content: noteContent } }),
+        { error: "Notiz konnte nicht gespeichert werden" },
+      );
+      if (!n) return;
+      setNotes((prev) => [n, ...prev]);
+      setNoteContent("");
+      setNoteTitle("");
+    } finally {
+      setSavingNote(false);
+    }
   }
 
   async function deleteNote(noteId: string) {
-    await fetch(`/api/clients/${id}/notes/${noteId}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/clients/${id}/notes/${noteId}`, { method: "DELETE" }),
+      { error: "Notiz konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
   }
 
   async function togglePin(note: ClientNote) {
-    await fetch(`/api/clients/${id}/notes/${note.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pinned: !note.pinned }),
-    });
+    const ok = await run(
+      api(`/api/clients/${id}/notes/${note.id}`, { method: "PATCH", body: { pinned: !note.pinned } }),
+      { error: "Notiz konnte nicht angepinnt werden" },
+    );
+    if (ok === null) return;
     setNotes((prev) => prev.map((n) => n.id === note.id ? { ...n, pinned: !n.pinned } : n)
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)));
   }
@@ -320,20 +333,29 @@ export default function ClientDetailPage() {
   async function saveActivity() {
     if (!actForm.title.trim()) return;
     setSavingAct(true);
-    const res = await fetch(`/api/clients/${id}/activities`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...actForm, duration: actForm.duration ? Number(actForm.duration) : null, outcome: actForm.outcome === "__none__" ? null : actForm.outcome || null }),
-    });
-    const a = await res.json();
-    setActivities((prev) => [a, ...prev]);
-    setActForm({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "__none__" });
-    setActOpen(false);
-    setSavingAct(false);
+    try {
+      const a = await run(
+        api<ClientActivity>(`/api/clients/${id}/activities`, {
+          method: "POST",
+          body: { ...actForm, duration: actForm.duration ? Number(actForm.duration) : null, outcome: actForm.outcome === "__none__" ? null : actForm.outcome || null },
+        }),
+        { error: "Aktivität konnte nicht gespeichert werden" },
+      );
+      if (!a) return;
+      setActivities((prev) => [a, ...prev]);
+      setActForm({ type: "CALL", title: "", description: "", date: new Date().toISOString().slice(0, 16), duration: "", outcome: "__none__" });
+      setActOpen(false);
+    } finally {
+      setSavingAct(false);
+    }
   }
 
   async function deleteActivity(actId: string) {
-    await fetch(`/api/clients/${id}/activities/${actId}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/clients/${id}/activities/${actId}`, { method: "DELETE" }),
+      { error: "Aktivität konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     setActivities((prev) => prev.filter((a) => a.id !== actId));
   }
 

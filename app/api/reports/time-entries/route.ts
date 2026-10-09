@@ -41,22 +41,17 @@ export async function GET(req: NextRequest) {
   const where: any = {
     duration: { gt: 0 }, // only completed entries
     ...(userId ? { userId } : isAdmin ? {} : { userId: session.user.id }),
-    ...(projectId ? { task: { projectId } } : {}),
+    // Non-admins only ever see entries of projects they are a member of —
+    // even when filtering by an explicit projectId or userId.
+    task: {
+      ...(projectId ? { projectId } : {}),
+      ...(!isAdmin ? { project: { members: { some: { userId: session.user.id } } } } : {}),
+    },
     ...(dateFrom || dateTo
       ? {
           startedAt: {
             ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
             ...(dateTo ? { lte: new Date(new Date(dateTo).setHours(23, 59, 59, 999)) } : {}),
-          },
-        }
-      : {}),
-    // MEMBER: only their own projects
-    ...(!isAdmin && !projectId
-      ? {
-          task: {
-            project: {
-              members: { some: { userId: session.user.id } },
-            },
           },
         }
       : {}),

@@ -6,11 +6,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 
+// Includes project members so the client column survives list-row updates (same shape as the list route)
 const invoiceInclude = {
   items: { orderBy: { order: "asc" as const } },
-  project: { select: { id: true, name: true, color: true } },
+  project: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      members: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, company: true, role: true },
+          },
+        },
+      },
+    },
+  },
 };
 
 export async function GET(
@@ -23,6 +37,7 @@ export async function GET(
   const { id } = await params;
   const invoice = await prisma.invoice.findUnique({ where: { id }, include: invoiceInclude });
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, invoice.projectId))) return forbidden();
 
   return NextResponse.json(invoice);
 }
@@ -39,6 +54,7 @@ export async function PATCH(
 
   const existing = await prisma.invoice.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, existing.projectId))) return forbidden();
 
   const updateData: Record<string, unknown> = {};
   if (body.title   !== undefined) updateData.title   = body.title;
@@ -107,6 +123,7 @@ export async function DELETE(
   const { id } = await params;
   const existing = await prisma.invoice.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, existing.projectId))) return forbidden();
 
   await prisma.invoice.delete({ where: { id } });
   return NextResponse.json({ success: true });

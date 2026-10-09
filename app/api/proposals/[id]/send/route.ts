@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
@@ -37,6 +37,7 @@ export async function POST(
   });
 
   if (!proposal) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, proposal.projectId))) return forbidden();
 
   const workspace = await prisma.workspace.findFirst();
   if (!workspace?.smtpHost) {

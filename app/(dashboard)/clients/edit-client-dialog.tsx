@@ -17,6 +17,7 @@ import {
 import { Edit2, X, Plus, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { confirmDialog } from "@/components/confirm-dialog";
+import { api, run } from "@/lib/api";
 
 interface Project {
   id: string;
@@ -82,18 +83,21 @@ export function EditClientDialog({ client }: { client: ClientProps }) {
     setLoading(true);
     const form = new FormData(e.currentTarget);
 
-    await fetch(`/api/clients/${client.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: form.get("email"),
-        name: form.get("name"),
-        company: form.get("company"),
-        projectIds: Array.from(assignedProjectIds),
+    const ok = await run(
+      api(`/api/clients/${client.id}`, {
+        method: "PATCH",
+        body: {
+          email: form.get("email"),
+          name: form.get("name"),
+          company: form.get("company"),
+          projectIds: Array.from(assignedProjectIds),
+        },
       }),
-    });
+      { error: "Kunde konnte nicht gespeichert werden" },
+    );
 
     setLoading(false);
+    if (ok === null) return;
     setOpen(false);
     router.refresh();
   }
@@ -101,8 +105,12 @@ export function EditClientDialog({ client }: { client: ClientProps }) {
   async function handleDelete() {
     if (!(await confirmDialog({ title: "Kunde löschen?", description: "Der Kunde wird endgültig gelöscht." }))) return;
     setLoading(true);
-    await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/clients/${client.id}`, { method: "DELETE" }),
+      { error: "Kunde konnte nicht gelöscht werden" },
+    );
     setLoading(false);
+    if (ok === null) return;
     setOpen(false);
     router.refresh();
   }

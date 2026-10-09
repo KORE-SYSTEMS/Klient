@@ -10,7 +10,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,7 @@ export async function GET(
       select: {
         number: true,
         title: true,
+        projectId: true,
         project: {
           select: {
             members: {
@@ -55,6 +56,7 @@ export async function GET(
     }),
   ]);
   if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, invoice.projectId))) return forbidden();
   const senderName = workspace?.companyName || workspace?.name || "";
   const clientMember = invoice.project?.members?.find((m) => m.user.role === "CLIENT");
   const clientName = clientMember?.user.company || clientMember?.user.name || "";

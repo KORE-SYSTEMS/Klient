@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, canAccessTask, forbidden } from "@/lib/auth-guard";
 
 // GET time entries for a task
 export async function GET(request: NextRequest) {
@@ -13,6 +13,15 @@ export async function GET(request: NextRequest) {
   if (!taskId) {
     return NextResponse.json({ error: "taskId is required" }, { status: 400 });
   }
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { projectId: true, clientVisible: true, assigneeId: true },
+  });
+  if (!task) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  if (!(await canAccessTask(session, task))) return forbidden();
 
   const entries = await prisma.timeEntry.findMany({
     where: { taskId },
@@ -32,6 +41,9 @@ export async function POST(request: NextRequest) {
 
   const userId = session.user.id;
 
+  // Clients never track time
+  if (session.user.role === "CLIENT") return forbidden();
+
   try {
     const body = await request.json();
     const { taskId, description, manual } = body;
@@ -39,6 +51,15 @@ export async function POST(request: NextRequest) {
     if (!taskId) {
       return NextResponse.json({ error: "taskId is required" }, { status: 400 });
     }
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { projectId: true, clientVisible: true, assigneeId: true },
+    });
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+    if (!(await canAccessTask(session, task))) return forbidden();
 
     // ── Manual entry: create a pre-completed time entry ──────────────────────
     if (manual) {

@@ -60,6 +60,10 @@ export async function GET(
   const { id: projectId } = await params;
   const userId = session.user.id;
   const role = session.user.role;
+  // Export contains internal tasks, descriptions and assignee e-mails — staff only
+  if (role === "CLIENT") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   if (role !== "ADMIN") {
     const hasAccess = await requireProjectAccess(projectId, userId);
     if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

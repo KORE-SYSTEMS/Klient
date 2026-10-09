@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { EmptyState } from "@/components/empty-state";
+import { api, run } from "@/lib/api";
 
 const UPDATE_TYPES = [
   { value: "INFO",      label: "Info",       icon: Info,                color: "text-blue-400",   bg: "bg-blue-500/10",   border: "border-blue-500/20" },
@@ -64,19 +65,23 @@ export default function UpdatesPage() {
     e.preventDefault();
     if (!content.trim()) return;
     setSubmitting(true);
-    await fetch("/api/updates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, content, type }),
-    });
+    const created = await run(
+      api("/api/updates", { method: "POST", body: { projectId, content, type } }),
+      { error: "Update konnte nicht veröffentlicht werden" },
+    );
+    setSubmitting(false);
+    if (created === null) return; // keep the typed text
     setContent("");
     setType("INFO");
-    setSubmitting(false);
     fetchUpdates();
   }
 
   async function deleteUpdate(id: string) {
-    await fetch(`/api/updates/${id}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/updates/${id}`, { method: "DELETE" }),
+      { error: "Update konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     setUpdates((prev) => prev.filter((u) => u.id !== id));
   }
 

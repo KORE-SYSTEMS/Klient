@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { api, run } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -120,12 +121,11 @@ export default function ProjectsPage() {
   async function toggleArchive(project: Project, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const res = await fetch(`/api/projects/${project.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archived: !project.archived }),
-    });
-    if (res.ok) fetchProjects();
+    const ok = await run(
+      api(`/api/projects/${project.id}`, { method: "PATCH", body: { archived: !project.archived } }),
+      { error: project.archived ? "Projekt konnte nicht wiederhergestellt werden" : "Projekt konnte nicht archiviert werden" },
+    );
+    if (ok !== null) fetchProjects();
   }
 
   async function permanentDelete(project: Project, e: React.MouseEvent) {
@@ -138,8 +138,11 @@ export default function ProjectsPage() {
       confirmLabel: "Endgültig löschen",
     });
     if (!ok) return;
-    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
-    if (res.ok) fetchProjects();
+    const deleted = await run(
+      api(`/api/projects/${project.id}`, { method: "DELETE" }),
+      { error: "Projekt konnte nicht gelöscht werden" },
+    );
+    if (deleted !== null) fetchProjects();
   }
 
   /**
@@ -150,19 +153,20 @@ export default function ProjectsPage() {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-          description: newDescription || undefined,
-          status: newStatus,
-          color: newColor,
-          dueDate: newDueDate || undefined,
+      const created = await run(
+        api<{ id?: string } | undefined>("/api/projects", {
+          method: "POST",
+          body: {
+            name: newName,
+            description: newDescription || undefined,
+            status: newStatus,
+            color: newColor,
+            dueDate: newDueDate || undefined,
+          },
         }),
-      });
-      if (res.ok) {
-        const created = await res.json().catch(() => null);
+        { error: "Projekt konnte nicht erstellt werden" },
+      );
+      if (created !== null) {
         setDialogOpen(false);
         setNewName("");
         setNewDescription("");

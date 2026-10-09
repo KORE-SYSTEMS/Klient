@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronRight, Circle, Plus, X } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -40,8 +40,9 @@ export function SubtasksSection({
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  const doneStatusIds = new Set(
-    statuses.filter((s) => s.category === "DONE").map((s) => s.id),
+  const doneStatusIds = useMemo(
+    () => new Set(statuses.filter((s) => s.category === "DONE").map((s) => s.id)),
+    [statuses],
   );
 
   const emitCounts = useCallback(

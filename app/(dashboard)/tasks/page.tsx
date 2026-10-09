@@ -79,7 +79,8 @@ export default function MyTasksPage() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  const now = new Date();
+  // Fixed per mount — only used for overdue/bucket comparisons
+  const now = useMemo(() => new Date(), []);
 
   // Client-side priority filter (applied on top of server due filter)
   const filteredTasks = useMemo(() => {

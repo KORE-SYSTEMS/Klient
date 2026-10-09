@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Circle, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api, run } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,13 +66,11 @@ export function ChecklistSection({
     if (!title || adding) return;
     setAdding(true);
     try {
-      const res = await fetch(`/api/tasks/${taskId}/checklist`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
-      if (res.ok) {
-        const created: ChecklistItem = await res.json();
+      const created = await run(
+        api<ChecklistItem>(`/api/tasks/${taskId}/checklist`, { method: "POST", body: { title } }),
+        { error: "Punkt konnte nicht hinzugefügt werden" },
+      );
+      if (created) {
         setItems((prev) => {
           const next = [...prev, created];
           emitCounts(next);
@@ -89,12 +88,11 @@ export function ChecklistSection({
     const next = items.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i));
     setItems(next);
     emitCounts(next);
-    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: !item.done }),
-    });
-    if (!res.ok) {
+    const ok = await run(
+      api(`/api/tasks/${taskId}/checklist/${item.id}`, { method: "PATCH", body: { done: !item.done } }),
+      { error: "Änderung konnte nicht gespeichert werden" },
+    );
+    if (ok === null) {
       setItems(items);
       emitCounts(items);
     }
@@ -113,22 +111,22 @@ export function ChecklistSection({
     const next = items.map((i) => (i.id === item.id ? { ...i, title } : i));
     setItems(next);
     setEditingId(null);
-    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    if (!res.ok) setItems(items);
+    const ok = await run(
+      api(`/api/tasks/${taskId}/checklist/${item.id}`, { method: "PATCH", body: { title } }),
+      { error: "Titel konnte nicht gespeichert werden" },
+    );
+    if (ok === null) setItems(items);
   }
 
   async function removeItem(item: ChecklistItem) {
     const next = items.filter((i) => i.id !== item.id);
     setItems(next);
     emitCounts(next);
-    const res = await fetch(`/api/tasks/${taskId}/checklist/${item.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
+    const ok = await run(
+      api(`/api/tasks/${taskId}/checklist/${item.id}`, { method: "DELETE" }),
+      { error: "Punkt konnte nicht gelöscht werden" },
+    );
+    if (ok === null) {
       setItems(items);
       emitCounts(items);
     }

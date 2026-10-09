@@ -26,6 +26,7 @@ import {
 import { StatusPill } from "@/components/status-pill";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
+import { api, run } from "@/lib/api";
 
 interface Member {
   id: string;
@@ -142,11 +143,11 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
   }, [dialogOpen, project]);
 
   async function handleStatusChange(newStatus: string) {
-    await fetch(`/api/projects/${project.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
+    const ok = await run(
+      api(`/api/projects/${project.id}`, { method: "PATCH", body: { status: newStatus } }),
+      { error: "Status konnte nicht geändert werden" },
+    );
+    if (ok === null) return;
     router.refresh();
   }
 
@@ -165,18 +166,20 @@ export function ProjectHeader({ project, canEdit, initialMembers = [], progress 
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/projects/${project.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          description: description || null,
-          status,
-          dueDate: dueDate || null,
-          memberIds: Array.from(selectedMemberIds),
+      const saved = await run(
+        api(`/api/projects/${project.id}`, {
+          method: "PATCH",
+          body: {
+            name,
+            description: description || null,
+            status,
+            dueDate: dueDate || null,
+            memberIds: Array.from(selectedMemberIds),
+          },
         }),
-      });
-      if (res.ok) {
+        { error: "Projekt konnte nicht gespeichert werden" },
+      );
+      if (saved !== null) {
         setDialogOpen(false);
         router.refresh();
       }

@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { PriorityPill } from "@/components/task/priority-pill";
+import { api, run } from "@/lib/api";
 
 interface Epic {
   id: string;
@@ -188,27 +189,25 @@ export default function MilestonesPage() {
       dueDate: dueDate || null,
     };
 
-    if (editEpic) {
-      await fetch(`/api/projects/${projectId}/epics/${editEpic.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      await fetch(`/api/projects/${projectId}/epics`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    }
+    const saved = await run(
+      editEpic
+        ? api(`/api/projects/${projectId}/epics/${editEpic.id}`, { method: "PATCH", body: payload })
+        : api(`/api/projects/${projectId}/epics`, { method: "POST", body: payload }),
+      { error: "Meilenstein konnte nicht gespeichert werden" },
+    );
 
-    setDialogOpen(false);
     setSaving(false);
+    if (saved === null) return;
+    setDialogOpen(false);
     fetchEpics();
   }
 
   async function handleDelete(epic: Epic) {
-    await fetch(`/api/projects/${projectId}/epics/${epic.id}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/projects/${projectId}/epics/${epic.id}`, { method: "DELETE" }),
+      { error: "Meilenstein konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     setDialogOpen(false);
     fetchEpics();
   }

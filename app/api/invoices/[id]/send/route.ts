@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 
 // ── Default HTML template ─────────────────────────────────────────────────────
 // Used when workspace.invoiceEmailTemplate is empty / not configured.
@@ -103,6 +103,7 @@ export async function POST(
   if (!invoice) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
+  if (!(await canAccessProjectRecord(session, invoice.projectId))) return forbidden();
 
   // 2. Fetch workspace settings
   const workspace = await prisma.workspace.findFirst();

@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 import crypto from "crypto";
 
 const proposalInclude = {
@@ -39,6 +39,7 @@ export async function GET(
   const { id } = await params;
   const proposal = await prisma.proposal.findUnique({ where: { id }, include: proposalInclude });
   if (!proposal) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, proposal.projectId))) return forbidden();
 
   return NextResponse.json(proposal);
 }
@@ -55,6 +56,9 @@ export async function PATCH(
 
   const existing = await prisma.proposal.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, existing.projectId))) return forbidden();
+  // Moving a proposal into another project requires access to that project too
+  if (body.projectId && !(await canAccessProjectRecord(session, body.projectId))) return forbidden();
 
   const updateData: Record<string, unknown> = {};
   if (body.title      !== undefined) updateData.title      = body.title;
@@ -110,6 +114,7 @@ export async function DELETE(
   const { id } = await params;
   const existing = await prisma.proposal.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessProjectRecord(session, existing.projectId))) return forbidden();
 
   await prisma.proposal.delete({ where: { id } });
   return NextResponse.json({ success: true });

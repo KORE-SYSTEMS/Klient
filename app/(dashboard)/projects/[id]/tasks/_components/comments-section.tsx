@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
 import type { TaskComment, ProjectMember } from "../_lib/types";
+import { api, run } from "@/lib/api";
 
 interface CommentsSectionProps {
   taskId: string;
@@ -71,11 +72,14 @@ export function CommentsSection({ taskId, members }: CommentsSectionProps) {
       if (newComment.includes(`@${displayName}`)) mentionedIds.push(m.id);
     }
     try {
-      await fetch(`/api/tasks/${taskId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newComment.trim(), mentions: mentionedIds }),
-      });
+      const posted = await run(
+        api(`/api/tasks/${taskId}/comments`, {
+          method: "POST",
+          body: { content: newComment.trim(), mentions: mentionedIds },
+        }),
+        { error: "Kommentar konnte nicht gesendet werden" },
+      );
+      if (posted === null) return; // keep the typed text
       setNewComment("");
       fetchComments();
     } finally {

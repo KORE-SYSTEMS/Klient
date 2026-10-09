@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import type { TaskFile } from "../_lib/types";
+import { api, run } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 interface FilesSectionProps {
   taskId: string;
@@ -36,7 +38,10 @@ export function FilesSection({ taskId, isClient, canUpload }: FilesSectionProps)
     const formData = new FormData();
     for (let i = 0; i < selectedFiles.length; i++) formData.append("files", selectedFiles[i]);
     try {
-      await fetch(`/api/tasks/${taskId}/files`, { method: "POST", body: formData });
+      const res = await fetch(`/api/tasks/${taskId}/files`, { method: "POST", body: formData });
+      if (!res.ok) {
+        toast({ title: "Upload fehlgeschlagen", description: "Dateien konnten nicht hochgeladen werden.", variant: "destructive" });
+      }
       fetchFiles();
     } finally {
       setUploading(false);
@@ -45,7 +50,11 @@ export function FilesSection({ taskId, isClient, canUpload }: FilesSectionProps)
   }
 
   async function handleDelete(fileId: string) {
-    await fetch(`/api/tasks/${taskId}/files?fileId=${fileId}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/tasks/${taskId}/files?fileId=${fileId}`, { method: "DELETE" }),
+      { error: "Datei konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     fetchFiles();
   }
 

@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { api, run } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -328,20 +329,22 @@ export default function InvoicesPage() {
 
   async function deleteInvoice(id: string) {
     if (!(await confirmDialog({ title: "Rechnung löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
-    const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
-    if (res.ok) {
+    const deleted = await run(
+      api(`/api/invoices/${id}`, { method: "DELETE" }),
+      { error: "Rechnung konnte nicht gelöscht werden" },
+    );
+    if (deleted !== null) {
       await fetchInvoices();
       toast({ title: "Rechnung gelöscht" });
     }
   }
 
   async function updateStatus(id: string, status: string) {
-    const res = await fetch(`/api/invoices/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) {
+    const updated = await run(
+      api(`/api/invoices/${id}`, { method: "PATCH", body: { status } }),
+      { error: "Status konnte nicht geändert werden" },
+    );
+    if (updated !== null) {
       await fetchInvoices();
       const cfg = STATUS_CONFIG[status];
       toast({ title: `Status: ${cfg?.label || status}`, variant: "success" });

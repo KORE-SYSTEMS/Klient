@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDuration } from "@/components/time-tracker";
 import { toast } from "@/hooks/use-toast";
+import { api, run } from "@/lib/api";
 
 /** Robust int-parse für Number-Inputs: NaN/leer → 0, sonst clamped int. */
 function parseIntField(value: string, max: number): number {
@@ -191,7 +192,11 @@ export function TimeEntriesSection({
   useEffect(() => { fetchEntries(); }, [fetchEntries]);
 
   async function deleteEntry(id: string) {
-    await fetch(`/api/time-entries/${id}`, { method: "DELETE" });
+    const ok = await run(
+      api(`/api/time-entries/${id}`, { method: "DELETE" }),
+      { error: "Zeiteintrag konnte nicht gelöscht werden" },
+    );
+    if (ok === null) return;
     fetchEntries();
     onUpdate();
   }

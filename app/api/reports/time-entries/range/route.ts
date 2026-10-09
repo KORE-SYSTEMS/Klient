@@ -26,14 +26,11 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = {
     duration: { gt: 0 },
     ...(userId ? { userId } : isAdmin ? {} : { userId: session.user.id }),
-    ...(projectId ? { task: { projectId } } : {}),
-    ...(!isAdmin && !projectId
-      ? {
-          task: {
-            project: { members: { some: { userId: session.user.id } } },
-          },
-        }
-      : {}),
+    // Non-admins only ever see entries of projects they are a member of
+    task: {
+      ...(projectId ? { projectId } : {}),
+      ...(!isAdmin ? { project: { members: { some: { userId: session.user.id } } } } : {}),
+    },
   };
 
   const [first, last] = await Promise.all([

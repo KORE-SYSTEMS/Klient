@@ -144,6 +144,8 @@ export function UpdateManager({ currentVersion, latestVersion, onUpdated }: Upda
           raw: evt.raw,
         },
       }));
+    } else if (evt.stage === "backup") {
+      setStatusText(evt.message || "Sicherung…");
     } else if (evt.stage === "recreate") {
       setStage("recreate");
       setStatusText(evt.message || "Recreating container…");

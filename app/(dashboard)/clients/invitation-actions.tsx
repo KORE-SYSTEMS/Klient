@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { confirmDialog } from "@/components/confirm-dialog";
+import { api, run } from "@/lib/api";
 
 export function DeleteInvitationButton({ id }: { id: string }) {
   const router = useRouter();
@@ -14,10 +15,12 @@ export function DeleteInvitationButton({ id }: { id: string }) {
     if (!(await confirmDialog({ title: "Einladung löschen?" }))) return;
     
     setLoading(true);
-    await fetch(`/api/invitations/${id}`, {
-      method: "DELETE",
-    });
+    const ok = await run(
+      api(`/api/invitations/${id}`, { method: "DELETE" }),
+      { error: "Einladung konnte nicht gelöscht werden" },
+    );
     setLoading(false);
+    if (ok === null) return;
     router.refresh();
   }
 

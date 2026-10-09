@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { api, run } from "@/lib/api";
 import { confirmDialog } from "@/components/confirm-dialog";
 import { ClientUser, ProjectMemberWithUser, BillingDefaults, FALLBACK_DEFAULTS, UNITS, formatCurrency, addDays } from "@/lib/billing";
 import { StatusBadge as BaseStatusBadge } from "@/components/billing/status-badge";
@@ -397,11 +398,11 @@ export default function GlobalInvoicesPage() {
   async function copyShareLink(inv: Invoice) {
     let token = inv.shareToken;
     if (!token) {
-      const res = await fetch(`/api/invoices/${inv.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ generateShareToken: true }),
-      });
-      if (res.ok) { const u = await res.json(); token = u.shareToken; setInvoices((prev) => prev.map((i) => i.id === inv.id ? { ...i, shareToken: u.shareToken } : i)); }
+      const u = await run(
+        api<Invoice>(`/api/invoices/${inv.id}`, { method: "PATCH", body: { generateShareToken: true } }),
+        { error: "Link konnte nicht erstellt werden" },
+      );
+      if (u) { token = u.shareToken; setInvoices((prev) => prev.map((i) => i.id === inv.id ? { ...i, shareToken: u.shareToken } : i)); }
     }
     if (token) {
       await navigator.clipboard.writeText(`${window.location.origin}/i/${token}`);
@@ -412,11 +413,11 @@ export default function GlobalInvoicesPage() {
   // ── Status change ──────────────────────────────────────────────────────────
 
   async function changeStatus(inv: Invoice, status: string) {
-    const res = await fetch(`/api/invoices/${inv.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
+    const updated = await run(
+      api<Invoice>(`/api/invoices/${inv.id}`, { method: "PATCH", body: { status } }),
+      { error: "Status konnte nicht geändert werden" },
+    );
+    if (updated) {
       setInvoices((prev) => prev.map((i) => i.id === updated.id ? updated : i));
       toast({ title: `Status auf „${STATUS_CONFIG[status]?.label}" geändert` });
     }
@@ -426,8 +427,11 @@ export default function GlobalInvoicesPage() {
 
   async function deleteInvoice(id: string) {
     if (!(await confirmDialog({ title: "Rechnung löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
-    const res = await fetch(`/api/invoices/${id}`, { method: "DELETE" });
-    if (res.ok) {
+    const deleted = await run(
+      api(`/api/invoices/${id}`, { method: "DELETE" }),
+      { error: "Rechnung konnte nicht gelöscht werden" },
+    );
+    if (deleted !== null) {
       setInvoices((prev) => prev.filter((i) => i.id !== id));
       toast({ title: "Rechnung gelöscht" });
     }

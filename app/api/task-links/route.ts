@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminOrMember } from "@/lib/auth-guard";
+import { requireAdminOrMember, canAccessProjectRecord, forbidden } from "@/lib/auth-guard";
 
 export async function POST(request: NextRequest) {
   const session = await requireAdminOrMember();
@@ -16,6 +16,18 @@ export async function POST(request: NextRequest) {
 
     if (sourceTaskId === targetTaskId) {
       return NextResponse.json({ error: "Cannot link a task to itself" }, { status: 400 });
+    }
+
+    // Both tasks must exist and be in projects the caller can access
+    const linkedTasks = await prisma.task.findMany({
+      where: { id: { in: [sourceTaskId, targetTaskId] } },
+      select: { projectId: true },
+    });
+    if (linkedTasks.length !== 2) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+    for (const t of linkedTasks) {
+      if (!(await canAccessProjectRecord(session, t.projectId))) return forbidden();
     }
 
     // Check if link already exists

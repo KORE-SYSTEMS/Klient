@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, MessageSquare } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { EmptyState } from "@/components/empty-state";
+import { api, run } from "@/lib/api";
 import { useRefetchOnFocus } from "@/hooks/use-refetch-on-focus";
 
 interface Message {
@@ -68,13 +69,13 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim()) return;
     setSending(true);
-    await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, content: input }),
-    });
-    setInput("");
+    const sent = await run(
+      api("/api/messages", { method: "POST", body: { projectId, content: input } }),
+      { error: "Nachricht konnte nicht gesendet werden" },
+    );
     setSending(false);
+    if (sent === null) return; // keep the typed text
+    setInput("");
     fetchMessages();
   }
 

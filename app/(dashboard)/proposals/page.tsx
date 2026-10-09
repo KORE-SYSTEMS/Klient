@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { api, run } from "@/lib/api";
 import { confirmDialog } from "@/components/confirm-dialog";
 import { ClientUser, ProjectMemberWithUser, BillingDefaults, FALLBACK_DEFAULTS, UNITS, formatCurrency } from "@/lib/billing";
 import { StatusBadge as BaseStatusBadge } from "@/components/billing/status-badge";
@@ -412,8 +413,11 @@ export default function ProposalsPage() {
 
   async function deleteProposal(id: string) {
     if (!(await confirmDialog({ title: "Angebot löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden." }))) return;
-    const res = await fetch(`/api/proposals/${id}`, { method: "DELETE" });
-    if (res.ok) {
+    const deleted = await run(
+      api(`/api/proposals/${id}`, { method: "DELETE" }),
+      { error: "Angebot konnte nicht gelöscht werden" },
+    );
+    if (deleted !== null) {
       setProposals((prev) => prev.filter((p) => p.id !== id));
       toast({ title: "Angebot gelöscht" });
     }
@@ -658,13 +662,11 @@ export default function ProposalsPage() {
                           key={s}
                           disabled={p.status === s}
                           onClick={async () => {
-                            const res = await fetch(`/api/proposals/${p.id}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ status: s }),
-                            });
-                            if (res.ok) {
-                              const updated = await res.json();
+                            const updated = await run(
+                              api<Proposal>(`/api/proposals/${p.id}`, { method: "PATCH", body: { status: s } }),
+                              { error: "Status konnte nicht geändert werden" },
+                            );
+                            if (updated) {
                               setProposals((prev) => prev.map((x) => x.id === updated.id ? updated : x));
                               toast({ title: `Status auf „${STATUS_CONFIG[s]?.label}" geändert` });
                             }

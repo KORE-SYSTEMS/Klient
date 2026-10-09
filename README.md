@@ -171,6 +171,23 @@ All data lives in two directories:
 | `/app/data` | SQLite database + session secret |
 | `/app/uploads` | Uploaded files |
 
+### Built-in backups
+
+Klient creates backups itself (**Settings → Backup**, admin only):
+
+- a consistent snapshot of the database plus the uploads, packed as one `.tar.gz`
+- once a day automatically, on demand ("Jetzt sichern"), and **before every in-app update**
+- stored in `/app/data/backups` (inside the existing data volume — no extra mount needed);
+  set `KLIENT_BACKUP_DIR` to use a separate volume
+- old automatic / pre-update backups are pruned (counts configurable); manual ones are kept
+
+> The default location shares a volume with the database. For real disaster safety, also copy
+> the `backups` folder somewhere else (e.g. an Unraid share synced elsewhere).
+
+Restore is intentionally manual — see the instructions on the Backup settings page.
+
+### Manual backup
+
 ```bash
 # Backup
 cp /path/to/klient/data/klient.db backup_$(date +%Y%m%d).db
@@ -188,6 +205,7 @@ cp -r /path/to/klient/uploads/ backup_uploads/
 | `NEXTAUTH_URL` | auto-detected | Only needed behind a reverse proxy |
 | `NEXTAUTH_SECRET` | auto-generated | Session secret, persisted in `/app/data` |
 | `DATABASE_URL` | `file:/app/data/klient.db` | SQLite path |
+| `KLIENT_BACKUP_DIR` | `/app/data/backups` | Where built-in backups are stored |
 
 ---
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-guard";
 import { detectCapabilities, pullImage, scheduleSelfRecreate } from "@/lib/docker-update";
+import { createBackup } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,19 @@ export async function POST(_req: NextRequest) {
 
       try {
         send({ stage: "start", image: caps.imageRef });
+
+        // Safety net: snapshot data before swapping the container. A failed backup
+        // is reported but does not block the update (e.g. backup folder not writable).
+        try {
+          send({ stage: "backup", message: "Sicherung wird erstellt…" });
+          const backup = await createBackup("pre-update");
+          send({ stage: "backup", message: `Sicherung erstellt: ${backup.name}` });
+        } catch (e: any) {
+          send({
+            stage: "backup",
+            message: `Sicherung fehlgeschlagen (${e?.message || e}) – Update läuft trotzdem weiter.`,
+          });
+        }
 
         await pullImage(caps.imageRef!, (line) => {
           // Docker stream shapes: { status, id, progressDetail: {current,total}, progress }

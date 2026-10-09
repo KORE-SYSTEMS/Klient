@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, Copy, Check, Link, User } from "lucide-react";
+import { api, run } from "@/lib/api";
 
 export function ClientActions() {
   const router = useRouter();
@@ -36,27 +37,25 @@ export function ClientActions() {
     const emailValue = form.get("email");
     const emailData = emailValue ? emailValue.toString().trim() : "";
 
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: emailData,
-        name: form.get("name"),
-        createDirectly,
+    const data = await run(
+      api<{ token?: string; emailSent?: boolean }>("/api/clients", {
+        method: "POST",
+        body: { email: emailData, name: form.get("name"), createDirectly },
       }),
-    });
+      { error: createDirectly ? "Kunde konnte nicht angelegt werden" : "Einladung konnte nicht erstellt werden" },
+    );
 
-    const data = await res.json();
-    if (res.ok && data.token && !createDirectly) {
+    setLoading(false);
+    if (!data) return;
+    if (data.token && !createDirectly) {
       const link = `${window.location.origin}/invite/${data.token}`;
       setInviteLink(link);
       setEmailSent(!!data.emailSent);
       setLoaded(true);
-    } else if (res.ok && createDirectly) {
+    } else if (createDirectly) {
       setOpen(false);
       setInviteLink("");
     }
-    setLoading(false);
     router.refresh();
   }
 
