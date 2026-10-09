@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -90,6 +91,11 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Wird angemeldet..." : "Anmelden"}
             </Button>
+            <div className="text-center text-sm">
+              <Link href="/forgot-password" className="text-muted-foreground hover:underline">
+                Passwort vergessen?
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

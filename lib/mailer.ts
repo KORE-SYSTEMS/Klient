@@ -187,3 +187,63 @@ export async function sendNotificationEmail({
     return { sent: false, reason: "SMTP error" };
   }
 }
+
+// --- Password reset email ---
+
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetLink,
+}: {
+  to: string;
+  name?: string | null;
+  resetLink: string;
+}) {
+  const workspace = await prisma.workspace.findFirst();
+  if (!workspace?.smtpHost || !workspace?.smtpUser || !workspace?.smtpPass) {
+    return { sent: false, reason: "SMTP not configured" };
+  }
+
+  const primaryColor = workspace.primaryColor || "#E8520A";
+  const workspaceName = workspace.name || "Klient";
+  const html = `<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Passwort zurücksetzen</title></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#111111;border-radius:8px;overflow:hidden;border:1px solid #1f1f1f;">
+        <tr><td style="background:${primaryColor};padding:24px 40px;"><h1 style="margin:0;color:#fff;font-size:18px;font-weight:700;">${workspaceName}</h1></td></tr>
+        <tr><td style="padding:32px 40px;">
+          <h2 style="margin:0 0 12px;color:#f5f5f5;font-size:18px;font-weight:600;">Hallo${name ? ` ${name}` : ""},</h2>
+          <p style="margin:0 0 24px;color:#a1a1aa;font-size:14px;line-height:1.6;">Für dein Konto wurde das Zurücksetzen des Passworts angefordert. Der Link ist 1 Stunde gültig.</p>
+          <div style="text-align:center;margin:28px 0;"><a href="${resetLink}" style="display:inline-block;background:${primaryColor};color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600;">Neues Passwort festlegen</a></div>
+          <p style="margin:0;color:#71717a;font-size:12px;word-break:break-all;">${resetLink}</p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;border-top:1px solid #1f1f1f;text-align:center;">
+          <p style="margin:0;color:#52525b;font-size:11px;">Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const transporter = nodemailer.createTransport({
+    host: workspace.smtpHost,
+    port: workspace.smtpPort || 587,
+    secure: (workspace.smtpPort || 587) === 465,
+    auth: { user: workspace.smtpUser, pass: workspace.smtpPass },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: workspace.smtpFrom || workspace.smtpUser,
+      to,
+      subject: `Passwort zurücksetzen – ${workspaceName}`,
+      html,
+    });
+    return { sent: true };
+  } catch (e) {
+    console.error("sendPasswordResetEmail failed:", e);
+    return { sent: false, reason: "SMTP error" };
+  }
+}

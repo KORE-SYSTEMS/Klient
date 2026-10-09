@@ -10,7 +10,9 @@ export default auth((req) => {
   // Public routes — no auth required
   const isInvitePage = pathname.startsWith("/invite");
   const isInviteApi = pathname.startsWith("/api/invitations");
-  const isAuthPage = pathname.startsWith("/login") || isInvitePage;
+  const isResetPage =
+    pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password");
+  const isAuthPage = pathname.startsWith("/login") || isInvitePage || isResetPage;
   const isSetup = pathname.startsWith("/setup") || pathname.startsWith("/api/setup");
   const isApiAuth = pathname.startsWith("/api/auth");
 

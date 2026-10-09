@@ -2,14 +2,201 @@
 
 > Wird nach jedem abgeschlossenen Schritt aktualisiert. Alles unter "In Arbeit" ist die aktuelle Position.
 
-**Letzte Aktualisierung:** 2026-04-30
+**Letzte Aktualisierung:** 2026-05-06
 
 ---
 
 ## Aktueller Stand
 
 **Phase:** P3.8 (Recurring Tasks) abgeschlossen ✅
-**Nächste Phase:** P3.9 — Automations · P5.1 — SSE · P4.2 — Timeline/Gantt
+**Nächste Phase:** **PX.0 — Design-Overhaul** (Blocker vor weiteren Feature-Phasen)
+
+---
+
+## ⚠ PX.0 · Design-Overhaul — TEIL 1 ABGESCHLOSSEN ✅ (Foundation + Hauptseiten)
+
+**Status:** Foundation + Sidebar/Topbar/Layout + Dashboard + TaskCard + Kanban + MyDay + Inbox überarbeitet.
+
+**Was wurde geändert:**
+
+**Foundation (`globals.css`, Tokens):**
+- Border heller (`0 0% 13%` → `0 0% 15%`) für bessere Sichtbarkeit
+- Muted-foreground heller (`52%` → `55%`) — bessere Lesbarkeit
+- Radius `0.5rem` → `0.625rem` (shadcn v4 Standard)
+- Eigene Sidebar-Tokens (`--sidebar`, `--sidebar-border` etc.)
+- Shadow-Skala: `--shadow-xs` neu, `--shadow-sm` weicher
+- Compact-Mode-Padding entspannt: `1.25rem` → `1.5rem`, Cards `0.75rem` → `1rem`
+
+**Base-Komponenten (shadcn v4 Niveau):**
+- `Button`: neue `xs`/`icon-xs`/`icon-sm` Sizes, `gap-2`, `shadow-xs`, Focus-Ring `[3px] ring-ring/50`, `[&_svg]` shrinks-0
+- `Card`: `rounded-sm` → `rounded-xl`, `flex-col gap-6 py-6`, `shadow-sm` — endlich konsistente innere Spacing
+- `Badge`: `rounded-sm` → `rounded-full`, neue `ghost` Variant, `gap-1`, transparenter Border
+
+**Layout:**
+- Sidebar: eigene Hintergrundfarbe (sidebar-token), Active-State `bg-primary/10 text-primary` → `bg-accent text-foreground` + 3px Primary-Strich (Primary nur als Akzent), Items `rounded-sm` → `rounded-lg`, mehr Spacing (space-y-0.5 → space-y-1, py-3 → py-4, space-y-4 → space-y-6)
+- Topbar: `bg-card` → `bg-background` (klarere Trennung zur Sidebar)
+- Main-Padding: `p-8` → `px-8 py-10`
+
+**Dashboard:**
+- Section-Spacing `space-y-6` → `space-y-8`
+- Card-Header pb-3-Hack raus (Card hat jetzt eigenes Spacing)
+- StatCard: `p-4 mb-1` → `p-5 mb-2`, neuer `shadow-sm`
+- Listen-Items: Padding größer (`px-3 py-2.5` → `px-3.5 py-3`), Hover `hover:bg-accent` → `hover:bg-accent/60`
+- Icons im Card-Header: `text-primary` → `text-muted-foreground` (außer warning-Icons)
+- Hover-Titel `group-hover:text-primary` → `group-hover:text-foreground`
+- Project-Grid Gap `gap-2` → `gap-3`
+
+**Task-Board (Kanban):**
+- TaskCard: `p-3.5` → `p-4`, neuer `shadow-sm` + `hover:border-border/80`, `space-y-3` → `space-y-3.5`
+- Kolumnen: `min-w-[280px]` → `min-w-[300px]`, `rounded-lg` → `rounded-xl`, Drop-State `bg-primary/5` → `bg-accent/40`, mehr Header-Padding
+- Card-Spacing in Spalte: `space-y-2` → `space-y-2.5`
+- "Task hinzufügen"-Button: weicheres Hover
+
+**My Day:**
+- Greeting-Icon: `bg-primary/10 text-primary` → `bg-muted text-foreground` (Primary entfernt)
+- Section-Spacing `space-y-6` → `space-y-8`, Stats-Gap `gap-3` → `gap-4`
+- StatCard: `p-3` → `p-4 shadow-sm`, mehr inneres Spacing
+- Heute-Bucket: `text-primary bg-primary/10` → `text-foreground bg-muted`
+- Bucket-Container: `rounded-lg border` → `rounded-xl border bg-card shadow-sm`
+- Task-Rows: mehr vertikales Padding, weichere Hover
+
+**Inbox:**
+- Header-Icon: `text-primary` → `text-muted-foreground`
+- Filter-Chips Gap `gap-1.5` → `gap-2`
+- Liste: `rounded-lg border` → `rounded-xl border bg-card shadow-sm`
+- Ungelesen-Background: `bg-primary/5` → `bg-accent/30` (subtiler, weniger orange)
+- Type-Counts (inaktiv): `bg-primary/15 text-primary` → `bg-muted text-foreground`
+
+**Verifiziert:** `tsc --noEmit` grün — keine Type-Fehler.
+
+---
+
+## ✅ PX.1 · Design-Overhaul — TEIL 2 ABGESCHLOSSEN (restliche Pages)
+
+**Zusätzlich gemacht:**
+- **Projects-List**: `space-y-6` → `space-y-8`, Card mit `gap-4 py-5 hover:border-border/80`
+- **Tasks-Page (List-View)**: `bg-primary` Badge/Filter-Buttons → `bg-foreground text-background`, Container `rounded-lg` → `rounded-xl bg-card shadow-sm`
+- **Task-Filter Chips**: Active-State `border-primary/40 bg-primary/10 text-primary` → `border-foreground/30 bg-accent text-foreground` (Primary nur noch im "Mehr Filter" Counter)
+- **Tab-Nav (Project-Detail)**: Active-Border/Text `border-primary text-primary` → `border-foreground text-foreground`
+- **Clients-Page**: Avatar-Fallback `bg-primary/10 text-primary` → `bg-muted text-foreground`, Card `gap-4 py-5 hover:border-border/80`, Hover-Texts auf foreground
+- **Invoices/Proposals**: Check-Icons im Status-Dropdown → `text-foreground`
+- **Settings (Update verfügbar)**: `bg-primary/10 text-primary` → `bg-warning/10 text-warning` (semantisch korrekter)
+- **Sub-Sections** (Tasks): Subtasks-Toggle, Import-Dialog-Icon, Task-Filter Check-Icon → `text-foreground`/`text-muted-foreground`
+
+**Was bewusst Primary geblieben ist (semantisch korrekt):**
+- Aktive Filter-Button im "Mehr Filter"-Counter (CTA)
+- Selected-State auf TaskCards (`ring-2 ring-primary`)
+- Drag-Overlay Placeholder
+- Today-Highlight im Kalender
+- Running-Timer Indicator (live-Status)
+- Recurrence-Picker aktive Toggles
+- Reports-Charts (Datenvisualisierung)
+- Progress-Bars (Fortschritt)
+- Mention-Highlight in Comments
+
+**Verifiziert:** `tsc --noEmit` grün — keine Type-Fehler.
+
+**Visuelle Verifikation steht aus** — Worktree hat keine `.env`-DB. Sobald die App läuft, kann man die Änderungen im Browser checken.
+
+---
+
+## 🎯 PX.2 · UX-Roadmap (aus UX-Audit 2026-05-10)
+
+> Vollständiges Audit: siehe **`UX_AUDIT.md`** im Repo-Root. Ziel: großer Funktionsumfang ohne Überladung, schnelle Bearbeitung, bessere Client-UX.
+
+### Hauptbefunde aus dem Audit
+
+**Globale Patterns die fehlen:**
+- `Cmd+Enter` zum Speichern fehlt in allen Forms (Task-Dialog, Kommentare, Epic, Spalten, Invoice)
+- Native `confirm()`/`alert()` an 4 Stellen statt shadcn `AlertDialog`
+- Kein Autosave-Indikator im Task-Dialog (User weiß nicht ob gespeichert)
+- Fetch-Fehler werden still geschluckt (kein Inline-Error-State, kein Retry)
+- View-Mode (Board/Liste/Kalender) nicht in URL → SavedViews verlieren View
+
+**Client-UX Lücken (Priorität!):**
+- Clients können keine Anfragen/Feedback-Tasks selbst erstellen
+- Keine Fortschrittsanzeige auf Projekt-Cards für Clients (wichtigster Kontext fehlt)
+- Abnahme-Workflow versteckt — keine dedizierte `/approvals`-Route in Sidebar
+- Time-Entries für Clients unleserlich (rohe Tabelle statt "X Stunden abgerechnet"-Summary)
+- Clients können keine eigenen Files (Briefings, Brand-Assets) hochladen
+
+**Speed-of-Use Bremsen:**
+- Status, Assignee, DueDate, Priorität alle nur über Task-Dialog änderbar (kein Inline-Edit in List-View / Cards)
+- Kein `Cmd+Enter` für Comment-Submit (größter Power-User-Breaker)
+- Form-Hierarchie falsch: Epic-Feld steht oben, Titel danach
+
+**Information Density:**
+- TaskCard mit bis zu 12 sichtbaren Elementen (Tags wrappen → ungleiche Card-Heights)
+- Filter-Bar bricht auf 13"-Laptops bei 7 Elementen in einer Zeile
+- Dashboard für Clients zu wenig informativ (Progress fehlt)
+
+### Priorisierte Roadmap
+
+**P-UX-1 · Quick Wins (gesamt < 1 Tag):**
+- [ ] `Cmd+Enter` in Task-Form + Comment-Textarea
+- [ ] Autofocus auf Titel-Input beim Task-Dialog
+- [ ] Form-Order: Titel zuerst, Epic ans Ende
+- [ ] `AlertDialog` für 4× `confirm()`/`alert()`
+- [ ] Unread-Badge auf Inbox-Sidebar-Item
+- [ ] `href="/tasks?due=overdue"` an Überfällig-StatCard
+- [ ] shadcn `Switch` statt nacktem Checkbox für `clientVisible`
+- [ ] `!`-Badge in "Mehr Filter" → Zahl
+- [ ] URL-Param `?view=kanban|list|calendar|timeline`
+
+**P-UX-2 · Mittel (gesamt ~1 Woche):**
+- [ ] Inline Status-Toggle in List-View (Klick auf Badge → Mini-Popover)
+- [ ] Inline Assignee-Toggle (Avatar-Klick → Members-Dropdown) in Card + List
+- [ ] Inline Due-Date-Picker in List-View
+- [ ] Progress-Bar auf Projekt-Cards (für Clients essentiell)
+- [ ] Dedicated `/approvals`-Seite für Clients + Sidebar-Eintrag
+- [ ] Toast + Retry bei Fetch-Fehlern (tasks/page.tsx, my-day/page.tsx)
+
+**P-UX-3 · Größere Features (je > 3 Tage):**
+- [ ] Client Request/Feedback-Flow (Clients erstellen Tasks mit `clientVisible + PENDING` → Team-Inbox)
+- [ ] Side-Panel statt zentrierter Dialog (Linear-Style) für Task-Detail
+- [ ] Drag zwischen My-Day-Buckets oder "Auf Heute setzen"-Action
+- [ ] Markdown in Task-Beschreibung mit Preview-Toggle
+- [ ] Client-Zeitübersicht: "X Stunden abgerechnet"-Summary, optional exportierbar
+
+**Empfohlene Reihenfolge:**
+1. P-UX-1 komplett (1 Tag) → spürbarer Speed-Boost
+2. Progress-Bar auf Projekt-Cards + `/approvals`-Route (P-UX-2 Client-Block) → größter Client-Wert
+3. Inline-Edits in List-View (P-UX-2 Speed-Block) → Power-User-Workflow
+4. Side-Panel + Markdown (P-UX-3) → strategisch, schöneres Endspiel
+
+**Problem-Analyse:**
+
+Das aktuelle Design hat mehrere grundlegende Schwächen, die sich durch die schnelle Feature-Entwicklung akkumuliert haben:
+
+1. **Zu wenig Spacing / gequetschtes Layout** — Elemente stehen zu eng beieinander, fehlende Abstände zwischen Sections, Cards, Buttons und Inline-Elementen. Braucht konsistente Spacing-Skala (8px-Grid).
+2. **Überlappende Elemente** — Komponenten überlagern sich teilweise, z.B. in dichten Views (Kanban-Cards, Dialog-Sections, Filter-Bars). Klare Trennung und ausreichend Breathing-Room nötig.
+3. **Highlight-/Accent-Color zu häufig eingesetzt** — Primary-Color wird inflationär verwendet (Buttons, Badges, Pills, Links, Hover-States gleichzeitig). Muss reduziert werden auf gezielte CTA-Elemente. Restliche UI neutral/muted halten.
+4. **Buttons passen nicht zum Stil** — Inkonsistente Button-Styles (Größen, Radii, Padding, Varianten). Müssen an ein einheitliches System angepasst werden.
+5. **Generell kein kohärentes Design-System** — Einzelne Komponenten sehen isoliert okay aus, aber das Gesamtbild wirkt zusammengewürfelt.
+
+**Design-Richtung:**
+
+- **Referenz:** [shadcn/ui](https://ui.shadcn.com/) als Baseline für Spacing, Typografie, Farbbalance und Komponentenstruktur
+- **Ziel:** shadcn-Qualität als Fundament, aber visuell ansprechender/moderner ("sexier") — z.B. subtilere Animationen, elegantere Card-Designs, bessere visuelle Hierarchie
+- **Kernprinzipien:**
+  - Mehr Whitespace, großzügigere Abstände
+  - Zurückhaltender Farb-Einsatz (Accent nur für primäre CTAs)
+  - Konsistente Komponentengrößen und -abstände
+  - Klare visuelle Hierarchie durch Typografie und Spacing statt durch Farbe
+  - Buttons: einheitliches System (default/destructive/outline/ghost/link) wie shadcn, aber mit eigenem Feinschliff
+
+**Scope (noch zu definieren):**
+
+- [ ] Spacing-Audit: alle Pages durchgehen, Gap/Padding/Margin vereinheitlichen
+- [ ] Color-Audit: Primary-Farbe auf CTAs reduzieren, Rest muted/neutral
+- [ ] Button-Overhaul: Varianten + Sizes an shadcn-System angleichen
+- [ ] Card/Container-Spacing: innere Padding + Abstände zwischen Cards
+- [ ] Dialog-Layout: Sections besser trennen, Scrolling-Verhalten prüfen
+- [ ] Kanban-Board: Card-Spacing, Column-Spacing, Overflow-Handling
+- [ ] Filter-Bar / Toolbar: Abstände, Alignment, visuelles Gewicht
+- [ ] Typography-Hierarchy: Headings, Labels, Body-Text klarer staffeln
+- [ ] Hover/Focus-States: subtiler, weniger "laut"
+- [ ] Global CSS Tokens: Spacing-Skala, Border-Radii, Schatten konsolidieren
 
 ---
 
