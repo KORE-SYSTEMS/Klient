@@ -3,6 +3,10 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
+import { clearFailures, isLimited, recordFailure } from "@/lib/rate-limit";
+
+const LOGIN_MAX_FAILURES = 8;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -16,17 +20,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const limitKey = `login:${(credentials.email as string).trim().toLowerCase()}`;
+        if (isLimited(limitKey, LOGIN_MAX_FAILURES)) return null;
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.password || !user.active) return null;
-
-        const isValid = await compare(
-          credentials.password as string,
-          user.password
-        );
-        if (!isValid) return null;
+        const isValid =
+          !!user?.password &&
+          user.active &&
+          (await compare(credentials.password as string, user.password));
+        if (!user || !isValid) {
+          recordFailure(limitKey, LOGIN_WINDOW_MS);
+          return null;
+        }
+        clearFailures(limitKey);
 
         return {
           id: user.id,

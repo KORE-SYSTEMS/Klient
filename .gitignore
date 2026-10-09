@@ -47,3 +47,10 @@ postgres_data/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local SQLite dev databases (production DB lives in /app/data)
+*.db
+*.db-journal
+
+# Claude Code local memory
+.claude/projects/

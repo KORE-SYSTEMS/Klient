@@ -16,7 +16,13 @@ export default auth((req) => {
   const isSetup = pathname.startsWith("/setup") || pathname.startsWith("/api/setup");
   const isApiAuth = pathname.startsWith("/api/auth");
 
-  if (isApiAuth || isSetup || isInviteApi) return;
+  // Token-gated share links for invoices (/i) and proposals (/p) — the token is the credential
+  const isPublicShare =
+    pathname.startsWith("/i/") ||
+    pathname.startsWith("/p/") ||
+    pathname.startsWith("/api/public/");
+
+  if (isApiAuth || isSetup || isInviteApi || isPublicShare) return;
 
   if (!isLoggedIn && !isAuthPage) {
     return Response.redirect(new URL("/login", req.nextUrl));

@@ -268,6 +268,8 @@ export default function InvoicesPage() {
       .catch(() => {});
   }, [fetchInvoices]);
 
+  const formTotal = useMemo(() => calcTotal(formItems), [formItems]);
+
   // Clients can't access this page
   if (isClient) {
     return (
@@ -391,8 +393,6 @@ export default function InvoicesPage() {
   const totalDraft  = invoices.filter((i) => i.status === "DRAFT").reduce((s, i) => s + calcTotal(i.items), 0);
   const totalSent   = invoices.filter((i) => i.status === "SENT").reduce((s, i)  => s + calcTotal(i.items), 0);
   const totalPaid   = invoices.filter((i) => i.status === "PAID").reduce((s, i)  => s + calcTotal(i.items), 0);
-
-  const formTotal = useMemo(() => calcTotal(formItems), [formItems]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 

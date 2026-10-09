@@ -444,7 +444,7 @@ export default function BillingSettingsPage() {
                 Einleitungstexte
               </CardTitle>
               <CardDescription>
-                Erscheinen im PDF direkt unter dem Titel "Rechnung" bzw. "Angebot".
+                Erscheinen im PDF direkt unter dem Titel &quot;Rechnung&quot; bzw. &quot;Angebot&quot;.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -481,7 +481,7 @@ export default function BillingSettingsPage() {
                 Standard-Anmerkungen
               </CardTitle>
               <CardDescription>
-                Werden im PDF unter den Positionen als "Anmerkungen" angezeigt.
+                Werden im PDF unter den Positionen als &quot;Anmerkungen&quot; angezeigt.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">

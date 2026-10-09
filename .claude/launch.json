@@ -2,10 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "coasty-web",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "cd /d D:\\AppDev\\Coasty\\app && npx expo start --web --port 8081"],
-      "port": 8081
+      "name": "klient-dev",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DATABASE_URL=file:/private/tmp/claude-501/-Users-nikosmacbook-Coding-App-Development-Klient/93cc90c0-0445-41ae-89b2-2e1c7deb172e/scratchpad/test.db",
+        "NEXTAUTH_SECRET=local-test-secret",
+        "NEXTAUTH_URL=http://localhost:3100",
+        "npx", "next", "dev", "-p", "3100"
+      ],
+      "port": 3100
     }
   ]
 }
