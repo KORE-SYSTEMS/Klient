@@ -73,6 +73,8 @@ interface Invoice {
   title: string;
   status: string;
   dueDate?: string | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
   issuedAt: string;
   paidAt?: string | null;
   notes?: string | null;
@@ -165,6 +167,8 @@ export default function InvoicesPage() {
   const [formNumber,  setFormNumber]  = useState("");
   const [formStatus,  setFormStatus]  = useState("DRAFT");
   const [formDueDate, setFormDueDate] = useState("");
+  const [formPeriodStart, setFormPeriodStart] = useState("");
+  const [formPeriodEnd, setFormPeriodEnd] = useState("");
   const [formNotes,   setFormNotes]   = useState("");
   const [formIntro,   setFormIntro]   = useState("");
   const [formItems,   setFormItems]   = useState<InvoiceItem[]>([EMPTY_ITEM()]);
@@ -280,6 +284,8 @@ export default function InvoicesPage() {
       setFormNumber(invoice.number);
       setFormStatus(invoice.status);
       setFormDueDate(invoice.dueDate ? invoice.dueDate.split("T")[0] : "");
+      setFormPeriodStart(invoice.periodStart ? invoice.periodStart.split("T")[0] : "");
+      setFormPeriodEnd(invoice.periodEnd ? invoice.periodEnd.split("T")[0] : "");
       setFormNotes(invoice.notes || "");
       setFormIntro((invoice as Invoice & { intro?: string | null }).intro || "");
       setFormItems(invoice.items.length ? invoice.items : [EMPTY_ITEM()]);
@@ -288,6 +294,8 @@ export default function InvoicesPage() {
       setFormNumber("");
       setFormStatus("DRAFT");
       setFormDueDate(addDays(new Date(), defaults.paymentTermsDays).toISOString().slice(0, 10));
+      setFormPeriodStart("");
+      setFormPeriodEnd("");
       setFormNotes(defaults.defaultInvoiceNotes ?? "");
       setFormIntro(defaults.defaultInvoiceIntro ?? "");
       setFormItems([EMPTY_ITEM(defaults.defaultHourlyRate ?? 0)]);
@@ -320,6 +328,8 @@ export default function InvoicesPage() {
         number:  formNumber.trim() || undefined,
         status:  formStatus,
         dueDate: formDueDate || null,
+        periodStart: formPeriodStart || null,
+        periodEnd: formPeriodEnd || null,
         notes:   formNotes.trim() || null,
         intro:   formIntro.trim() || null,
         items:   formItems.filter((i) => i.description.trim()),
@@ -613,6 +623,17 @@ export default function InvoicesPage() {
               <div className="space-y-1.5">
                 <Label>Fälligkeitsdatum</Label>
                 <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Leistungszeitraum von</Label>
+                <DatePicker value={formPeriodStart} onChange={setFormPeriodStart} placeholder="Automatisch" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Leistungszeitraum bis</Label>
+                <DatePicker value={formPeriodEnd} onChange={setFormPeriodEnd} placeholder="Automatisch" />
               </div>
             </div>
 

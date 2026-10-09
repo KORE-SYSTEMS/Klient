@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   if (session instanceof NextResponse) return session;
 
   const body = await request.json();
-  const { projectId, title, number, status, dueDate, notes, intro, items, taxRate } = body;
+  const { projectId, title, number, status, dueDate, periodStart, periodEnd, notes, intro, items, taxRate } = body;
 
   if (!projectId || !title) {
     return NextResponse.json({ error: "projectId and title are required" }, { status: 400 });
@@ -137,6 +137,8 @@ export async function POST(request: NextRequest) {
       status: status || "DRAFT",
       taxRate: resolvedTaxRate,
       dueDate: dueDate ? new Date(dueDate) : null,
+      periodStart: periodStart ? new Date(periodStart) : null,
+      periodEnd: periodEnd ? new Date(periodEnd) : null,
       notes: notes || null,
       intro: intro || null,
       items: items?.length

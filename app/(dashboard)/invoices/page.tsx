@@ -96,6 +96,8 @@ interface Invoice {
   taxRate: number;
   shareToken?: string | null;
   dueDate?: string | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
   issuedAt: string;
   paidAt?: string | null;
   notes?: string | null;
@@ -233,6 +235,8 @@ export default function GlobalInvoicesPage() {
   const [formNumber,    setFormNumber]    = useState("");
   const [formStatus,    setFormStatus]    = useState("DRAFT");
   const [formDueDate,   setFormDueDate]   = useState("");
+  const [formPeriodStart, setFormPeriodStart] = useState("");
+  const [formPeriodEnd,   setFormPeriodEnd]   = useState("");
   const [formNotes,     setFormNotes]     = useState("");
   const [formIntro,     setFormIntro]     = useState("");
   const [formTaxRate,   setFormTaxRate]   = useState(19);
@@ -358,6 +362,8 @@ export default function GlobalInvoicesPage() {
     // Default-Due-Date aus paymentTermsDays
     const due = addDays(new Date(), defaults.paymentTermsDays);
     setFormDueDate(due.toISOString().slice(0, 10));
+    setFormPeriodStart("");
+    setFormPeriodEnd("");
     setFormNotes(defaults.defaultInvoiceNotes ?? "");
     setFormIntro(defaults.defaultInvoiceIntro ?? "");
     setFormTaxRate(defaults.defaultTaxRate);
@@ -372,6 +378,8 @@ export default function GlobalInvoicesPage() {
     setFormNumber(inv.number);
     setFormStatus(inv.status);
     setFormDueDate(inv.dueDate ? inv.dueDate.split("T")[0] : "");
+    setFormPeriodStart(inv.periodStart ? inv.periodStart.split("T")[0] : "");
+    setFormPeriodEnd(inv.periodEnd ? inv.periodEnd.split("T")[0] : "");
     setFormNotes(inv.notes ?? "");
     setFormIntro((inv as Invoice & { intro?: string | null }).intro ?? "");
     setFormTaxRate(inv.taxRate ?? 19);
@@ -399,6 +407,8 @@ export default function GlobalInvoicesPage() {
         status:    formStatus,
         taxRate:   formTaxRate,
         dueDate:   formDueDate || null,
+        periodStart: formPeriodStart || null,
+        periodEnd:   formPeriodEnd || null,
         notes:     formNotes.trim() || null,
         intro:     formIntro.trim() || null,
         items:     formItems.filter((i) => i.description.trim()),
@@ -829,6 +839,17 @@ export default function GlobalInvoicesPage() {
               <div className="space-y-1.5">
                 <Label>Fälligkeitsdatum</Label>
                 <DatePicker value={formDueDate} onChange={setFormDueDate} placeholder="Kein Datum" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Leistungszeitraum von</Label>
+                <DatePicker value={formPeriodStart} onChange={setFormPeriodStart} placeholder="Automatisch" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Leistungszeitraum bis</Label>
+                <DatePicker value={formPeriodEnd} onChange={setFormPeriodEnd} placeholder="Automatisch" />
               </div>
             </div>
 

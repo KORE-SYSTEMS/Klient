@@ -48,6 +48,8 @@ export async function PATCH(
   if (body.intro   !== undefined) updateData.intro   = body.intro || null;
   if (body.taxRate !== undefined) updateData.taxRate = Number(body.taxRate);
   if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
+  if (body.periodStart !== undefined) updateData.periodStart = body.periodStart ? new Date(body.periodStart) : null;
+  if (body.periodEnd   !== undefined) updateData.periodEnd   = body.periodEnd   ? new Date(body.periodEnd)   : null;
   if (body.paidAt  !== undefined) updateData.paidAt  = body.paidAt  ? new Date(body.paidAt)  : null;
 
   // If status changes to PAID, auto-set paidAt

@@ -104,6 +104,13 @@ export default async function InvoicePrintPage({ params, searchParams }: PagePro
       if (!periodTo || e > periodTo) periodTo = e;
     }
   }
+  // Manuell gesetzter Leistungszeitraum hat Vorrang
+  if (invoice.periodStart) {
+    periodFrom = new Date(invoice.periodStart);
+    periodTo = invoice.periodEnd ? new Date(invoice.periodEnd) : periodFrom;
+  } else if (invoice.periodEnd && periodFrom) {
+    periodTo = new Date(invoice.periodEnd);
+  }
   // Fallback: Rechnungsmonat
   if (!periodFrom) {
     const issued = new Date(invoice.issuedAt);

@@ -444,6 +444,8 @@ model Invoice {
   status      String        @default("DRAFT") // DRAFT | SENT | PAID | CANCELLED
   taxRate     Int           @default(19)       // MwSt. %
   dueDate     DateTime?
+  periodStart DateTime?     // Leistungszeitraum von (leer = automatisch aus Zeiteinträgen)
+  periodEnd   DateTime?     // Leistungszeitraum bis
   issuedAt    DateTime      @default(now())
   paidAt      DateTime?
   intro       String?       // Einleitungstext unter dem Titel
